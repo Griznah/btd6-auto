@@ -1,0 +1,385 @@
+{
+  "maps": {
+    "Beginner": {
+      "Monkey Meadow": {},
+      "Tree Stump": {},
+      "Town Center": {},
+      "Middle of the Road": {},
+      "The Cabin": {},
+      "Resort": {},
+      "Skates": {},
+      "Lotus Island": {},
+      "Candy Falls": {},
+      "Winter Park": {},
+      "Four Circles": {},
+      "Hedge": {},
+      "Scrapyard": {},
+      "One Two Tree": {},
+      "In The Loop": {},
+      "Cubism": {},
+      "Alpine Run": {},
+      "Frozen Over": {},
+      "Carved": {},
+      "Park Path": {},
+      "End of the Road": {},
+      "Logs": {},
+      "Spa Pits": {},
+      "Tinkerton": {}
+    },
+    "Intermediate": {
+      "Quarry": {},
+      "Covered Garden": {},
+      "Polyphemus": {},
+      "Water Park": {},
+      "KartsNDarts": {},
+      "Moon Landing": {},
+      "Haunted": {},
+      "Downstream": {},
+      "Firing Range": {},
+      "Cracked": {},
+      "Streambed": {},
+      "Adora's Temple": {},
+      "Chutes": {},
+      "Quiet Street": {},
+      "Bloonarius Prime": {},
+      "Balance": {},
+      "Encrypted": {},
+      "Spring Spring": {},
+      "Bazaar": {},
+      "Rake": {},
+      "Spillway": {},
+      "Lost Crevasse": {},
+      "Luminous Cove": {},
+      "Spice Islands": {},
+      "Sulfur Springs": {}
+    },
+    "Advanced": {
+      "Midnight Mansion": {},
+      "Sunken Columns": {},
+      "Erosion": {},
+      "X Factor": {},
+      "Mesa": {},
+      "Geared": {},
+      "Spillway": {},
+      "Dark Path": {},
+      "Castle Revenge": {},
+      "Ancient Portal": {},
+      "Last Resort": {},
+      "Enchanted Glade": {},
+      "High Finance": {},
+      "Another Brick": {},
+      "Off The Coast": {},
+      "Cornfield": {},
+      "Underground": {},
+      "Cargo": {},
+      "Pat's Pond": {},
+      "Peninsula": {}
+    },
+    "Expert": {
+      "Bloody Puddles": {},
+      "Infernal": {},
+      "Flooded Valley": {},
+      "Ravine": {},
+      "Dark Dungeons": {},
+      "Dark Castle": {},
+      "Glacial Trail": {},
+      "Sanctuary": {},
+      "Workshop": {},
+      "Quad": {},
+      "#Ouch": {},
+      "Muddy Puddles": {}
+    },
+    "Game modes": {
+      "Easy": ["Standard", "Primary Only", "Deflation", "Sandbox"],
+      "Medium": [
+        "Standard",
+        "Military Only",
+        "Apopalypse",
+        "Reverse",
+        "Sandbox"
+      ],
+      "Hard": [
+        "Standard",
+        "Magic Monkeys Only",
+        "Double HP MOABS",
+        "Half Cash",
+        "Alternate Bloons Rounds",
+        "Impoppable",
+        "Chimps"
+      ]
+    }
+  },
+  "monkeys": {
+    "Primary": {
+      "Dart Monkey": {
+        "path_1": [
+          "Sharp Shots",
+          "Razor Sharp Shots",
+          "Spike-o-Pult",
+          "Juggernaut",
+          "Ultra-Juggernaut"
+        ],
+        "path_2": [
+          "Quick Shots",
+          "Very Quick Shots",
+          "Triple Shot",
+          "Super Monkey Fan Club",
+          "Plasma Monkey Fan Club"
+        ],
+        "path_3": [
+          "Long Range Darts",
+          "Enhanced Eyesight",
+          "Crossbow",
+          "Sharp Shooter",
+          "Crossbow Master"
+        ],
+        "paragon": "Apex Plasma Master"
+      },
+      "Boomerang Monkey": {
+        "path_1": [
+          "Improved Rangs",
+          "Glaives",
+          "Glaive Ricochet",
+          "M.O.A.R Glaives",
+          "Glaive Lord"
+        ],
+        "path_2": [
+          "Faster Throwing",
+          "Faster Rangs",
+          "Bionic Boomerang",
+          "Turbo Charge",
+          "Perma Charge"
+        ],
+        "path_3": [
+          "Long Range Rangs",
+          "Red Hot Rangs",
+          "Kylie Boomerang",
+          "MOAB Press",
+          "MOAB Domination"
+        ],
+        "paragon": "Glaive Dominus"
+      },
+      "Bomb Shooter": {
+        "path_1": [
+          "Extra Range",
+          "Missile Launcher",
+          "MOAB Mauler",
+          "MOAB Assassin",
+          "MOAB Eliminator"
+        ],
+        "path_2": [
+          "Faster Reload",
+          "Heavy Bombs",
+          "Cluster Bomb",
+          "Recursive Cluster",
+          "Bomb Blitz"
+        ],
+        "path_3": [
+          "Frag Bombs",
+          "Bigger Bombs",
+          "Balloon Impact",
+          "Balloon Crush",
+          "The Big One"
+        ],
+        "paragon": null
+      },
+      "Tack Shooter": {
+        "path_1": [
+          "More Tacks",
+          "Even More Tacks",
+          "Hot Shots",
+          "Ring of Fire",
+          "Inferno Ring"
+        ],
+        "path_2": [
+          "Faster Shooting",
+          "Even Faster Shooting",
+          "Tack Sprayer",
+          "Overdrive",
+          "The Tack Zone"
+        ],
+        "path_3": [
+          "Long Range",
+          "Super Range",
+          "Blade Shooter",
+          "Blade Maelstrom",
+          "Super Maelstrom"
+        ],
+        "paragon": null
+      },
+      "Ice Monkey": {
+        "path_1": [
+          "Enhanced Freeze",
+          "Deep Freeze",
+          "Arctic Wind",
+          "Snowstorm",
+          "Absolute Zero"
+        ],
+        "path_2": [
+          "Larger Radius",
+          "Refreeze",
+          "Ice Shards",
+          "Ice Impale",
+          "Super Brittle"
+        ],
+        "path_3": [
+          "Permafrost",
+          "Cold Snap",
+          "Icicles",
+          "Icicle Impale",
+          "Embrittlement"
+        ],
+        "paragon": null
+      },
+      "Glue Gunner": {
+        "path_1": [
+          "Glue Soak",
+          "Corrosive Glue",
+          "Bloon Dissolver",
+          "Bloon Liquefier",
+          "The Bloon Solver"
+        ],
+        "path_2": [
+          "Bigger Globs",
+          "Glue Splatter",
+          "Glue Hose",
+          "Glue Strike",
+          "Glue Storm"
+        ],
+        "path_3": [
+          "Stickier Glue",
+          "Stronger Glue",
+          "MOAB Glue",
+          "Relentless Glue",
+          "Super Glue"
+        ],
+        "paragon": null
+      },
+      "Desperado": {
+        "path_1": [
+          "Quickdraw",
+          "Standoff",
+          "Big Iron",
+          "Twin Sixes",
+          "The Blazing Sun"
+        ],
+        "path_2": [
+          "Eagle Eye",
+          "Bullseye",
+          "Deadeye",
+          "Bounty Hunter",
+          "Golden Justice"
+        ],
+        "path_3": [
+          "Wanderer",
+          "Nomad",
+          "Enforcer",
+          "Avenger",
+          "The Desert Phantom"
+        ],
+        "paragon": null
+      }
+    },
+    "Military": {
+      "Sniper Monkey": {
+        "path_1": [
+          "Full Metal Jacket",
+          "Large Caliber",
+          "Deadly Precision",
+          "Maim MOAB",
+          "Cripple MOAB"
+        ],
+        "path_2": [
+          "Fast Firing",
+          "Even Faster Firing",
+          "Semi-Automatic",
+          "Full Auto Rifle",
+          "Elite Defender"
+        ],
+        "path_3": [
+          "Night Vision Goggles",
+          "Shrapnel Shot",
+          "Bouncing Bullet",
+          "Supply Drop",
+          "Elite Sniper"
+        ],
+        "paragon": null
+      },
+      "Monkey Sub": {},
+      "Monkey Buccaneer": {},
+      "Monkey Ace": {},
+      "Heli Pilot": {},
+      "Mortar Monkey": {},
+      "Dartling Gunner": {}
+    },
+    "Magic": {
+      "Wizard Monkey": {
+        "path_1": [
+          "Fireball",
+          "Wall of Fire",
+          "Dragon's Breath",
+          "Summon Phoenix",
+          "Wizard Lord Phoenix"
+        ],
+        "path_2": [
+          "Lightning Bolt",
+          "Arcane Blast",
+          "Arcane Mastery",
+          "Necromancer: Unpopped Army",
+          "Prince of Darkness"
+        ],
+        "path_3": [
+          "Intense Magic",
+          "Monkey Sense",
+          "Shimmer",
+          "Unstable Concoction",
+          "Archmage"
+        ],
+        "paragon": null
+      },
+      "Super Monkey": {},
+      "Ninja Monkey": {},
+      "Alchemist": {},
+      "Druid": {},
+      "Mermonkey": {}
+    },
+    "Support": {
+      "Banana Farm": {
+        "path_1": [
+          "Increased Production",
+          "Greater Production",
+          "Banana Plantation",
+          "Banana Research Facility",
+          "Banana Central"
+        ],
+        "path_2": [
+          "Long Life Bananas",
+          "Valuable Bananas",
+          "Marketplace",
+          "Central Market",
+          "Monkey Wall Street"
+        ],
+        "path_3": [
+          "EZ Collect",
+          "Banana Salvage",
+          "Banana Bank",
+          "IMF Loan",
+          "Monkeynomics"
+        ],
+        "paragon": null
+      },
+      "Spike Factory": {},
+      "Monkey Village": {},
+      "Engineer Monkey": {},
+      "Beast Handler": {}
+    }
+  },
+  "heroes": {
+  "Support": ["Geraldo"],
+  "Attacker": ["Quincy"]
+  },
+  "powers": {
+    "Placable": [],
+    "NotPlacable": []
+  }
+}

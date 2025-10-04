@@ -1,0 +1,45 @@
+
+# MVP Plan for BTD6 Automation Bot
+
+**Goal:**
+Automate gameplay for Bloons Tower Defense 6 on one map, using one monkey and one hero, in Easy - Standard mode.
+
+## Features
+
+1. Map Selection
+
+- Support only one predefined map (e.g., "Monkey Meadow").
+
+2. Game Mode
+
+- Easy - Standard mode only.
+
+3. Monkey Placement
+
+- Place a single type of monkey (e.g., Dart Monkey) at a fixed location.
+
+4. Hero Placement
+
+- Place one hero (e.g., Quincy) at a fixed location.
+
+5. Basic Automation
+
+- Start the game.
+- Place monkey and hero.
+- Start rounds and handle basic input (e.g., clicking "next round").
+
+6. Screen Capture & Input Simulation
+
+- Use pyautogui for mouse/keyboard automation.
+- Use OpenCV for basic image recognition (e.g., detecting game state).
+
+7. Error Handling
+
+- Basic error handling (e.g., if placement fails, retry).
+
+## Out of Scope (for MVP)
+
+- Multiple maps, monkeys, or heroes.
+- Advanced strategies or upgrades.
+- GUI or configuration files.
+- Cross-platform testing (focus on Linux for MVP).
