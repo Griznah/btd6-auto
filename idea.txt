@@ -1,28 +1,28 @@
 # BTD6 Automation Bot - Project Idea
 
 ## Overview
-Create a Python3-based automation bot for Bloons Tower Defense 6 (BTD6), a popular tower defense game. The bot will automate gameplay actions, supporting both Linux and Windows platforms.
+Create a Python3-based automation bot for Bloons Tower Defense 6 (BTD6), a popular tower defense game. The bot will automate gameplay actions, focusing exclusively on Windows automation.
 
 ## Goals
 - Automate core gameplay tasks (placing towers, upgrading, using abilities).
 - Support multiple heroes, towers, and maps.
 - Modular design for easy extension and testing.
-- Cross-platform compatibility (Linux & Windows).
+- Reliable automation for Windows environments only.
 
 ## Stages of Development
 
 ### Stage 1: Research & Planning
-- Identify automation methods (screen reading, input simulation).
+- Identify Windows-specific automation methods (screen reading, input simulation).
 - List supported heroes, towers, and maps.
 - Define minimum viable product (MVP) features.
 
 ### Stage 2: Environment Setup
 - Set up Python3 project structure.
-- Choose libraries for GUI automation (e.g., pyautogui, opencv).
-- Ensure cross-platform support.
+- Choose libraries for GUI automation on Windows (e.g., pyautogui, opencv, pygetwindow).
+- Ensure compatibility with common Windows setups.
 
 ### Stage 3: Basic Automation
-- Implement screen capture and input simulation.
+- Implement screen capture and input simulation for Windows.
 - Automate simple actions (start game, place basic towers).
 
 ### Stage 4: Advanced Features
@@ -31,12 +31,12 @@ Create a Python3-based automation bot for Bloons Tower Defense 6 (BTD6), a popul
 - Add error handling and logging.
 
 ### Stage 5: Testing & Optimization
-- Test on Linux and Windows.
+- Test on Windows.
 - Optimize for speed and reliability.
 - Gather feedback and iterate.
 
 ## Technical Considerations
-- Use pyautogui for mouse/keyboard automation.
+- Use pyautogui for mouse/keyboard automation (Windows).
 - Use opencv for image recognition (detecting game state).
 - Modular codebase for easy updates.
 - Configuration files for user preferences.

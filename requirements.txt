@@ -1,2 +1,7 @@
 pyautogui
 opencv-python
+numpy
+Pillow
+pyscreeze
+pynput
+pygetwindow

@@ -1,8 +1,7 @@
-
 # MVP Plan for BTD6 Automation Bot
 
 **Goal:**
-Automate gameplay for Bloons Tower Defense 6 on one map, using one monkey and one hero, in Easy - Standard mode.
+Automate gameplay for Bloons Tower Defense 6 on one map, using one monkey and one hero, in Easy - Standard mode, exclusively on Windows.
 
 ## Features
 
@@ -30,7 +29,7 @@ Automate gameplay for Bloons Tower Defense 6 on one map, using one monkey and on
 
 6. Screen Capture & Input Simulation
 
-- Use pyautogui for mouse/keyboard automation.
+- Use pyautogui for mouse/keyboard automation (Windows).
 - Use OpenCV for basic image recognition (e.g., detecting game state).
 
 7. Error Handling
@@ -42,4 +41,4 @@ Automate gameplay for Bloons Tower Defense 6 on one map, using one monkey and on
 - Multiple maps, monkeys, or heroes.
 - Advanced strategies or upgrades.
 - GUI or configuration files.
-- Cross-platform testing (focus on Linux for MVP).
+- Cross-platform testing (Windows only).
