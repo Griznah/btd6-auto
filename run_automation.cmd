@@ -17,9 +17,3 @@ pip install -r requirements.txt
 REM Run the BTD6 automation bot
 echo Starting BTD6 Automation Bot...
 python main.py
-
-REM Deactivate the virtual environment
-echo Deactivating virtual environment.
-REM No explicit deactivate needed in batch; closing the shell will deactivate
-
-pause

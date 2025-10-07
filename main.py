@@ -18,7 +18,9 @@ HERO_TYPE = "Quincy"
 
 # Example coordinates (update for actual game window)
 MONKEY_COORDS = (100, 200)
+SELECT_MONKEY_COORDS = (1215, 145)
 HERO_COORDS = (320, 250)
+SELECT_HERO_COORDS = (1145, 145)
 MONKEY_KEY = 'q'  # Key to select Dart Monkey
 HERO_KEY = 'u'    # Key to select Quincy
 
@@ -27,6 +29,10 @@ BTD6_WINDOW_TITLE = "BloonsTD6"
 
 # Global killswitch flag
 KILL_SWITCH = False
+
+# Options
+pyautogui.PAUSE = 0.1  # Pause after each PyAutoGUI call
+pyautogui.FAILSAFE = True  # Move mouse to top-left to abort
 
 def activate_btd6_window() -> bool:
     """
@@ -67,20 +73,24 @@ def capture_screen(region=None) -> np.ndarray:
     img = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
     return img
 
-def place_monkey(coords: tuple[int, int], monkey_key: str) -> None:
+def place_monkey(select: tuple[int, int], coords: tuple[int, int], monkey_key: str) -> None:
     """
     Simulate mouse action to place monkey at given coordinates (Windows-only).
     """
+    pyautogui.moveTo(select[0], select[1], duration=0.2)
+    pyautogui.click()
     pyautogui.moveTo(coords[0], coords[1], duration=0.2)
-    pyautogui.press(monkey_key)
+    #pyautogui.press(monkey_key)
     pyautogui.click()
 
-def place_hero(coords: tuple[int, int], hero_key: str) -> None:
+def place_hero(select: tuple[int, int], coords: tuple[int, int], hero_key: str) -> None:
     """
     Simulate mouse action to place hero at given coordinates (Windows-only).
     """
+    pyautogui.moveTo(select[0], select[1], duration=0.2)
+    pyautogui.click()
     pyautogui.moveTo(coords[0], coords[1], duration=0.2)
-    pyautogui.press(hero_key)
+    #pyautogui.press(hero_key)
     pyautogui.click()
 
 def main() -> None:
@@ -103,8 +113,8 @@ def main() -> None:
 
     # Example: Place monkey and hero
     while not KILL_SWITCH:
-        place_hero(HERO_COORDS, HERO_KEY)
-        # place_monkey(MONKEY_COORDS, MONKEY_KEY)
+        place_hero(SELECT_HERO_COORDS, HERO_COORDS, HERO_KEY)
+        place_monkey(SELECT_MONKEY_COORDS, MONKEY_COORDS, MONKEY_KEY)
         print("Automation step complete. Press ESC to exit.")
         break  # Remove or modify for continuous automation
 
