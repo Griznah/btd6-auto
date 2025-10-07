@@ -18,7 +18,9 @@ HERO_TYPE = "Quincy"
 
 # Example coordinates (update for actual game window)
 MONKEY_COORDS = (100, 200)
-HERO_COORDS = (150, 250)
+HERO_COORDS = (320, 250)
+MONKEY_KEY = 'q'  # Key to select Dart Monkey
+HERO_KEY = 'u'    # Key to select Quincy
 
 # Window title for BTD6 (Windows)
 BTD6_WINDOW_TITLE = "BloonsTD6"
@@ -65,18 +67,20 @@ def capture_screen(region=None) -> np.ndarray:
     img = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
     return img
 
-def place_monkey(coords: tuple[int, int]) -> None:
+def place_monkey(coords: tuple[int, int], monkey_key: str) -> None:
     """
     Simulate mouse action to place monkey at given coordinates (Windows-only).
     """
     pyautogui.moveTo(coords[0], coords[1], duration=0.2)
+    pyautogui.press(monkey_key)
     pyautogui.click()
 
-def place_hero(coords: tuple[int, int]) -> None:
+def place_hero(coords: tuple[int, int], hero_key: str) -> None:
     """
     Simulate mouse action to place hero at given coordinates (Windows-only).
     """
     pyautogui.moveTo(coords[0], coords[1], duration=0.2)
+    pyautogui.press(hero_key)
     pyautogui.click()
 
 def main() -> None:
@@ -99,8 +103,8 @@ def main() -> None:
 
     # Example: Place monkey and hero
     while not KILL_SWITCH:
-        place_hero(HERO_COORDS)
-        # place_monkey(MONKEY_COORDS)
+        place_hero(HERO_COORDS, HERO_KEY)
+        # place_monkey(MONKEY_COORDS, MONKEY_KEY)
         print("Automation step complete. Press ESC to exit.")
         break  # Remove or modify for continuous automation
 
