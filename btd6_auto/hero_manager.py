@@ -1,9 +1,10 @@
 """
 Handles hero selection and placement.
 """
-import pyautogui
-import keyboard
-import time
+
+from .input import click
+from config import CLICK_DELAY
+import logging
 
 def select_hero(hero_name):
     pass
@@ -11,10 +12,13 @@ def select_hero(hero_name):
 def place_hero(coords: tuple[int, int], hero_key: str) -> None:
     """
     Simulate mouse action to place hero at given coordinates (Windows-only).
-    Hero selection is wonky compared to monkey selection, making a workaround with key press.
+    Uses input utilities and config for delays.
     """
-    keyboard.press(hero_key)
-    time.sleep(0.2)
-    keyboard.release(hero_key)
-    pyautogui.moveTo(coords[0], coords[1], duration=0.2)
-    pyautogui.click()
+    try:
+        import keyboard
+        keyboard.press(hero_key)
+        time.sleep(CLICK_DELAY)
+        keyboard.release(hero_key)
+        click(coords[0], coords[1], delay=CLICK_DELAY)
+    except Exception as e:
+        logging.error(f"Failed to place hero at {coords} with key {hero_key}: {e}")
