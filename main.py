@@ -87,6 +87,7 @@ def place_monkey(coords: tuple[int, int], monkey_key: str) -> None:
 def place_hero(coords: tuple[int, int], hero_key: str) -> None:
     """
     Simulate mouse action to place hero at given coordinates (Windows-only).
+    Hero selection is wonky compared to monkey selection, making a workaround with key press.
     """
     keyboard.press(hero_key)
     time.sleep(0.2)
