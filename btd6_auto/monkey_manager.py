@@ -3,9 +3,11 @@
 Handles selection and placement of monkeys and heroes.
 """
 
+
 from .input import click
 from config import CLICK_DELAY
 import logging
+import time
 
 def select_monkey(monkey_type: str) -> None:
     """
