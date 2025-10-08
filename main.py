@@ -17,7 +17,7 @@ MONKEY_TYPE = "Dart Monkey"
 HERO_TYPE = "Quincy"
 
 # Example coordinates (update for actual game window)
-MONKEY_COORDS = (100, 200)
+MONKEY_COORDS = (440, 355)
 SELECT_MONKEY_COORDS = (1215, 145)
 HERO_COORDS = (320, 250)
 SELECT_HERO_COORDS = (1145, 145)
