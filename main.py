@@ -10,6 +10,7 @@ import PIL        # Image format conversion
 import pyscreeze  # Screenshot support
 import pygetwindow as gw  # Window management (Windows)
 from pynput import keyboard  # Keyboard event listener
+import keyboard  # Keyboard automation (Windows)
 
 # --- Windows-only Constants for MVP ---
 MAP_NAME = "Monkey Meadow"
@@ -77,20 +78,20 @@ def place_monkey(select: tuple[int, int], coords: tuple[int, int], monkey_key: s
     """
     Simulate mouse action to place monkey at given coordinates (Windows-only).
     """
-    pyautogui.moveTo(select[0], select[1], duration=0.2)
-    pyautogui.click()
+    #pyautogui.moveTo(select[0], select[1], duration=0.2)
+    #pyautogui.click()
     pyautogui.moveTo(coords[0], coords[1], duration=0.2)
-    #pyautogui.press(monkey_key)
+    keyboard.send(monkey_key)
     pyautogui.click()
 
 def place_hero(select: tuple[int, int], coords: tuple[int, int], hero_key: str) -> None:
     """
     Simulate mouse action to place hero at given coordinates (Windows-only).
     """
-    pyautogui.moveTo(select[0], select[1], duration=0.2)
-    pyautogui.click()
+    #pyautogui.moveTo(select[0], select[1], duration=0.2)
+    #pyautogui.click()
     pyautogui.moveTo(coords[0], coords[1], duration=0.2)
-    #pyautogui.press(hero_key)
+    keyboard.send(hero_key)
     pyautogui.click()
 
 def main() -> None:
