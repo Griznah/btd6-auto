@@ -17,7 +17,8 @@ from btd6_auto.config import (
     MONKEY_KEY, HERO_KEY, BTD6_WINDOW_TITLE, KILL_SWITCH
 )
 from btd6_auto.game_launcher import activate_btd6_window
-from btd6_auto.input import esc_listener, place_monkey, place_hero
+from btd6_auto.input import esc_listener
+from btd6_auto.monkey_manager import place_monkey, place_hero
 from btd6_auto.vision import capture_screen
 
 

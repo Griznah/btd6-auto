@@ -1,15 +1,25 @@
+
 """
-Input automation (pyautogui).
+Input automation utilities for BTD6 automation bot.
+Centralizes mouse/keyboard actions and error handling.
 """
 
-# Placeholder for input automation logic
+
+import pyautogui
+import time
+import logging
 from pynput import keyboard as pynput_keyboard
+from config import CLICK_DELAY
+
 
 KILL_SWITCH = False
+
 
 def esc_listener():
     """
     Listen for ESC key to set killswitch flag (Windows-only).
+    Returns:
+        pynput.keyboard.Listener: The listener object.
     """
     def on_press(key):
         global KILL_SWITCH
@@ -21,29 +31,30 @@ def esc_listener():
     listener.start()
     return listener
 
-def type_text(text):
-    pass
 
-import pyautogui
-import keyboard
-import time
+def click(x: int, y: int, delay: float = CLICK_DELAY) -> None:
+    """
+    Move mouse to (x, y) and click, with optional delay.
+    Args:
+        x (int): X coordinate.
+        y (int): Y coordinate.
+        delay (float): Delay after click.
+    """
+    try:
+        pyautogui.moveTo(x, y)
+        pyautogui.click()
+        time.sleep(delay)
+    except Exception as e:
+        logging.error(f"Failed to click at ({x}, {y}): {e}")
 
-def place_monkey(coords: tuple[int, int], monkey_key: str) -> None:
+def type_text(text: str, interval: float = 0.05) -> None:
     """
-    Simulate mouse action to place monkey at given coordinates (Windows-only).
+    Type text using pyautogui.
+    Args:
+        text (str): The text to type.
+        interval (float): Delay between key presses.
     """
-    keyboard.send(monkey_key)
-    time.sleep(0.2)
-    pyautogui.moveTo(coords[0], coords[1], duration=0.2)
-    pyautogui.click()
-
-def place_hero(coords: tuple[int, int], hero_key: str) -> None:
-    """
-    Simulate mouse action to place hero at given coordinates (Windows-only).
-    Hero selection is wonky compared to monkey selection, making a workaround with key press.
-    """
-    keyboard.press(hero_key)
-    time.sleep(0.2)
-    keyboard.release(hero_key)
-    pyautogui.moveTo(coords[0], coords[1], duration=0.2)
-    pyautogui.click()
+    try:
+        pyautogui.write(text, interval=interval)
+    except Exception as e:
+        logging.error(f"Failed to type text '{text}': {e}")
