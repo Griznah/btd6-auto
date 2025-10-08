@@ -9,8 +9,9 @@ import numpy as np
 import PIL        # Image format conversion
 import pyscreeze  # Screenshot support
 import pygetwindow as gw  # Window management (Windows)
-from pynput import keyboard  # Keyboard event listener
+from pynput import keyboard as pynput_keyboard # Keyboard event listener
 import keyboard  # Keyboard automation (Windows)
+import time
 
 # --- Windows-only Constants for MVP ---
 MAP_NAME = "Monkey Meadow"
@@ -23,7 +24,7 @@ SELECT_MONKEY_COORDS = (1215, 145)
 HERO_COORDS = (320, 250)
 SELECT_HERO_COORDS = (1145, 145)
 MONKEY_KEY = 'q'  # Key to select Dart Monkey
-HERO_KEY = 'u'    # Key to select Quincy
+HERO_KEY = 'u'    # Key to select Hero
 
 # Window title for BTD6 (Windows)
 BTD6_WINDOW_TITLE = "BloonsTD6"
@@ -55,11 +56,11 @@ def esc_listener():
     """
     def on_press(key):
         global KILL_SWITCH
-        if key == keyboard.Key.esc:
+        if key == pynput_keyboard.Key.esc:
             print("ESC pressed! Exiting...")
             KILL_SWITCH = True
             return False  # Stop listener
-    listener = keyboard.Listener(on_press=on_press)
+    listener = pynput_keyboard.Listener(on_press=on_press)
     listener.start()
     return listener
 
@@ -74,24 +75,23 @@ def capture_screen(region=None) -> np.ndarray:
     img = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
     return img
 
-def place_monkey(select: tuple[int, int], coords: tuple[int, int], monkey_key: str) -> None:
+def place_monkey(coords: tuple[int, int], monkey_key: str) -> None:
     """
     Simulate mouse action to place monkey at given coordinates (Windows-only).
     """
-    #pyautogui.moveTo(select[0], select[1], duration=0.2)
-    #pyautogui.click()
-    pyautogui.moveTo(coords[0], coords[1], duration=0.2)
     keyboard.send(monkey_key)
+    time.sleep(0.2)
+    pyautogui.moveTo(coords[0], coords[1], duration=0.2)
     pyautogui.click()
 
-def place_hero(select: tuple[int, int], coords: tuple[int, int], hero_key: str) -> None:
+def place_hero(coords: tuple[int, int], hero_key: str) -> None:
     """
     Simulate mouse action to place hero at given coordinates (Windows-only).
     """
-    #pyautogui.moveTo(select[0], select[1], duration=0.2)
-    #pyautogui.click()
+    keyboard.press(hero_key)
+    time.sleep(0.2)
+    keyboard.release(hero_key)
     pyautogui.moveTo(coords[0], coords[1], duration=0.2)
-    keyboard.send(hero_key)
     pyautogui.click()
 
 def main() -> None:
@@ -114,8 +114,9 @@ def main() -> None:
 
     # Example: Place monkey and hero
     while not KILL_SWITCH:
-        place_hero(SELECT_HERO_COORDS, HERO_COORDS, HERO_KEY)
-        place_monkey(SELECT_MONKEY_COORDS, MONKEY_COORDS, MONKEY_KEY)
+        pyautogui.moveTo(300, 300, duration=0.1)
+        place_hero(HERO_COORDS, HERO_KEY)
+        place_monkey(MONKEY_COORDS, MONKEY_KEY)
         print("Automation step complete. Press ESC to exit.")
         break  # Remove or modify for continuous automation
 
