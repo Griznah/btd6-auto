@@ -7,34 +7,34 @@ Automate gameplay for Bloons Tower Defense 6 on one map, using one monkey and on
 
 1. Map Selection
 
-- Support only one predefined map (e.g., "Monkey Meadow").
+    - Support only one predefined map (e.g., "Monkey Meadow").
 
 2. Game Mode
 
-- Easy - Standard mode only.
+    - Easy - Standard mode only.
 
 3. Monkey Placement
 
-- Place a single type of monkey (e.g., Dart Monkey) at a fixed location.
+    - Place a single type of monkey (e.g., Dart Monkey) at a fixed location.
 
 4. Hero Placement
 
-- Place one hero (e.g., Quincy) at a fixed location.
+    - Place one hero (e.g., Quincy) at a fixed location.
 
 5. Basic Automation
 
-- Start the game.
-- Place monkey and hero.
-- Start rounds and handle basic input (e.g., clicking "next round").
+    - Start the game.
+    - Place monkey and hero.
+    - Start rounds and handle basic input (e.g., clicking "next round").
 
 6. Screen Capture & Input Simulation
 
-- Use pyautogui for mouse/keyboard automation (Windows).
-- Use OpenCV for basic image recognition (e.g., detecting game state).
+    - Use pyautogui for mouse/keyboard automation (Windows).
+    - Use OpenCV for basic image recognition (e.g., detecting game state).
 
 7. Error Handling
 
-- Basic error handling (e.g., if placement fails, retry).
+    - Basic error handling (e.g., if placement fails, retry).
 
 ## Out of Scope (for MVP)
 

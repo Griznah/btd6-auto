@@ -4,7 +4,6 @@ Configuration management.
 
 
 # --- Windows-only Constants for MVP ---
-MAP_NAME = "Monkey Meadow"
 MONKEY_TYPE = "Dart Monkey"
 HERO_TYPE = "Quincy"
 
@@ -21,6 +20,15 @@ BTD6_WINDOW_TITLE = "BloonsTD6"
 
 # Global killswitch flag
 KILL_SWITCH = False
+
+# Map selection (default: Monkey Meadow)
+selected_map = "Monkey Meadow"
+
+# Difficulty selection (default: Easy)
+difficulty = "Easy"  # Options: "Easy", "Medium", "Hard"
+
+# Mode selection (default: Standard)
+mode = "Standard"  # Options: "Standard", "Alternate Bloons Rounds", etc.
 
 def load_config(config_path):
     pass

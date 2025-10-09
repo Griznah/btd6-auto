@@ -2,13 +2,51 @@
 Handles launching the game and map selection.
 """
 
-# Placeholder for game launch and map selection logic
 
-def launch_game():
-    pass
+import os
+import logging
+from .config import selected_map, difficulty, mode
+from .vision import capture_screen, find_element_on_screen
+from .input import click
 
-def select_map(map_name):
-    pass
+DATA_IMAGE_PATH = os.path.join(os.path.dirname(__file__), '../data/images')
+
+def get_image_path(name):
+    """Helper to get full path for image asset."""
+    return os.path.join(DATA_IMAGE_PATH, name)
+
+def start_map():
+    """
+    Automate starting the selected map with chosen difficulty and mode.
+    Steps:
+    1. Click 'Play' button
+    2. Select map (Monkey Meadow)
+    3. Select difficulty (Easy)
+    4. Select mode (Standard)
+    """
+    if not activate_btd6_window():
+        logging.error("BTD6 window not activated.")
+        return False
+
+    steps = [
+        ("button_play.png", "Play button"),
+        ("map_monkey_meadow.png", "Monkey Meadow map"),
+        ("button_easy.png", "Easy difficulty"),
+        ("button_standard.png", "Standard mode/start"),
+    ]
+
+    for img_name, desc in steps:
+        img_path = get_image_path(img_name)
+        screen = capture_screen()
+        coords = find_element_on_screen(img_path)
+        if coords:
+            click(*coords)
+            logging.info(f"Clicked {desc} at {coords}")
+        else:
+            logging.error(f"Could not find {desc} on screen.")
+            return False
+    logging.info("Map started successfully.")
+    return True
 
 
 import pygetwindow as gw
