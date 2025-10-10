@@ -9,7 +9,7 @@ import pyautogui
 import time
 import logging
 from pynput import keyboard as pynput_keyboard
-from config import CLICK_DELAY
+from .config import CLICK_DELAY
 
 
 KILL_SWITCH = False

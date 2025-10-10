@@ -6,6 +6,8 @@ import pyautogui
 import cv2
 import numpy as np
 import logging
+import os
+from datetime import datetime
 
 def capture_screen(region=None) -> np.ndarray:
     """
@@ -30,10 +32,28 @@ def find_element_on_screen(element_image):
         element_image (str): Path to the template image file.
     Returns:
         tuple: (x, y) coordinates of the center of the matched region, or None if not found.
+    Additionally, saves the screenshot to the screenshots folder for debugging.
     """
     screen = capture_screen()
     if screen is None:
         return None
+    # Debug: Save screenshot with timestamp and sanitized element name
+    try:
+        screenshots_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'screenshots')
+        if not os.path.exists(screenshots_dir):
+            os.makedirs(screenshots_dir)
+        # Sanitize element name for Windows filenames
+        element_base = os.path.basename(element_image)
+        element_name = os.path.splitext(element_base)[0]
+        element_name = ''.join(c if c.isalnum() or c in ('-', '_') else '_' for c in element_name)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        screenshot_filename = f"{timestamp}_{element_name}.png"
+        screenshot_path = os.path.join(screenshots_dir, screenshot_filename)
+        cv2.imwrite(screenshot_path, screen)
+        logging.info(f"Saved screenshot for debug: {screenshot_path}")
+    except Exception as e:
+        logging.error(f"Failed to save debug screenshot: {e}")
+
     try:
         template = cv2.imread(element_image, cv2.IMREAD_COLOR)
         if template is None:
