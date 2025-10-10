@@ -28,14 +28,37 @@ def start_map():
         logging.error("BTD6 window not activated.")
         return False
 
-    steps = [
-        ("button_play.png", "Play button"),
-        ("map_monkey_meadow.png", "Monkey Meadow map"),
-        ("button_easy.png", "Easy difficulty"),
-        ("button_standard.png", "Standard mode/start"),
-    ]
+    import time
+    import pyautogui
 
-    for img_name, desc in steps:
+    # Step 1: Click 'Play' button using image matching
+    play_img = get_image_path("button_play.png")
+    screen = capture_screen()
+    play_coords = find_element_on_screen(play_img)
+    if play_coords:
+        click(*play_coords)
+        logging.info(f"Clicked Play button at {play_coords}")
+    else:
+        logging.error("Could not find Play button on screen.")
+        return False
+
+    # Step 2: Wait and click coordinates to open map search
+    time.sleep(0.5)
+    pyautogui.click(55, 115)
+    logging.info("Clicked at (55, 115) to open map search box.")
+    time.sleep(0.5)
+    pyautogui.click(615, 30)
+    logging.info("Clicked at (615, 30) to focus map search input.")
+
+    # Step 3: Enter map name and select
+    pyautogui.typewrite(selected_map, interval=0.05)
+    logging.info(f"Entered map name: {selected_map}")
+    time.sleep(0.2)
+    pyautogui.click(360, 225)
+    logging.info("Clicked at (360, 225) to select map.")
+
+    # Step 4: Continue with difficulty and mode selection using image matching
+    for img_name, desc in [("button_easy.png", "Easy difficulty"), ("button_standard.png", "Standard mode/start")]:
         img_path = get_image_path(img_name)
         screen = capture_screen()
         coords = find_element_on_screen(img_path)
