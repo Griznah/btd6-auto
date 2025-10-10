@@ -9,9 +9,9 @@ HERO_TYPE = "Quincy"
 
 # Example coordinates (update for actual game window)
 MONKEY_COORDS = (440, 355)
-SELECT_MONKEY_COORDS = (1215, 145)
+SELECT_MONKEY_COORDS = (1215, 145) # for debug purposes only
 HERO_COORDS = (320, 250)
-SELECT_HERO_COORDS = (1145, 145)
+SELECT_HERO_COORDS = (1145, 145) # for debug purposes only
 MONKEY_KEY = 'q'  # Key to select Dart Monkey
 HERO_KEY = 'u'    # Key to select Hero
 
@@ -22,13 +22,13 @@ BTD6_WINDOW_TITLE = "BloonsTD6"
 KILL_SWITCH = False
 
 # Map selection (default: Monkey Meadow)
-selected_map = "Monkey Meadow"
+MAP_NAME = "Monkey Meadow"
 
 # Difficulty selection (default: Easy)
-difficulty = "Easy"  # Options: "Easy", "Medium", "Hard"
+DIFFICULTY = "Easy"  # Options: "Easy", "Medium", "Hard"
 
 # Mode selection (default: Standard)
-mode = "Standard"  # Options: "Standard", "Alternate Bloons Rounds", etc.
+MODE = "Standard"  # Options: "Standard", "Alternate Bloons Rounds", etc.
 
 def load_config(config_path):
     pass

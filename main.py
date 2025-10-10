@@ -11,9 +11,9 @@ import pyautogui
 
 # Import configuration and modules
 from btd6_auto.config import (
-    MAP_NAME, MONKEY_TYPE, HERO_TYPE,
-    MONKEY_COORDS, SELECT_MONKEY_COORDS,
-    HERO_COORDS, SELECT_HERO_COORDS,
+    MAP_NAME, DIFFICULTY, MODE,
+    MONKEY_TYPE, HERO_TYPE,
+    MONKEY_COORDS, HERO_COORDS,
     MONKEY_KEY, HERO_KEY, BTD6_WINDOW_TITLE, KILL_SWITCH
 )
 from btd6_auto.game_launcher import activate_btd6_window
