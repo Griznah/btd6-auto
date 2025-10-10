@@ -15,7 +15,7 @@ from btd6_auto.config import (
     MONKEY_COORDS, HERO_COORDS,
     MONKEY_KEY, HERO_KEY, BTD6_WINDOW_TITLE, KILL_SWITCH
 )
-from btd6_auto.game_launcher import activate_btd6_window
+from btd6_auto.game_launcher import activate_btd6_window, start_map
 from btd6_auto.input import esc_listener
 from btd6_auto.monkey_manager import place_monkey, place_hero
 from btd6_auto.vision import capture_screen
@@ -36,22 +36,22 @@ def main() -> None:
 
     # Start killswitch listener
     esc_listener()
-
-    # Activate BTD6 window
-    if not activate_btd6_window():
-        logging.error("Exiting due to missing game window.")
-        return
-
     try:
-        # Example: Capture full screen
-        screen_img = capture_screen()
-        logging.info(f"Captured screen shape: {screen_img.shape}")
-
-        # Example: Place monkey and hero
         while not KILL_SWITCH:
-            pyautogui.moveTo(300, 300, duration=0.1)
+            # Activate BTD6 window and start map
+            if not activate_btd6_window():
+                logging.error("Exiting due to missing game window.")
+                return
+
+            if not start_map():
+                logging.error("Exiting due to failure to start map.")
+                return
+
+            # Place hero and monkey after map is started
             place_hero(HERO_COORDS, HERO_KEY)
+            time.sleep(0.5)  # Wait for hero to be placed
             place_monkey(MONKEY_COORDS, MONKEY_KEY)
+            time.sleep(0.5)  # Wait for monkey to be placed
             logging.info("Automation step complete. Press ESC to exit.")
             break  # Remove or modify for continuous automation
     except Exception as e:
