@@ -5,7 +5,6 @@ Screen capture and image recognition (OpenCV).
 import pyautogui
 import cv2
 import numpy as np
-from config import TOWER_POSITIONS
 import logging
 
 def capture_screen(region=None) -> np.ndarray:

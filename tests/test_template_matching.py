@@ -91,10 +91,6 @@ def main():
     output_path = os.path.join(os.path.dirname(__file__), 'output_match.png')
     cv2.imwrite(output_path, matched_img)
     print(f"[INFO] Output image saved to: {output_path}")
-    print("[INFO] Displaying result image...")
-    cv2.imshow('Matches', matched_img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     main()
