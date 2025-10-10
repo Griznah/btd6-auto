@@ -73,7 +73,7 @@ def start_map():
 
 
 import pygetwindow as gw
-from config import BTD6_WINDOW_TITLE
+from .config import BTD6_WINDOW_TITLE
 
 def activate_btd6_window() -> bool:
     """
