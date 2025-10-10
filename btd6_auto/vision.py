@@ -49,8 +49,8 @@ def find_element_on_screen(element_image):
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         screenshot_filename = f"{timestamp}_{element_name}.png"
         screenshot_path = os.path.join(screenshots_dir, screenshot_filename)
-        cv2.imwrite(screenshot_path, screen)
-        logging.info(f"Saved screenshot for debug: {screenshot_path}")
+        #cv2.imwrite(screenshot_path, screen)
+        #logging.info(f"Saved screenshot for debug: {screenshot_path}")
     except Exception as e:
         logging.error(f"Failed to save debug screenshot: {e}")
 
