@@ -22,13 +22,13 @@ BTD6_WINDOW_TITLE = "BloonsTD6"
 KILL_SWITCH = False
 
 # Map selection (default: Monkey Meadow)
-MAP_NAME = "Monkey Meadow"
+selected_map = "Monkey Meadow"
 
 # Difficulty selection (default: Easy)
-DIFFICULTY = "Easy"  # Options: "Easy", "Medium", "Hard"
+selected_difficulty = "Easy"  # Options: "Easy", "Medium", "Hard"
 
 # Mode selection (default: Standard)
-MODE = "Standard"  # Options: "Standard", "Alternate Bloons Rounds", etc.
+selected_mode = "Standard"  # Options: "Standard", "Alternate Bloons Rounds", etc.
 
 def load_config(config_path):
     pass
