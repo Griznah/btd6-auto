@@ -48,6 +48,7 @@ def main() -> None:
                 return
 
             # Place hero and monkey after map is started
+            time.sleep(10)  # Wait for map to load
             place_hero(HERO_COORDS, HERO_KEY)
             time.sleep(0.5)  # Wait for hero to be placed
             place_monkey(MONKEY_COORDS, MONKEY_KEY)

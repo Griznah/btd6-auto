@@ -9,7 +9,7 @@ from .config import selected_map, selected_difficulty, selected_mode
 from .vision import capture_screen, find_element_on_screen
 from .input import click
 
-DATA_IMAGE_PATH = os.path.join(os.path.dirname(__file__), '../data/images')
+DATA_IMAGE_PATH = os.path.join(os.path.dirname(__file__), '..\data\images')
 
 def get_image_path(name):
     """Helper to get full path for image asset."""
