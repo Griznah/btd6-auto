@@ -305,14 +305,4 @@ _config_manager = _get_config_manager()
 _config_proxy = _ConfigProxy(_config_manager)
 
 # These will now dynamically fetch current values
-MONKEY_TYPE = _config_proxy.monkey_type
-MONKEY_COORDS = _config_proxy.monkey_coords
-MONKEY_KEY = _config_proxy.monkey_key
-HERO_TYPE = _config_proxy.hero_type
-HERO_COORDS = _config_proxy.hero_coords
-HERO_KEY = _config_proxy.hero_key
-BTD6_WINDOW_TITLE = _config_proxy.window_title
-selected_map = _config_proxy.selected_map
-selected_difficulty = _config_proxy.selected_difficulty
-selected_mode = _config_proxy.selected_mode
-CLICK_DELAY = _config_proxy.click_delay
+
