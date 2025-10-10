@@ -5,7 +5,7 @@ Handles launching the game and map selection.
 
 import os
 import logging
-from .config import selected_map, difficulty, mode
+from .config import selected_map, selected_difficulty, selected_mode
 from .vision import capture_screen, find_element_on_screen
 from .input import click
 
