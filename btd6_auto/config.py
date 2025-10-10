@@ -21,6 +21,9 @@ BTD6_WINDOW_TITLE = "BloonsTD6"
 # Global killswitch flag
 KILL_SWITCH = False
 
+# Delay after mouse click (seconds)
+CLICK_DELAY = 0.2
+
 # Map selection (default: Monkey Meadow)
 selected_map = "Monkey Meadow"
 
