@@ -58,7 +58,7 @@ def start_map():
     time.sleep(0.5) # let next screen load
 
     # Step 4: Continue with difficulty and mode selection using image matching
-    for img_name, desc in [("button_easy.png", "Easy difficulty"), ("button_standard.png", "Standard mode/start")]:
+    for img_name, desc in [("button_easy1080p.png", "Easy difficulty"), ("button_standard1080p.png", "Standard mode/start")]:
         time.sleep(0.5) # let next screen load
         img_path = get_image_path(img_name)
         screen = capture_screen()
