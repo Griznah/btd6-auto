@@ -317,3 +317,23 @@ _config_proxy = _ConfigProxy(_config_manager)
 
 # These will now dynamically fetch current values
 
+def __getattr__(name: str):
+    """
+    Module-level dynamic attribute access for settings.
+    Allows: from btd6_auto.config import CLICK_DELAY
+    """
+    try:
+        return getattr(_config_proxy, name)
+    except AttributeError:
+        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+def __dir__():
+    """
+    Module-level __dir__ for discoverability of settings and attributes.
+    Returns sorted list of globals plus settings keys.
+    """
+    global_names = list(globals().keys())
+    # Get all GameSettings fields
+    settings_keys = list(_config_manager.settings.__dataclass_fields__.keys())
+    return sorted(set(global_names + settings_keys))
+

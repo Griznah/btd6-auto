@@ -118,10 +118,14 @@ class CoordinateValidator:
         # Check against screen bounds
         max_x, max_y = self._screen_bounds.get("primary", (1920, 1080))
 
-        if x >= max_x or y >= max_y:
-            self.logger.warning(
-                f"Coordinates {coordinates} may be outside screen bounds "
-                f"(screen: {max_x}x{max_y}) for {context}"
+        if x > max_x - 1 or y > max_y - 1:
+            raise InvalidCoordinateError(
+                coordinates,
+                operation=f"coordinate_validation_{context}",
+                details={
+                    "reason": f"coordinates must be within [0, {max_x - 1}] for x and [0, {max_y - 1}] for y",
+                    "screen_bounds": (max_x, max_y)
+                }
             )
 
         return coordinates
@@ -401,8 +405,8 @@ class GameStateValidator:
                 raise
             window_title = self.config_manager.get_setting('window_title') or "BloonsTD6"
             raise WindowActivationError(
-                window_title=window_title,
-                operation="game_window_validation"
+                window_title,
+                details={"context": "game_window_validation", "original_exception": str(e)}
             ) from e
 
     def validate_map_loaded(self, expected_map: str = None) -> bool:

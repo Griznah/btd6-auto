@@ -91,6 +91,7 @@ class TemplateMatchingTests(unittest.TestCase):
 
     def test_coordinate_validation(self):
         """Test coordinate validation functionality."""
+        from validation import InvalidCoordinateError  # Ensure precise import
         with LogContext("coordinate_validation_test", self.logger):
             # Test valid coordinates
             valid_coords = (100, 200)
@@ -98,7 +99,7 @@ class TemplateMatchingTests(unittest.TestCase):
             self.assertEqual(validated, valid_coords)
 
             # Test invalid coordinates
-            with self.assertRaises(Exception):  # Should raise InvalidCoordinateError
+            with self.assertRaises(InvalidCoordinateError):
                 invalid_coords = (-10, -20)
                 self.validator.validate_coordinates(invalid_coords, "test")
 
