@@ -43,18 +43,24 @@ def start_map():
 
     # Step 2: Wait and click coordinates to open map search
     time.sleep(0.5)
-    pyautogui.click(55, 115)
-    logging.info("Clicked at (55, 115) to open map search box.")
+    #pyautogui.click(55, 115) # 720p coords
+    #logging.info("Clicked at (55, 115) to open map search box.")
+    #pyautogui.click(80, 170) # 1080p coords
+    #logging.info("Clicked at (80, 170) to open map search box.")
     time.sleep(0.5)
-    pyautogui.click(615, 30)
-    logging.info("Clicked at (615, 30) to focus map search input.")
+    #pyautogui.click(615, 30) # 720p coords
+    #logging.info("Clicked at (615, 30) to focus map search input.")
+    pyautogui.click(830, 50) # 1080p coords
+    #logging.info("Clicked at (830, 50) to focus map search input.")
 
     # Step 3: Enter map name and select
     pyautogui.typewrite(selected_map, interval=0.05)
     logging.info(f"Entered map name: {selected_map}")
     time.sleep(0.2)
-    pyautogui.click(360, 225)
-    logging.info("Clicked at (360, 225) to select map.")
+    #pyautogui.click(360, 225) # 720p coords
+    #logging.info("Clicked at (360, 225) to select map.")
+    pyautogui.click(550, 350) # 1080p coords
+    logging.info("Clicked at (550, 350) to select map.")
     time.sleep(0.5) # let next screen load
 
     # Step 4: Continue with difficulty and mode selection using image matching

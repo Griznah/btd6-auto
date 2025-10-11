@@ -39,9 +39,9 @@ def main() -> None:
     try:
         while not KILL_SWITCH:
             # Activate BTD6 window and start map
-            if not activate_btd6_window():
-                logging.error("Exiting due to missing game window.")
-                return
+            #if not activate_btd6_window():
+            #    logging.error("Exiting due to missing game window.")
+            #    return
 
             if not start_map():
                 logging.error("Exiting due to failure to start map.")
