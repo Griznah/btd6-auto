@@ -8,10 +8,8 @@ MONKEY_TYPE = "Dart Monkey"
 HERO_TYPE = "Quincy"
 
 # Example coordinates (update for actual game window)
-MONKEY_COORDS = (440, 355)
-SELECT_MONKEY_COORDS = (1215, 145) # for debug purposes only
-HERO_COORDS = (320, 250)
-SELECT_HERO_COORDS = (1145, 145) # for debug purposes only
+MONKEY_COORDS = (625, 500) # 1080p
+HERO_COORDS = (485, 395) # 1080p
 MONKEY_KEY = 'q'  # Key to select Dart Monkey
 HERO_KEY = 'u'    # Key to select Hero
 
