@@ -9,10 +9,7 @@ import pyautogui
 import time
 import logging
 from pynput import keyboard as pynput_keyboard
-from .config import CLICK_DELAY
-
-
-KILL_SWITCH = False
+import btd6_auto.config as config
 
 
 def esc_listener():
@@ -22,17 +19,16 @@ def esc_listener():
         pynput.keyboard.Listener: The listener object.
     """
     def on_press(key):
-        global KILL_SWITCH
         if key == pynput_keyboard.Key.esc:
-            print("ESC pressed! Exiting...")
-            KILL_SWITCH = True
+            logging.info("ESC pressed! Exiting...")
+            config.KILL_SWITCH = True
             return False  # Stop listener
     listener = pynput_keyboard.Listener(on_press=on_press)
     listener.start()
     return listener
 
 
-def click(x: int, y: int, delay: float = CLICK_DELAY) -> None:
+def click(x: int, y: int, delay: float = config.CLICK_DELAY) -> None:
     """
     Move mouse to (x, y) and click, with optional delay.
     Args:

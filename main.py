@@ -9,12 +9,8 @@ import time
 import numpy as np
 import pyautogui
 
-# Import configuration and modules
-from btd6_auto.config import (
-    MONKEY_TYPE, HERO_TYPE,
-    MONKEY_COORDS, HERO_COORDS,
-    MONKEY_KEY, HERO_KEY, BTD6_WINDOW_TITLE, KILL_SWITCH
-)
+# Import configuration manager and modules
+from btd6_auto.config import ConfigManager, KILL_SWITCH
 from btd6_auto.game_launcher import activate_btd6_window, start_map
 from btd6_auto.input import esc_listener
 from btd6_auto.monkey_manager import place_monkey, place_hero
@@ -34,10 +30,22 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
     logging.info("BTD6 Automation Bot MVP starting (Windows-only)...")
 
+    # Initialize configuration manager
+    config_manager = ConfigManager()
+    logging.info("Configuration loaded successfully")
+
     # Start killswitch listener
     esc_listener()
+
     try:
         while not KILL_SWITCH:
+            # Get current configuration values
+            hero_coords = config_manager.get_setting('hero_coords')
+            hero_key = config_manager.get_setting('hero_key')
+            monkey_coords = config_manager.get_setting('monkey_coords')
+            monkey_key = config_manager.get_setting('monkey_key')
+            window_title = config_manager.get_setting('window_title')
+
             # Activate BTD6 window and start map
             if not activate_btd6_window():
                 logging.error("Exiting due to missing game window.")
@@ -49,9 +57,9 @@ def main() -> None:
 
             # Place hero and monkey after map is started
             time.sleep(10)  # Wait for map to load
-            place_hero(HERO_COORDS, HERO_KEY)
+            place_hero(hero_coords, hero_key)
             time.sleep(0.5)  # Wait for hero to be placed
-            place_monkey(MONKEY_COORDS, MONKEY_KEY)
+            place_monkey(monkey_coords, monkey_key)
             time.sleep(0.5)  # Wait for monkey to be placed
             logging.info("Automation step complete. Press ESC to exit.")
             break  # Remove or modify for continuous automation
