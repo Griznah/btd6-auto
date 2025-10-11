@@ -7,6 +7,8 @@ to prevent runtime errors and ensure reliable automation.
 
 import logging
 import platform
+from typing import Any, Dict, List, Tuple, Optional
+
 try:
     import tkinter as tk
 except ModuleNotFoundError:
