@@ -238,21 +238,18 @@ class RetryContext:
                 # Check if exception is retryable
                 is_retryable = any(isinstance(e, exc_type) for exc_type in self.retryable_exceptions)
 
-                if not is_retryable or self.attempt == self.max_retries - 1:
-                    # Not retryable or last attempt, re-raise
+                if not is_retryable:
+                    raise
+
+                if self.attempt == self.max_retries - 1:
                     if self.attempt > 0:
-                        logger.error(f"Operation {op_name} failed after {self.attempt + 1} attempts")
-
-                    if isinstance(e, BTD6AutomationError):
-                        raise RetryExhaustedError(
-                            message=f"Operation '{op_name}' failed after {self.attempt + 1} attempts",
-                            attempts=self.attempt + 1,
-                            last_error=e,
-                            operation=op_name
-                        ) from e
-                    else:
-                        raise
-
+                        logger.exception(f"Operation {op_name} failed after {self.attempt + 1} attempts")
+                    raise RetryExhaustedError(
+                        message=f"Operation '{op_name}' failed after {self.attempt + 1} attempts",
+                        attempts=self.attempt + 1,
+                        last_error=e,
+                        operation=op_name
+                    ) from e
                 # Calculate delay for next retry
                 delay = min(self.base_delay * (self.backoff_factor ** self.attempt), self.max_delay)
 
