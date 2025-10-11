@@ -32,6 +32,7 @@ def activate_btd6_window() -> bool:
             return False
         win = windows[0]
         win.activate()
+        time.sleep(0.5)  # Wait for the window to come to the foreground
         print(f"[INFO] Activated window: {win.title}")
         return True
     except Exception as e:

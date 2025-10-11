@@ -2,7 +2,6 @@
 Handles launching the game and map selection.
 """
 
-
 import os
 import logging
 from .config import selected_map, selected_difficulty, selected_mode
@@ -32,7 +31,7 @@ def start_map():
     import pyautogui
 
     # Step 1: Click 'Play' button using image matching
-    play_img = get_image_path("button_play.png")
+    play_img = get_image_path("button_play1080p.png")
     screen = capture_screen()
     play_coords = find_element_on_screen(play_img)
     if play_coords:
@@ -75,6 +74,7 @@ def start_map():
 
 
 import pygetwindow as gw
+import time
 from .config import BTD6_WINDOW_TITLE
 
 def activate_btd6_window() -> bool:
@@ -90,6 +90,7 @@ def activate_btd6_window() -> bool:
             return False
         win = windows[0]
         win.activate()
+        time.sleep(0.5)  # Wait for the window to come to the foreground
         print(f"Activated window: {win.title}")
         return True
     except Exception as e:
