@@ -18,12 +18,11 @@ from io import StringIO
 # Add the btd6_auto module to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'btd6_auto'))
 
-from logging_utils import (
+from btd6_auto.logging_utils import (
     BTD6Logger,
     get_logger,
     log_performance,
-    LogContext,
-    setup_logging
+    LogContext
 )
 
 

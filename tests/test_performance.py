@@ -15,11 +15,11 @@ from unittest.mock import patch, MagicMock
 # Add the btd6_auto module to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "btd6_auto"))
 
-from config import ConfigManager
-from validation import CoordinateValidator, InputValidator
-from retry_utils import retry, RetryContext
-from logging_utils import get_logger, log_performance, LogContext
-from recovery import RecoveryManager, RecoveryStrategy
+from btd6_auto.config import ConfigManager
+from btd6_auto.validation import CoordinateValidator, InputValidator
+from btd6_auto.retry_utils import retry, RetryContext
+from btd6_auto.logging_utils import get_logger, log_performance, LogContext
+from btd6_auto.recovery import RecoveryManager
 
 
 class ConfigurationPerformanceTests(unittest.TestCase):

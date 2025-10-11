@@ -23,7 +23,13 @@ from .exceptions import (
     GameStateError,
 )
 from .config import _get_config_manager
-from screeninfo import get_monitors
+try:
+    from screeninfo import get_monitors
+except ModuleNotFoundError:
+    raise ImportError(
+        "The 'screeninfo' package is required for coordinate validation. "
+        "Please install it with 'pip install screeninfo'."
+    )
 
 
 

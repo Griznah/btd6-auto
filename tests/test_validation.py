@@ -13,8 +13,8 @@ from unittest.mock import patch, MagicMock
 # Add the btd6_auto module to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'btd6_auto'))
 
-from validation import CoordinateValidator, InputValidator
-from exceptions import (
+from btd6_auto.validation import CoordinateValidator, InputValidator
+from btd6_auto.exceptions import (
     InvalidCoordinateError,
     InvalidKeyError,
     BTD6AutomationError,

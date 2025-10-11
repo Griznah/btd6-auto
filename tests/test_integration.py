@@ -14,17 +14,17 @@ from unittest.mock import patch, MagicMock, call
 # Add the btd6_auto module to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "btd6_auto"))
 
-from config import ConfigManager
-from validation import CoordinateValidator, InputValidator
-from exceptions import (
+from btd6_auto.config import ConfigManager
+from btd6_auto.validation import CoordinateValidator, InputValidator
+from btd6_auto.exceptions import (
     BTD6AutomationError,
     InvalidCoordinateError,
     WindowNotFoundError,
     TemplateNotFoundError,
 )
-from retry_utils import retry, RetryContext
-from logging_utils import get_logger, LogContext
-from recovery import RecoveryManager, RecoveryStrategy
+from btd6_auto.retry_utils import retry, RetryContext
+from btd6_auto.logging_utils import get_logger, LogContext
+from btd6_auto.recovery import RecoveryManager
 
 
 class ModuleIntegrationTests(unittest.TestCase):
@@ -450,7 +450,7 @@ class MockGameEnvironmentTests(unittest.TestCase):
     def test_mock_game_window_interaction(self):
         """Test interaction with mock game window."""
         # Test window activation
-        from game_launcher import activate_btd6_window
+        from btd6_auto.game_launcher import activate_btd6_window
 
         success = activate_btd6_window()
         self.assertTrue(success)
@@ -461,7 +461,7 @@ class MockGameEnvironmentTests(unittest.TestCase):
 
     def test_mock_screenshot_integration(self):
         """Test screenshot capture integration."""
-        from vision import capture_screen
+        from btd6_auto.vision import capture_screen
 
         # Mock successful screenshot
         mock_image = MagicMock()
@@ -477,7 +477,7 @@ class MockGameEnvironmentTests(unittest.TestCase):
 
     def test_mock_input_integration(self):
         """Test input system integration with mocks."""
-        from input import click, type_text
+        from btd6_auto.input import click, type_text
 
         # Test clicking
         click(100, 200)
@@ -487,8 +487,8 @@ class MockGameEnvironmentTests(unittest.TestCase):
 
     def test_complete_mock_automation_workflow(self):
         """Test complete automation workflow with mocks."""
-        from game_launcher import activate_btd6_window, start_map
-        from monkey_manager import place_hero, place_monkey
+        from btd6_auto.game_launcher import activate_btd6_window, start_map
+        from btd6_auto.monkey_manager import place_hero, place_monkey
 
         with LogContext("mock_automation_test", self.logger):
             # 1. Activate window

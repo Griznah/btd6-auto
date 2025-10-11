@@ -14,8 +14,8 @@ from unittest.mock import patch, MagicMock
 # Add the btd6_auto module to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "btd6_auto"))
 
-from retry_utils import retry, RetryContext, RetryExhaustedError
-from exceptions import (
+from btd6_auto.retry_utils import retry, RetryContext, RetryExhaustedError
+from btd6_auto.exceptions import (
     TemplateNotFoundError,
     MatchFailedError,
     WindowActivationError,
@@ -316,7 +316,7 @@ class RetryIntegrationTests(unittest.TestCase):
 
     def test_retry_with_validation_integration(self):
         """Test retry mechanism integration with validation."""
-        from validation import CoordinateValidator
+        from btd6_auto.validation import CoordinateValidator
 
         validator = CoordinateValidator()
         attempt_count = 0

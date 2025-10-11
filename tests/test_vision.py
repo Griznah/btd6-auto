@@ -15,8 +15,8 @@ from unittest.mock import patch, MagicMock, mock_open
 # Add the btd6_auto module to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "btd6_auto"))
 
-from vision import capture_screen, find_element_on_screen
-from exceptions import ScreenshotError, TemplateNotFoundError
+from btd6_auto.vision import capture_screen, find_element_on_screen
+from btd6_auto.exceptions import ScreenshotError, TemplateNotFoundError
 
 
 class VisionSystemTests(unittest.TestCase):
@@ -435,7 +435,7 @@ class VisionIntegrationTests(unittest.TestCase):
 
     def test_vision_with_validation_integration(self):
         """Test vision system integration with validation."""
-        from validation import CoordinateValidator
+        from btd6_auto.validation import CoordinateValidator
 
         validator = CoordinateValidator()
 
@@ -456,7 +456,7 @@ class VisionIntegrationTests(unittest.TestCase):
 
     def test_vision_with_retry_integration(self):
         """Test vision system integration with retry mechanism."""
-        from retry_utils import retry
+        from btd6_auto.retry_utils import retry
 
         attempt_count = 0
 

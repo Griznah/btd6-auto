@@ -14,8 +14,8 @@ from unittest.mock import patch, MagicMock
 # Add the btd6_auto module to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "btd6_auto"))
 
-from recovery import RecoveryManager, RecoveryStrategy, RecoveryContext
-from exceptions import (
+from btd6_auto.recovery import RecoveryManager
+from btd6_auto.exceptions import (
     BTD6AutomationError,
     TemplateNotFoundError,
     WindowNotFoundError,
@@ -54,11 +54,11 @@ class RecoveryStrategyTests(unittest.TestCase):
         with patch.object(strategy, "_execute") as mock_execute:
             mock_execute.return_value = True
 
-            context = RecoveryContext("test_operation")
-            result = strategy.execute(context)
+            # RecoveryContext removed; test only strategy execution logic
+            result = strategy.execute(None)
 
             self.assertTrue(result)
-            mock_execute.assert_called_once_with(context)
+            mock_execute.assert_called_once_with(None)
 
     def test_recovery_strategy_execution_failure(self):
         """Test RecoveryStrategy execute method with failure."""
@@ -67,8 +67,8 @@ class RecoveryStrategyTests(unittest.TestCase):
         with patch.object(strategy, "_execute") as mock_execute:
             mock_execute.return_value = False
 
-            context = RecoveryContext("test_operation")
-            result = strategy.execute(context)
+            # RecoveryContext removed; test only strategy execution logic
+            result = strategy.execute(None)
 
             self.assertFalse(result)
 
@@ -427,7 +427,7 @@ class RecoveryIntegrationTests(unittest.TestCase):
 
     def test_recovery_with_validation_integration(self):
         """Test recovery system integration with validation."""
-        from validation import CoordinateValidator
+        from btd6_auto.validation import CoordinateValidator
 
         recovery_manager = RecoveryManager()
         validator = CoordinateValidator()

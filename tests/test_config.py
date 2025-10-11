@@ -14,8 +14,8 @@ from unittest.mock import patch, MagicMock
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'btd6_auto'))
 
-from config import ConfigManager, GameSettings
-from exceptions import BTD6AutomationError
+from btd6_auto.config import ConfigManager, GameSettings
+from btd6_auto.exceptions import BTD6AutomationError
 
 
 class ConfigurationSystemTests(unittest.TestCase):

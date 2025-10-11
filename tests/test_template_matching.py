@@ -17,15 +17,15 @@ from unittest.mock import patch, MagicMock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'btd6_auto'))
 
 try:
-    from vision import capture_screen, find_element_on_screen
-    from exceptions import (
+    from btd6_auto.vision import capture_screen, find_element_on_screen
+    from btd6_auto.exceptions import (
         TemplateNotFoundError, MatchFailedError, ScreenshotError,
         BTD6AutomationError
     )
-    from logging_utils import get_logger, log_performance, LogContext
-    from validation import get_coordinate_validator, validate_coordinates
-    from retry_utils import retry
-    from config import _get_config_manager
+    from btd6_auto.logging_utils import get_logger, log_performance, LogContext
+    from btd6_auto.validation import get_coordinate_validator, validate_coordinates
+    from btd6_auto.retry_utils import retry
+    from btd6_auto.config import _get_config_manager
 except ImportError as e:
     print(f"[ERROR] Failed to import BTD6 modules: {e}")
     sys.exit(1)
@@ -91,7 +91,7 @@ class TemplateMatchingTests(unittest.TestCase):
 
     def test_coordinate_validation(self):
         """Test coordinate validation functionality."""
-        from validation import InvalidCoordinateError  # Ensure precise import
+        from btd6_auto.validation import InvalidCoordinateError  # Ensure precise import
         with LogContext("coordinate_validation_test", self.logger):
             # Test valid coordinates
             valid_coords = (100, 200)
@@ -238,12 +238,12 @@ class IntegrationTests(unittest.TestCase):
         with LogContext("module_import_test", self.logger):
             try:
                 # Test importing all new modules
-                from exceptions import BTD6AutomationError, RetryExhaustedError
-                from logging_utils import BTD6Logger, get_logger
-                from validation import CoordinateValidator, InputValidator
-                from retry_utils import retry, RetryContext
-                from recovery import RecoveryManager
-                from config import ConfigManager
+                from btd6_auto.exceptions import BTD6AutomationError, RetryExhaustedError
+                from btd6_auto.logging_utils import BTD6Logger, get_logger
+                from btd6_auto.validation import CoordinateValidator, InputValidator
+                from btd6_auto.retry_utils import retry, RetryContext
+                from btd6_auto.recovery import RecoveryManager
+                from btd6_auto.config import ConfigManager
 
                 # Test basic instantiation
                 logger = get_logger("test")
@@ -378,7 +378,7 @@ def main():
 
             try:
                 # Test window activation with new error handling
-                from game_launcher import activate_btd6_window
+                from btd6_auto.game_launcher import activate_btd6_window
 
                 with patch('pygetwindow.getWindowsWithTitle') as mock_get_windows:
                     # Mock window for testing
