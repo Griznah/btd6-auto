@@ -61,13 +61,16 @@ class CoordinateValidator:
 
             # Fallback to tkinter if screeninfo fails
             if not bounds:
-                root = tk.Tk()
-                root.withdraw()  # Hide the window
-                screen_width = root.winfo_screenwidth()
-                screen_height = root.winfo_screenheight()
-                bounds["primary"] = (screen_width, screen_height)
-                root.destroy()
-
+                if tk is not None:
+                    root = tk.Tk()
+                    root.withdraw()  # Hide the window
+                    screen_width = root.winfo_screenwidth()
+                    screen_height = root.winfo_screenheight()
+                    bounds["primary"] = (screen_width, screen_height)
+                    root.destroy()
+                else:
+                    # Final fallback
+                    bounds["primary"] = (1920, 1080)
             self.logger.info(f"Detected screen bounds: {bounds}")
             return bounds
 
