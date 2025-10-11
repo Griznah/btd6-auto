@@ -56,7 +56,7 @@ def start_map():
     # Step 3: Enter map name and select
     pyautogui.typewrite(selected_map, interval=0.05)
     logging.info(f"Entered map name: {selected_map}")
-    time.sleep(0.2)
+    time.sleep(0.05)
     #pyautogui.click(360, 225) # 720p coords
     #logging.info("Clicked at (360, 225) to select map.")
     pyautogui.click(550, 350) # 1080p coords
