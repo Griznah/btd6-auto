@@ -1,0 +1,12 @@
+{
+  "monkey_type": "Invalid Monkey Type",
+  "monkey_coords": "invalid_coords",
+  "monkey_key": "qq",
+  "hero_coords": [-100, -50],
+  "hero_key": 123,
+  "selected_map": "Nonexistent Map",
+  "selected_difficulty": "Impossible",
+  "selected_mode": "Invalid Mode",
+  "click_delay": -1.0,
+  "confidence_threshold": 1.5
+}

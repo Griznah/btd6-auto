@@ -1,0 +1,17 @@
+{
+  "monkey_type": "Dart Monkey",
+  "monkey_coords": [440, 355],
+  "monkey_key": "q",
+  "hero_type": "Quincy",
+  "hero_coords": [320, 250],
+  "hero_key": "u",
+  "window_title": "BloonsTD6",
+  "selected_map": "Monkey Meadow",
+  "selected_difficulty": "Easy",
+  "selected_mode": "Standard",
+  "click_delay": 0.2,
+  "operation_timeout": 30.0,
+  "max_retries": 3,
+  "retry_delay": 1.0,
+  "confidence_threshold": 0.85
+}
