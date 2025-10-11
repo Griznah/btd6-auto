@@ -107,7 +107,6 @@ class TemplateMatchingTests(unittest.TestCase):
                 invalid_coords = (-10, -20)
                 self.validator.validate_coordinates(invalid_coords, "test")
 
-    @retry(max_retries=2, base_delay=0.1)
     def test_template_matching_with_retry(self):
         """Test template matching with retry logic."""
         if not os.path.exists(self.test_template):
@@ -128,12 +127,18 @@ class TemplateMatchingTests(unittest.TestCase):
                     return None  # First attempt fails
                 return (50, 50)  # Second attempt succeeds
 
+            @retry(max_retries=2, base_delay=0.1, retryable_exceptions=MatchFailedError)
+            def match_with_retry():
+                res = find_element_on_screen(self.test_template)
+                if res is None:
+                    raise MatchFailedError(self.test_template)
+                return res
+
             with patch('tests.test_template_matching.find_element_on_screen', side_effect=mock_find_element):
                 with patch('time.sleep'):
-                    result = find_element_on_screen(self.test_template)
+                    result = match_with_retry()
             self.assertIsNotNone(result, "Should succeed after retry")
             self.assertEqual(attempt_count, 2, "Should have made 2 attempts")
-
     def test_performance_logging(self):
         """Test performance logging integration."""
         @log_performance("test_operation", threshold_ms=50.0)
