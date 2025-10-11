@@ -8,6 +8,7 @@ Centralizes mouse/keyboard actions and error handling.
 import pyautogui
 import time
 import logging
+import os  # For hard termination
 from pynput import keyboard as pynput_keyboard
 from .config import CLICK_DELAY, KILL_SWITCH
 
@@ -15,6 +16,7 @@ from .config import CLICK_DELAY, KILL_SWITCH
 def esc_listener():
     """
     Listen for ESC key to set killswitch flag (Windows-only).
+    Performs hard termination using os._exit(0) for immediate exit.
     Returns:
         pynput.keyboard.Listener: The listener object.
     """
@@ -23,7 +25,8 @@ def esc_listener():
         if key == pynput_keyboard.Key.esc:
             logging.info("ESC pressed! Exiting...")
             config.KILL_SWITCH = True
-            return False  # Stop listener
+            # Hard terminate the process immediately (MVP requirement)
+            os._exit(0)
     listener = pynput_keyboard.Listener(on_press=on_press)
     listener.start()
     return listener

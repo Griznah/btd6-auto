@@ -45,8 +45,8 @@ def start_map():
     time.sleep(0.5)
     #pyautogui.click(55, 115) # 720p coords
     #logging.info("Clicked at (55, 115) to open map search box.")
-    #pyautogui.click(80, 170) # 1080p coords
-    #logging.info("Clicked at (80, 170) to open map search box.")
+    pyautogui.click(80, 170) # 1080p coords
+    logging.info("Clicked at (80, 170) to open map search box.")
     time.sleep(0.5)
     #pyautogui.click(615, 30) # 720p coords
     #logging.info("Clicked at (615, 30) to focus map search input.")
