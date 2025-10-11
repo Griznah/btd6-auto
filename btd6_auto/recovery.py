@@ -100,14 +100,8 @@ class RecoveryManager:
             try:
                 self.logger.info(f"Trying coordinates {coords} (attempt {i + 1}/{len(all_coords)})")
 
-                # Update coordinates in arguments if present
-                if 'coordinates' in kwargs:
-                    kwargs['coordinates'] = coords
-                elif args and hasattr(args[0], '__name__') and 'coords' in str(args):
-                    # This is a bit hacky, but handles the case where coordinates are first arg
-                    args = (coords,) + args[1:]
-
-                click_function(*args, **kwargs)
+                # Call with explicit x, y; additional args/kwargs are forwarded
+                click_function(coords[0], coords[1], *args, **kwargs)
                 self.logger.info(f"Click succeeded with coordinates {coords}")
                 return True
 
