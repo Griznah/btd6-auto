@@ -171,12 +171,12 @@ class RecoveryManager:
         try:
             import pyautogui
 
+
             # Ensure coordinates are valid
             if not isinstance(x, int) or not isinstance(y, int):
-                raise ClickFailedError((x, y))
-
+                raise ValueError(f"Invalid coordinates: ({x}, {y}) must be integers.")
             if x < 0 or y < 0:
-                raise ClickFailedError((x, y))
+                raise ValueError(f"Invalid coordinates: ({x}, {y}) must be non-negative.")
 
             # Move to position and click
             pyautogui.click(x, y, button=button, clicks=clicks)
@@ -187,8 +187,7 @@ class RecoveryManager:
             return True
 
         except Exception as e:
-            if isinstance(e, ClickFailedError):
-                raise
+            # Only wrap unexpected exceptions as ClickFailedError
             raise ClickFailedError((x, y)) from e
 
     @retry(max_retries=3, base_delay=1.0)
@@ -207,11 +206,18 @@ class RecoveryManager:
             import pyautogui
 
             # Ensure key is valid
-            if not isinstance(key, str) or len(key) != 1:
-                raise ValueError(f"Invalid key: {key}")
+            if not isinstance(key, str):
+                raise ValueError(f"Invalid key type: {key} (must be str)")
+            allowed_keys = set(getattr(pyautogui, "KEYBOARD_KEYS", []))
+            if key not in allowed_keys:
+                raise ValueError(f"Invalid key: '{key}' not in allowed keys: {allowed_keys}")
 
             # Press the key
-            pyautogui.press(key, presses=presses)
+            try:
+                pyautogui.press(key, presses=presses)
+            except Exception as e:
+                self.logger.error(f"pyautogui.press failed for key '{key}': {e}")
+                raise
 
             # Verify the key press was registered (basic check)
             time.sleep(0.1)
@@ -219,7 +225,8 @@ class RecoveryManager:
             return True
 
         except Exception as e:
-            raise e  # Re-raise to let retry decorator handle it
+            # Only wrap unexpected exceptions for retry
+            raise
 
     def execute_with_fallbacks(
         self,

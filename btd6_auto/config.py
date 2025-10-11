@@ -147,13 +147,24 @@ class ConfigManager:
         """Get the default configuration file path."""
         return os.path.join(os.path.dirname(__file__), '..', 'config', 'settings.json')
 
-    def save_config(self) -> bool:
+    def save_config(self, path: Optional[str] = None) -> bool:
         """Save current configuration to file.
+
+        Args:
+            path: Optional path to save configuration to. If None, uses default config path.
 
         Returns:
             bool: True if successful, False otherwise.
         """
         try:
+            # Determine target path
+            target_path = path or self.config_path
+
+            # Create parent directory if it doesn't exist
+            parent_dir = os.path.dirname(target_path)
+            if parent_dir:
+                os.makedirs(parent_dir, exist_ok=True)
+
             config_data = {
                 'monkey_type': self.settings.monkey_type,
                 'monkey_coords': self.settings.monkey_coords,
@@ -172,10 +183,10 @@ class ConfigManager:
                 'confidence_threshold': self.settings.confidence_threshold,
             }
 
-            with open(self.config_path, 'w') as f:
+            with open(target_path, 'w') as f:
                 json.dump(config_data, f, indent=2)
 
-            self.logger.info(f"Configuration saved to {self.config_path}")
+            self.logger.info(f"Configuration saved to {target_path}")
             return True
 
         except Exception as e:

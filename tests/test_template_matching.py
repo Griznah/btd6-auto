@@ -63,16 +63,11 @@ class TemplateMatchingTests(unittest.TestCase):
                 self.logger.warning(f"Test template not found: {self.test_template}")
 
     def test_invalid_template_handling(self):
-        """Test handling of invalid template files."""
-        with self.assertRaises(TemplateNotFoundError):
-            # This should raise our custom exception
-            invalid_template_path = "definitely/does/not/exist.png"
-            if not os.path.exists(invalid_template_path):
-                # Simulate the find_element_on_screen behavior
-                from vision import find_element_on_screen
-                result = find_element_on_screen(invalid_template_path)
-                # Should return None for non-existent files
-                self.assertIsNone(result)
+        """Test handling of invalid template files - should return None for missing templates."""
+        # Test that find_element_on_screen returns None for non-existent files
+        invalid_template_path = "definitely/does/not/exist.png"
+        result = find_element_on_screen(invalid_template_path)
+        self.assertIsNone(result, "find_element_on_screen should return None for missing template files")
 
     @patch('tests.test_template_matching.capture_screen')
     def test_screenshot_capture_with_retry(self, mock_capture):

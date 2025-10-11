@@ -10,9 +10,7 @@ import time
 import logging
 from pynput import keyboard as pynput_keyboard
 from .config import CLICK_DELAY
-
-
-KILL_SWITCH = False
+import btd6_auto.config as config
 
 
 def esc_listener():
@@ -22,10 +20,9 @@ def esc_listener():
         pynput.keyboard.Listener: The listener object.
     """
     def on_press(key):
-        global KILL_SWITCH
         if key == pynput_keyboard.Key.esc:
             print("ESC pressed! Exiting...")
-            KILL_SWITCH = True
+            config.KILL_SWITCH = True
             return False  # Stop listener
     listener = pynput_keyboard.Listener(on_press=on_press)
     listener.start()

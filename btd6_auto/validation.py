@@ -15,6 +15,7 @@ except ModuleNotFoundError:
     tk = None
 from .exceptions import (
     InvalidCoordinateError,
+    InvalidKeyError,
     BTD6AutomationError,
     WindowNotFoundError,
     WindowActivationError,
@@ -24,8 +25,6 @@ from .exceptions import (
 from .config import _get_config_manager
 from screeninfo import get_monitors
 
-from .exceptions import InvalidCoordinateError, BTD6AutomationError
-from .config import _get_config_manager
 
 
 class CoordinateValidator:
@@ -290,10 +289,10 @@ class InputValidator:
             InvalidKeyError: If key is invalid
         """
         if not isinstance(key, str):
-            raise ValueError(f"Key must be string, got {type(key)}")
+            raise InvalidKeyError(str(key), operation=f"key_validation_{context}")
 
         if len(key) != 1:
-            raise ValueError(f"Key must be single character, got '{key}'")
+            raise InvalidKeyError(key, operation=f"key_validation_{context}")
 
         # Basic validation - could be extended with pyautogui key validation
         valid_key_chars = "abcdefghijklmnopqrstuvwxyz0123456789"
@@ -400,8 +399,9 @@ class GameStateValidator:
         except Exception as e:
             if isinstance(e, (WindowNotFoundError, WindowActivationError)):
                 raise
+            window_title = self.config_manager.get_setting('window_title') or "BloonsTD6"
             raise WindowActivationError(
-                f"Unexpected error validating game window: {e}",
+                window_title=window_title,
                 operation="game_window_validation"
             ) from e
 
