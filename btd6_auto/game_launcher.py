@@ -5,7 +5,7 @@ Handles launching the game and map selection.
 import os
 import logging
 from .config import selected_map, selected_difficulty, selected_mode
-from .vision import capture_screen, find_element_on_screen
+from .vision import capture_screen, find_element_on_screen, is_mostly_black
 from .input import click
 
 DATA_IMAGE_PATH = os.path.join(os.path.dirname(__file__), '..\data\images')
@@ -90,7 +90,24 @@ def start_map():
         else:
             logging.error("Could not find Overwrite OK button on screen.")
             return False
-    
+    # Wait for loading screen to disappear (mostly black with some yellow/gold)
+    max_wait = 15  # seconds
+    poll_interval = 0.5
+    elapsed = 0
+    while elapsed < max_wait:
+        img_bgr, img_gray = capture_screen()
+        # Use vision.py logic: check if screen is "mostly black"
+        # For example, vision.py could have: is_mostly_black(image, threshold=0.9)
+        if img_bgr is None:
+            logging.error("Failed to capture screen during loading check.")
+            return False
+        if not is_mostly_black(img_bgr, threshold=0.9):
+            break
+        time.sleep(poll_interval)
+        elapsed += poll_interval
+    else:
+        logging.error("Loading screen did not disappear in time.")
+        return False
     logging.info("Map started successfully.")
     return True
 

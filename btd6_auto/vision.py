@@ -8,8 +8,38 @@ import numpy as np
 import logging
 import os
 import sys
+
 from datetime import datetime
 from datetime import datetime
+
+def is_mostly_black(image: np.ndarray, threshold: float = 0.9, black_level: int = 30) -> bool:
+    """
+    Determine if the given image is mostly black.
+
+    Parameters:
+        image (np.ndarray): Input image (BGR or grayscale).
+        threshold (float): Proportion of pixels that must be black (default: 0.9).
+        black_level (int): Pixel intensity below which a pixel is considered black (default: 30).
+
+    Returns:
+        bool: True if the proportion of black pixels exceeds the threshold, False otherwise.
+
+    Edge Cases:
+        - Returns False and logs a warning if image is None or empty.
+    """
+    if image is None or image.size == 0:
+        logging.warning("is_mostly_black: Received None or empty image.")
+        return False
+    # Convert to grayscale if needed
+    if len(image.shape) == 3 and image.shape[2] == 3:
+        image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else:
+        image_gray = image
+    total_pixels = image_gray.size
+    black_pixels = np.sum(image_gray < black_level)
+    proportion_black = black_pixels / total_pixels
+    logging.info(f"is_mostly_black: {proportion_black:.3f} black pixels (threshold={threshold})")
+    return proportion_black >= threshold
 
 def capture_screen(region=None) -> np.ndarray:
     """

@@ -9,3 +9,4 @@ pynput
 pygetwindow
 keyboard
 dxcam
+mss
