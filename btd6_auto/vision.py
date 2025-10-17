@@ -2,27 +2,44 @@
 Screen capture and image recognition (OpenCV).
 """
 
-import pyautogui
 import cv2
+import mss
 import numpy as np
 import logging
 import os
+import sys
+from datetime import datetime
 from datetime import datetime
 
 def capture_screen(region=None) -> np.ndarray:
     """
-    Capture a screenshot of the specified region (Windows-only).
+    Capture a screenshot of the specified region using dxcam (Windows-only).
+    On non-Windows platforms, always returns (None, None) and logs a warning.
     Args:
         region (tuple or None): (left, top, width, height) or None for full screen.
     Returns:
-        np.ndarray: OpenCV image (numpy array)
+        tuple: (img_bgr, img_gray) OpenCV images (numpy arrays)
     """
+    if not sys.platform.startswith("win"):
+        logging.warning("capture_screen: dxcam is only supported on Windows. Returning (None, None).")
+        return None, None
     try:
-        screenshot = pyautogui.screenshot(region=region)
-        img = np.array(screenshot)
-        # Return both color and grayscale for flexibility
-        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        import dxcam
+        # dxcam expects region as (left, top, right, bottom)
+        cam = dxcam.create()
+        if region is not None:
+            left, top, width, height = region
+            right = left + width
+            bottom = top + height
+            dxcam_region = (left, top, right, bottom)
+        else:
+            dxcam_region = None
+        img = cam.grab(region=dxcam_region)
+        if img is None:
+            raise RuntimeError("dxcam returned None image")
+        # dxcam returns BGRA, convert to BGR
+        img_bgr = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+        img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
         return img_bgr, img_gray
     except Exception as e:
         logging.error(f"Failed to capture screen region {region}: {e}")

@@ -1,8 +1,11 @@
 pyautogui
+# cv2
 opencv-python
 numpy
+# PIL
 Pillow
 pyscreeze
 pynput
 pygetwindow
 keyboard
+dxcam

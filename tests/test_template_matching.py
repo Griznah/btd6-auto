@@ -3,6 +3,12 @@ import os
 import cv2
 import numpy as np
 import time
+import pytest
+
+pytestmark = pytest.mark.skipif(
+    not sys.platform.startswith("win"),
+    reason="Actual automation only available on Windows"
+)
 
 # Import capture_screen from vision.py
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'btd6_auto'))
