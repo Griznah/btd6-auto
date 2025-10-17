@@ -69,7 +69,13 @@ def show_overlay_text(overlay_text: str, seconds: int):
                 wndclass.lpszClassName = self.className
                 wndclass.hCursor = win32gui.LoadCursor(None, win32con.IDC_ARROW)
                 wndclass.hbrBackground = 0  # No background brush for full transparency
-                atom = win32gui.RegisterClass(wndclass)
+                try:
+                    atom = win32gui.RegisterClass(wndclass)
+                except win32gui.error as e:
+                    if hasattr(e, 'winerror') and e.winerror == 1410:  # Class already exists
+                        atom = win32gui.GetClassInfo(wndclass.hInstance, wndclass.lpszClassName)
+                    else:
+                        raise
 
                 exStyle = (win32con.WS_EX_LAYERED | win32con.WS_EX_TOPMOST |
                            win32con.WS_EX_TRANSPARENT | win32con.WS_EX_TOOLWINDOW)
