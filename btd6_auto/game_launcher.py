@@ -106,7 +106,7 @@ def start_map():
             break
         time.sleep(poll_interval)
         elapsed += poll_interval
-        show_overlay_text(str(elapsed), poll_interval) # showing how long we have waited
+        show_overlay_text(str(elapsed), 1) # showing how long we have waited
     else:
         logging.error("Loading screen did not disappear in time.")
         return False

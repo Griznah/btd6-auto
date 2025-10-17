@@ -42,7 +42,7 @@ def show_overlay_text(overlay_text: str, seconds: int):
                     win32gui.SetTextColor(hdc, win32api.RGB(255, 0, 0))
                     # Create a large font
                     lf = win32gui.LOGFONT()
-                    lf.lfHeight = 24  # Large font size
+                    lf.lfHeight = 36  # Large font size
                     lf.lfWeight = win32con.FW_BOLD
                     lf.lfFaceName = "Arial"
                     hfont = win32gui.CreateFontIndirect(lf)
