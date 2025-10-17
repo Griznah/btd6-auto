@@ -75,6 +75,22 @@ def start_map():
         else:
             logging.error(f"Could not find {desc} on screen.")
             return False
+    # Check for overwrite save prompt
+    time.sleep(0.5)
+    overwrite_img = get_image_path("overwrite_save1080p.png")
+    screen = capture_screen()
+    overwrite_coords = find_element_on_screen(overwrite_img)
+    if overwrite_coords:
+        logging.info(f"Found overwrite save prompt at {overwrite_coords}")
+        ok_img = get_image_path("overwrite_ok1080p.png")
+        ok_coords = find_element_on_screen(ok_img)
+        if ok_coords:
+            click(*ok_coords)
+            logging.info(f"Clicked Overwrite OK at {ok_coords}")
+        else:
+            logging.error("Could not find Overwrite OK button on screen.")
+            return False
+    
     logging.info("Map started successfully.")
     return True
 
