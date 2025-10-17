@@ -208,30 +208,10 @@ tests/
 - **Multi-path upgrade strategies**
 - **Ability usage optimization**
 - **Resource management** (money, lives tracking)
-- **Adaptive placement** based on game state
 
 ### Image Recognition Improvements
 
-- **Machine learning integration** for better tower detection
-- **Dynamic template updating** based on game version
-- **Multi-scale template matching**
 - **Real-time game state analysis**
-
-## Phase 5: User Interface & Community Features
-
-### Configuration GUI
-
-- **Visual map editor** for placement coordinates
-- **Drag-and-drop strategy builder**
-- **Real-time preview** of automation sequences
-- **Import/export** of configuration files
-
-### Community Integration
-
-- **Strategy sharing platform**
-- **Automated strategy optimization**
-- **Leaderboards and statistics**
-- **Plugin system** for custom modules
 
 ## Technical Architecture Improvements
 
@@ -308,31 +288,3 @@ btd6_auto/
 - **Strategy configuration time** < 10 minutes
 - **Error recovery time** < 30 seconds
 - **Documentation completeness** > 90%
-
-## Risk Mitigation
-
-### Technical Risks
-
-- **Game updates breaking image recognition** → Template auto-update system
-- **Performance degradation** → Profiling and optimization phases
-- **Platform compatibility issues** → Comprehensive testing strategy
-
-### Project Risks
-
-- **Scope creep** → Strict phase-based development approach
-- **Resource constraints** → Modular design allowing incremental delivery
-- **Community expectations** → Clear roadmap communication
-
-## Timeline Estimate
-
-- **Phase 1 (Config System)**: 2-3 weeks
-- **Phase 2 (Error Handling)**: 1-2 weeks
-- **Phase 3 (Offline Testing)**: 2-3 weeks
-- **Phase 4 (Advanced Features)**: 3-4 weeks
-- **Phase 5 (UI & Community)**: 4-6 weeks
-
-*Total estimated timeline: 12-18 weeks depending on development pace and testing requirements.*
-
----
-
-This roadmap provides a comprehensive plan for evolving the BTD6 Automation Bot from MVP to a robust, production-ready automation system. Each phase builds upon the previous, ensuring steady progress toward the final vision.
