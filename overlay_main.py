@@ -51,6 +51,7 @@ def main() -> None:
             time.sleep(0.5)  # Wait for hero to be placed
             logging.info("Will now print overlay")
             show_overlay_text(bjarne, 5)
+            show_overlay_text("kjell!", 1)
             time.sleep(5)  # Wait for monkey to be placed
             logging.info("Automation step complete. Press ESC to exit.")
             break  # Remove or modify for continuous automation
