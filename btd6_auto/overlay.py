@@ -33,12 +33,27 @@ def show_overlay_text(overlay_text: str, seconds: int):
                 if msg == win32con.WM_PAINT:
                     hdc, paintStruct = win32gui.BeginPaint(hwnd)
                     rect = win32gui.GetClientRect(hwnd)
+                    # Fill background with black (color key for transparency)
+                    brush = win32gui.GetStockObject(win32con.BLACK_BRUSH)
+                    win32gui.FillRect(hdc, rect, brush)
+                    # Set transparent background for text
                     win32gui.SetBkMode(hdc, win32con.TRANSPARENT)
-                    win32gui.SetTextColor(hdc, win32api.RGB(255, 255, 255))
+                    # Set text color to red
+                    win32gui.SetTextColor(hdc, win32api.RGB(255, 0, 0))
+                    # Create a large font
+                    lf = win32gui.LOGFONT()
+                    lf.lfHeight = 24  # Large font size
+                    lf.lfWeight = win32con.FW_BOLD
+                    lf.lfFaceName = "Arial"
+                    hfont = win32gui.CreateFontIndirect(lf)
+                    oldfont = win32gui.SelectObject(hdc, hfont)
+                    # Draw text, left aligned, vertically centered
                     win32gui.DrawText(
                         hdc, self.text, -1, rect,
-                        win32con.DT_CENTER | win32con.DT_VCENTER | win32con.DT_SINGLELINE
+                        win32con.DT_LEFT | win32con.DT_VCENTER | win32con.DT_SINGLELINE
                     )
+                    win32gui.SelectObject(hdc, oldfont)
+                    win32gui.DeleteObject(hfont)
                     win32gui.EndPaint(hwnd, paintStruct)
                     return 0
                 elif msg == win32con.WM_DESTROY:
@@ -53,7 +68,7 @@ def show_overlay_text(overlay_text: str, seconds: int):
                 wndclass.hInstance = self.hInstance
                 wndclass.lpszClassName = self.className
                 wndclass.hCursor = win32gui.LoadCursor(None, win32con.IDC_ARROW)
-                wndclass.hbrBackground = win32con.COLOR_WINDOW
+                wndclass.hbrBackground = 0  # No background brush for full transparency
                 atom = win32gui.RegisterClass(wndclass)
 
                 exStyle = (win32con.WS_EX_LAYERED | win32con.WS_EX_TOPMOST |
@@ -69,7 +84,8 @@ def show_overlay_text(overlay_text: str, seconds: int):
                     0, 0, self.hInstance, None
                 )
 
-                win32gui.SetLayeredWindowAttributes(self.hwnd, 0x000000, 180, win32con.LWA_ALPHA)
+                # Set color key to black for full transparency
+                win32gui.SetLayeredWindowAttributes(self.hwnd, 0x000000, 255, win32con.LWA_COLORKEY)
                 win32gui.ShowWindow(self.hwnd, win32con.SW_SHOWNORMAL)
 
                 # Timer to close window after duration
@@ -81,9 +97,10 @@ def show_overlay_text(overlay_text: str, seconds: int):
 
                 # Message loop
                 while True:
-                    msg = win32gui.GetMessage(self.hwnd, 0, 0)
-                    if not msg:
+                    msg_tuple = win32gui.GetMessage(self.hwnd, 0, 0)
+                    if not msg_tuple:
                         break
+                    msg = msg_tuple[1]
                     win32gui.TranslateMessage(msg)
                     win32gui.DispatchMessage(msg)
 
