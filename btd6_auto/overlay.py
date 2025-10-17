@@ -1,19 +1,44 @@
 """
 Overlay utility for displaying click-through, always-on-top text overlays (Windows-only).
+
+Features:
+- True transparent overlay using color key (black)
+- Large, left-aligned red text
+- Robust window class registration
+- Thread-safe overlay creation
+- Resource management and logging
 """
 
 import sys
 import threading
 import time
+import logging
+
 
 if sys.platform.startswith("win"):
     import win32con
     import win32gui
     import win32api
+    _class_lock = threading.Lock()
 else:
     raise ImportError("overlay.py only works on Windows platforms.")
 
 def show_overlay_text(overlay_text: str, seconds: int):
+    """
+    Display a transparent, always-on-top, click-through overlay with the given text for a specified duration.
+
+    Parameters:
+        overlay_text (str): The text to display.
+        seconds (int): How many seconds to show the overlay.
+
+    Platform:
+        Windows only. Uses Win32 API via pywin32.
+
+    Overlay:
+        - Large, bold, left-aligned red text
+        - Fully transparent background (no gray box)
+        - Click-through, always-on-top
+    """
     """
     Display a transparent, always-on-top, click-through overlay with the given text for a specified duration.
 
@@ -36,63 +61,84 @@ def show_overlay_text(overlay_text: str, seconds: int):
                     # Fill background with black (color key for transparency)
                     brush = win32gui.GetStockObject(win32con.BLACK_BRUSH)
                     win32gui.FillRect(hdc, rect, brush)
-                    # Set transparent background for text
                     win32gui.SetBkMode(hdc, win32con.TRANSPARENT)
-                    # Set text color to red
                     win32gui.SetTextColor(hdc, win32api.RGB(255, 0, 0))
-                    # Create a large font
-                    lf = win32gui.LOGFONT()
-                    lf.lfHeight = 36  # Large font size
-                    lf.lfWeight = win32con.FW_BOLD
-                    lf.lfFaceName = "Arial"
-                    hfont = win32gui.CreateFontIndirect(lf)
-                    oldfont = win32gui.SelectObject(hdc, hfont)
+                    # Create a large, bold Arial font
+                    try:
+                        lf = win32gui.LOGFONT()
+                        lf.lfHeight = 36  # Large font size
+                        lf.lfWeight = win32con.FW_BOLD
+                        lf.lfFaceName = "Arial"
+                        hfont = win32gui.CreateFontIndirect(lf)
+                        oldfont = win32gui.SelectObject(hdc, hfont)
+                    except Exception as e:
+                        logging.error(f"Overlay font creation failed: {e}")
+                        hfont = None
+                        oldfont = None
                     # Draw text, left aligned, vertically centered
                     win32gui.DrawText(
                         hdc, self.text, -1, rect,
                         win32con.DT_LEFT | win32con.DT_VCENTER | win32con.DT_SINGLELINE
                     )
-                    win32gui.SelectObject(hdc, oldfont)
-                    win32gui.DeleteObject(hfont)
+                    # Cleanup font resources
+                    if oldfont:
+                        win32gui.SelectObject(hdc, oldfont)
+                    if hfont:
+                        win32gui.DeleteObject(hfont)
                     win32gui.EndPaint(hwnd, paintStruct)
                     return 0
                 elif msg == win32con.WM_DESTROY:
                     win32gui.PostQuitMessage(0)
+                    logging.info("Overlay closed.")
                     return 0
                 else:
                     return win32gui.DefWindowProc(hwnd, msg, wparam, lparam)
 
             def run(self, x, y, width, height, duration):
-                wndclass = win32gui.WNDCLASS()
-                wndclass.lpfnWndProc = self.wnd_proc
-                wndclass.hInstance = self.hInstance
-                wndclass.lpszClassName = self.className
-                wndclass.hCursor = win32gui.LoadCursor(None, win32con.IDC_ARROW)
-                wndclass.hbrBackground = 0  # No background brush for full transparency
-                try:
-                    atom = win32gui.RegisterClass(wndclass)
-                except win32gui.error as e:
-                    if hasattr(e, 'winerror') and e.winerror == 1410:  # Class already exists
-                        atom = win32gui.GetClassInfo(wndclass.hInstance, wndclass.lpszClassName)
-                    else:
-                        raise
+                """
+                Create and show the overlay window. Handles window class registration and resource management.
+                """
+                with _class_lock:
+                    wndclass = win32gui.WNDCLASS()
+                    wndclass.lpfnWndProc = self.wnd_proc
+                    wndclass.hInstance = self.hInstance
+                    wndclass.lpszClassName = self.className
+                    wndclass.hCursor = win32gui.LoadCursor(None, win32con.IDC_ARROW)
+                    wndclass.hbrBackground = 0  # No background brush for full transparency
+                    try:
+                        # Register window class if not already registered
+                        win32gui.RegisterClass(wndclass)
+                        logging.info("Overlay window class registered.")
+                    except win32gui.error as e:
+                        if hasattr(e, 'winerror') and e.winerror == 1410:  # Class already exists
+                            logging.info("Overlay window class already registered.")
+                        else:
+                            logging.error(f"Overlay window class registration failed: {e}")
+                            raise
+                # Always use class name for CreateWindowEx (works for both new and existing classes)
+                atom = self.className
 
                 exStyle = (win32con.WS_EX_LAYERED | win32con.WS_EX_TOPMOST |
                            win32con.WS_EX_TRANSPARENT | win32con.WS_EX_TOOLWINDOW)
                 style = win32con.WS_POPUP
 
-                self.hwnd = win32gui.CreateWindowEx(
-                    exStyle,
-                    atom,
-                    None,
-                    style,
-                    x, y, width, height,
-                    0, 0, self.hInstance, None
-                )
+                try:
+                    self.hwnd = win32gui.CreateWindowEx(
+                        exStyle,
+                        atom,
+                        None,
+                        style,
+                        x, y, width, height,
+                        0, 0, self.hInstance, None
+                    )
+                except Exception as e:
+                    logging.error(f"Overlay window creation failed: {e}")
+                    return
 
                 # Set color key to black for full transparency
                 win32gui.SetLayeredWindowAttributes(self.hwnd, 0x000000, 255, win32con.LWA_COLORKEY)
                 win32gui.ShowWindow(self.hwnd, win32con.SW_SHOWNORMAL)
+                logging.info(f"Overlay shown: '{self.text}' at ({x},{y}) for {duration}s.")
 
                 # Timer to close window after duration
                 def close_after_delay():
@@ -110,10 +156,10 @@ def show_overlay_text(overlay_text: str, seconds: int):
                     win32gui.TranslateMessage(msg)
                     win32gui.DispatchMessage(msg)
 
-        # Window size and position
-        x, y = 200, 800
-        width, height = 600, 60
-        OverlayWindow(overlay_text).run(x, y, width, height, seconds)
+    # Window size and position
+    x, y = 200, 800
+    width, height = 600, 60
+    OverlayWindow(overlay_text).run(x, y, width, height, seconds)
 
     t = threading.Thread(target=overlay_thread, daemon=True)
     t.start()
