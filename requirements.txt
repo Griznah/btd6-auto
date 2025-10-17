@@ -10,3 +10,4 @@ pygetwindow
 keyboard
 dxcam
 mss
+pywin32
