@@ -11,8 +11,8 @@ REM Activate the virtual environment
 call "%ENV_NAME%\Scripts\activate.bat"
 
 REM Install dependencies from requirements.txt
-echo Installing dependencies...
-pip install -r requirements.txt -q
+REM echo Installing dependencies...
+REM pip install -r requirements.txt -q
 
 REM Run the BTD6 automation bot
 echo Starting BTD6 Automation Bot...

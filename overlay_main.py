@@ -2,8 +2,6 @@
 Main entry point for BTD6 Automation Bot MVP
 Windows-only version
 """
-
-
 import logging
 import time
 import numpy as np
@@ -20,7 +18,6 @@ from btd6_auto.input import esc_listener
 from btd6_auto.monkey_manager import place_monkey, place_hero
 from btd6_auto.vision import capture_screen
 from btd6_auto.overlay import show_overlay_text
-
 
 # Options
 pyautogui.PAUSE = 0.1  # Pause after each PyAutoGUI call
@@ -52,8 +49,9 @@ def main() -> None:
             time.sleep(0.5)  # Wait for map to load
             #place_hero(HERO_COORDS, HERO_KEY)
             time.sleep(0.5)  # Wait for hero to be placed
+            logging.info("Will now print overlay")
             show_overlay_text(bjarne, 5)
-            time.sleep(0.5)  # Wait for monkey to be placed
+            time.sleep(5)  # Wait for monkey to be placed
             logging.info("Automation step complete. Press ESC to exit.")
             break  # Remove or modify for continuous automation
     except Exception as e:
