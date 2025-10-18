@@ -13,7 +13,7 @@ BTD6 Auto is a Python automation bot for Bloons Tower Defense 6 (BTD6), designed
 ## Technical Overview
 
 - **Language**: Python 3
-- **Automation**: Uses `pyautogui` for input simulation and `opencv` for image recognition.
+- **Automation**: Uses `pyautogui` for mouse input simulation and `opencv` for image recognition. `dxcam` for screencapture. `keyboard`for keyboard hotkeys.
 - **Configuration**: User preferences managed via configuration files.
 - **Structure**: Organized for easy extension and maintenance.
 
