@@ -3,13 +3,12 @@ Screen capture and image recognition (OpenCV).
 """
 
 import cv2
-import mss
 import numpy as np
 import logging
 import os
 import sys
+import sys
 
-from datetime import datetime
 from datetime import datetime
 
 def is_mostly_black(image: np.ndarray, threshold: float = 0.9, black_level: int = 30) -> bool:

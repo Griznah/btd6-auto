@@ -39,13 +39,6 @@ def show_overlay_text(overlay_text: str, seconds: int):
         - Fully transparent background (no gray box)
         - Click-through, always-on-top
     """
-    """
-    Display a transparent, always-on-top, click-through overlay with the given text for a specified duration.
-
-    Parameters:
-        overlay_text (str): The text to display.
-        seconds (int): How many seconds to show the overlay.
-    """
     def overlay_thread():
         class OverlayWindow:
             def __init__(self, text):
@@ -72,7 +65,7 @@ def show_overlay_text(overlay_text: str, seconds: int):
                         hfont = win32gui.CreateFontIndirect(lf)
                         oldfont = win32gui.SelectObject(hdc, hfont)
                     except Exception as e:
-                        logging.error(f"Overlay font creation failed: {e}")
+                        logging.exception("Overlay font creation failed:")
                         hfont = None
                         oldfont = None
                     # Draw text, left aligned, vertically centered
@@ -113,7 +106,7 @@ def show_overlay_text(overlay_text: str, seconds: int):
                         if hasattr(e, 'winerror') and e.winerror == 1410:  # Class already exists
                             logging.info("Overlay window class already registered.")
                         else:
-                            logging.error(f"Overlay window class registration failed: {e}")
+                            logging.exception("Overlay window class registration failed:")
                             raise
                 # Always use class name for CreateWindowEx (works for both new and existing classes)
                 atom = self.className
@@ -132,7 +125,7 @@ def show_overlay_text(overlay_text: str, seconds: int):
                         0, 0, self.hInstance, None
                     )
                 except Exception as e:
-                    logging.error(f"Overlay window creation failed: {e}")
+                    logging.exception("Overlay window creation failed:")
                     return
 
                 # Set color key to black for full transparency

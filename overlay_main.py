@@ -23,7 +23,7 @@ from btd6_auto.overlay import show_overlay_text
 pyautogui.PAUSE = 0.1  # Pause after each PyAutoGUI call
 pyautogui.FAILSAFE = True  # Move mouse to top-left to abort
 
-bjarne = "Hello world!"
+demo_message = "Hello world!"
 
 def main() -> None:
     """
@@ -50,12 +50,12 @@ def main() -> None:
             #place_hero(HERO_COORDS, HERO_KEY)
             time.sleep(0.5)  # Wait for hero to be placed
             logging.info("Will now print overlay")
-            show_overlay_text(bjarne, 5)
+            show_overlay_text(demo_message, 5)
             time.sleep(5)  # Wait for monkey to be placed
             logging.info("Automation step complete. Press ESC to exit.")
             break  # Remove or modify for continuous automation
     except Exception as e:
-        logging.exception(f"Automation error: {e}")
+        logging.exception("Automation error:")
 
 
 if __name__ == "__main__":
