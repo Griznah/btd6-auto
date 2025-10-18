@@ -22,8 +22,15 @@ def fake_dxcam_grab(region=None):
 def test_capture_screen_full(monkeypatch):
     """Test full screen capture returns correct shapes and types."""
     from btd6_auto import vision
-    monkeypatch.setattr("dxcam.Camera.grab", lambda self, region=None: fake_dxcam_grab(region))
-    monkeypatch.setattr("dxcam.Camera", mock.MagicMock())
+    # Patch sys.modules['dxcam'] with a mock module
+    class FakeCamera:
+        def grab(self, region=None):
+            return fake_dxcam_grab(region)
+    class FakeDxcam:
+        @staticmethod
+        def create():
+            return FakeCamera()
+    monkeypatch.setitem(sys.modules, "dxcam", FakeDxcam)
     # Patch cv2.cvtColor to just return the input for test simplicity
     def fake_cvtColor(img, code):
         # cv2.COLOR_BGR2GRAY is usually 6
@@ -42,8 +49,14 @@ def test_capture_screen_full(monkeypatch):
 
 def test_capture_screen_region(monkeypatch):
     from btd6_auto import vision
-    monkeypatch.setattr("dxcam.Camera.grab", lambda self, region=None: fake_dxcam_grab(region))
-    monkeypatch.setattr("dxcam.Camera", mock.MagicMock())
+    class FakeCamera:
+        def grab(self, region=None):
+            return fake_dxcam_grab(region)
+    class FakeDxcam:
+        @staticmethod
+        def create():
+            return FakeCamera()
+    monkeypatch.setitem(sys.modules, "dxcam", FakeDxcam)
     def fake_cvtColor(img, code):
         import cv2
         if code == cv2.COLOR_BGR2GRAY:
@@ -65,10 +78,14 @@ def test_capture_screen_region(monkeypatch):
 
 def test_capture_screen_error(monkeypatch):
     from btd6_auto import vision
-    def raise_error(*args, **kwargs):
-        raise RuntimeError("dxcam error")
-    monkeypatch.setattr("dxcam.Camera.grab", raise_error)
-    monkeypatch.setattr("dxcam.Camera", mock.MagicMock())
+    class FakeCamera:
+        def grab(self, region=None):
+            raise RuntimeError("dxcam error")
+    class FakeDxcam:
+        @staticmethod
+        def create():
+            return FakeCamera()
+    monkeypatch.setitem(sys.modules, "dxcam", FakeDxcam)
     """Test error in dxcam returns None outputs and handles cv2 dependency."""
     def fake_cvtColor(img, code):
         if code == 6:

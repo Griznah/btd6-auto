@@ -4,9 +4,11 @@ Note: These tests only check import, function signature, and thread launch.
 Actual overlay display cannot be tested in headless or CI environments.
 """
 import sys
+import os
 import threading
 import time
 import pytest
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 if sys.platform.startswith("win"):
     from btd6_auto import overlay
