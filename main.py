@@ -17,8 +17,9 @@ from btd6_auto.config import (
 )
 from btd6_auto.game_launcher import activate_btd6_window, start_map
 from btd6_auto.input import esc_listener
+from btd6_auto.overlay import show_overlay_text
 from btd6_auto.monkey_manager import place_monkey, place_hero
-from btd6_auto.vision import capture_screen
+from btd6_auto.vision import capture_screen, read_currency_amount
 
 
 # Options
@@ -54,7 +55,13 @@ def main() -> None:
             place_monkey(MONKEY_COORDS, MONKEY_KEY)
             time.sleep(0.5)  # Wait for monkey to be placed
             logging.info("Automation step complete. Press ESC to exit.")
-            break  # Remove or modify for continuous automation
+            while True:
+                currency = read_currency_amount(debug=True, fps_limit=2)
+                logging.info(f"Current currency: {currency}")
+                currency_string = str(currency)
+                show_overlay_text(currency_string, 0.5)
+                time.sleep(1)
+            #break  # Remove or modify for continuous automation
     except Exception as e:
         logging.exception(f"Automation error: {e}")
 

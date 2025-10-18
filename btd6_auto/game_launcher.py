@@ -9,7 +9,7 @@ from .vision import capture_screen, find_element_on_screen, is_mostly_black
 from .input import click
 from .overlay import show_overlay_text
 
-DATA_IMAGE_PATH = os.path.join(os.path.dirname(__file__), '..\data\images')
+DATA_IMAGE_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'images')
 
 def get_image_path(name):
     """Helper to get full path for image asset."""
@@ -106,7 +106,7 @@ def start_map():
             break
         time.sleep(poll_interval)
         elapsed += poll_interval
-        show_overlay_text(f"Loading: {elapsed:.1f}s", 0.5) # showing how long we have waited
+        #show_overlay_text(f"Loading: {elapsed:.1f}s", 0.5) # showing how long we have waited
     else:
         logging.error("Loading screen did not disappear in time.")
         return False

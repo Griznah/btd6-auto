@@ -7,6 +7,133 @@ import numpy as np
 import logging
 import os
 import sys
+import time
+
+# EasyOCR import
+try:
+    import easyocr
+except ImportError:
+    easyocr = None
+
+easyocr_available = easyocr is not None
+
+def read_currency_amount(
+    region: tuple = (370, 26, 515, 60),
+    debug: bool = False,
+    fps_limit: int = 2,
+    max_reads: int = None
+) -> int:
+    """
+    Reads the currency amount from the defined screen region using OCR.
+
+    Parameters:
+        region (tuple): (left, top, right, bottom) coordinates of the region.
+        debug (bool): If True, logs the value every other second for one second.
+        fps_limit (int): Max reads per second (default 2).
+        max_reads (int, optional): Maximum number of reads before returning (for testing/demo).
+
+    Returns:
+        int: Parsed currency value, or 0 if not found or error.
+
+    Edge Cases:
+        - Returns 0 if OCR or camera initialization fails.
+        - Handles KeyboardInterrupt gracefully.
+        - If OCR result is malformed, returns 0 and logs warning.
+    """
+    if not easyocr_available:
+        logging.error("EasyOCR not installed. Cannot perform OCR.")
+        return 0
+
+    # Static initialization for camera and OCR
+    if not hasattr(read_currency_amount, "_ocr") or not hasattr(read_currency_amount, "_camera"):
+        try:
+            import dxcam
+            # Pre-allocate EasyOCR Reader with English language and GPU
+            read_currency_amount._ocr = easyocr.Reader(['en'], gpu=True)
+            read_currency_amount._camera = dxcam.create(output_idx=0)
+        except Exception as e:
+            logging.error(f"OCR/camera init failed: {e}")
+            return 0
+    ocr = read_currency_amount._ocr
+    camera = read_currency_amount._camera
+
+    last_time = time.time()
+    start_time = last_time
+    show_debug = False
+    debug_interval = 1  # seconds
+    debug_duration = 1  # seconds
+    debug_last_shown = 0.0
+    value = 0
+    read_count = 0
+
+    logging.info(f"[OCR] Capturing currency region: {region}")
+    logging.info("Press Ctrl+C to stop.")
+
+    try:
+        while True:
+            now = time.time()
+            elapsed = now - last_time
+            if elapsed < 1 / fps_limit:
+                time.sleep(1 / fps_limit - elapsed)
+            last_time = time.time()
+
+            frame = camera.grab(region=region)
+            if frame is None:
+                logging.warning("No frame captured for currency region.")
+                continue
+
+            # Preprocess
+            try:
+                cv2.setUseOptimized(True)
+                cv2.setNumThreads(1)
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
+                norm = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
+                _, thresh = cv2.threshold(norm, 180, 255, cv2.THRESH_BINARY)
+            except Exception as e:
+                logging.error(f"Preprocessing error: {e}")
+                continue
+
+            # OCR
+            try:
+                # EasyOCR returns a list of (bbox, text, confidence)
+                results = ocr.readtext(thresh, allowlist='0123456789', detail=0)
+                digits = ''.join(results)
+                digits = ''.join(ch for ch in digits if ch.isdigit())
+                value = int(digits) if digits else 0
+            except Exception as e:
+                logging.error(f"OCR error: {e}")
+                value = 0
+
+            # Debug print logic: log every 1 seconds if debug is enabled
+            if debug and now - debug_last_shown > 1:
+                logging.info(f"[OCR] Currency: {value}")
+                debug_last_shown = now
+
+            read_count += 1
+            # For test/demo, break after max_reads or 5 seconds total if not debug
+            if (max_reads is not None and read_count >= max_reads) or (not debug and now - start_time > 5):
+                break
+
+            # Optional: show window for visual debug
+            # cv2.imshow("Currency Region", thresh)
+            # if cv2.waitKey(1) == 27:
+            #     break
+    except KeyboardInterrupt:
+        logging.info("[OCR] Stopped by user.")
+    finally:
+        try:
+            camera.stop()
+        except Exception:
+            pass
+        try:
+            cv2.destroyAllWindows()
+        except Exception:
+            pass
+        try:
+            del ocr
+        except Exception:
+            pass
+    return value
 
 from datetime import datetime
 
@@ -112,7 +239,7 @@ def find_element_on_screen(element_image):
         res = cv2.matchTemplate(screen_gray, template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
         match_end = time.time()
-        threshold = 0.85  # Adjust as needed for reliability
+        threshold = 0.75  # Adjust as needed for reliability
         logging.info(f"Template matching for {element_image} took {match_end - match_start:.3f}s (max_val={max_val:.2f})")
         if max_val >= threshold:
             h, w = template.shape[:2]
