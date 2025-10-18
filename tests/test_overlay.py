@@ -23,7 +23,6 @@ def test_show_overlay_text_runs_thread(monkeypatch):
     if not sys.platform.startswith("win"):
         pytest.skip("Windows-only test")
     started = threading.Event()
-    original_thread = threading.Thread
     def fake_thread(*args, **kwargs):
         started.set()
         class DummyThread:

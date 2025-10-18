@@ -96,7 +96,7 @@ def start_map():
     poll_interval = 0.5
     elapsed = 0
     while elapsed < max_wait:
-        img_bgr, img_gray = capture_screen()
+        img_bgr, _ = capture_screen()
         # Use vision.py logic: check if screen is "mostly black"
         # For example, vision.py could have: is_mostly_black(image, threshold=0.9)
         if img_bgr is None:
@@ -106,7 +106,7 @@ def start_map():
             break
         time.sleep(poll_interval)
         elapsed += poll_interval
-        show_overlay_text(str(elapsed), 1) # showing how long we have waited
+        show_overlay_text(f"Loading: {elapsed:.1f}s", 0.5) # showing how long we have waited
     else:
         logging.error("Loading screen did not disappear in time.")
         return False

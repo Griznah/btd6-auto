@@ -1,7 +1,7 @@
 pyautogui
 # cv2
 opencv-python
-numpy
+numpy>=2.0,<3.0
 # PIL
 Pillow
 pyscreeze
@@ -9,5 +9,4 @@ pynput
 pygetwindow
 keyboard
 dxcam
-mss
-pywin32
+pywin32>=311
