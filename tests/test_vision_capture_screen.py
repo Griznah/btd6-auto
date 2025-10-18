@@ -45,10 +45,11 @@ def test_capture_screen_region(monkeypatch):
     monkeypatch.setattr("dxcam.Camera.grab", lambda self, region=None: fake_dxcam_grab(region))
     monkeypatch.setattr("dxcam.Camera", mock.MagicMock())
     def fake_cvtColor(img, code):
-        # cv2.COLOR_BGR2GRAY is usually 6
-        if code == 6:
+        import cv2
+        if code == cv2.COLOR_BGR2GRAY:
             # Return a 2D grayscale image
-            return np.ones((100, 100), dtype=np.uint8) * 127
+            h, w = img.shape[:2]
+            return np.ones((h, w), dtype=np.uint8) * 127
         return img
     monkeypatch.setattr("cv2.cvtColor", fake_cvtColor)
     """Test region capture returns correct shapes and types for region size."""
