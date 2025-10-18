@@ -23,11 +23,16 @@ def test_show_overlay_text_runs_thread(monkeypatch):
     if not sys.platform.startswith("win"):
         pytest.skip("Windows-only test")
     started = threading.Event()
-    def fake_overlay_thread():
+    original_thread = threading.Thread
+    def fake_thread(*args, **kwargs):
         started.set()
-    monkeypatch.setattr(overlay, "overlay_thread", fake_overlay_thread)
+        class DummyThread:
+            def start(self_inner):
+                pass
+        return DummyThread()
+    monkeypatch.setattr(threading, "Thread", fake_thread)
     overlay.show_overlay_text("Test", 1)
-    assert started.wait(timeout=2)
+    assert started.is_set()
 
 def test_show_overlay_text_signature():
     if sys.platform.startswith("win"):

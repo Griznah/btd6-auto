@@ -2,5 +2,5 @@
 REM Run overlay.py unit tests using pytest (Windows only)
 setlocal
 set PYTHONPATH=%~dp0
-pytest tests\test_overlay.py
+pytest -v tests\test_overlay.py
 endlocal
