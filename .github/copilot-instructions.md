@@ -11,7 +11,7 @@ This project is a Python3 automation bot for Bloons Tower Defense 6 (BTD6), a to
 - Reliable automation for Windows environments only.
 
 ## Development Stages
-1. Research & Planning: Identify Windows-specific automation methods, list supported game elements, define MVP.
+1. Research & Planning: Identify Windows-specific automation methods, list supported game elements.
 2. Environment Setup: Use Python3, pyautogui for input, opencv for image recognition. Ensure compatibility with Windows.
 3. Basic Automation: Implement screen capture and input simulation for Windows.
 4. Advanced Features: Add hero selection, tower upgrades, map strategies, error handling, and logging.
@@ -28,6 +28,18 @@ This project is a Python3 automation bot for Bloons Tower Defense 6 (BTD6), a to
 
 ## File Naming Convention
 Use `.yaml` for YAML files in this project. Do not use `.yml`.
+
+## Windows Platform Note
+
+This project is developed and run exclusively on Windows. All file and directory names, as well as path handling, must be compatible with Windows conventions:
+
+- Use backslashes (`\\`) for paths in code, or use `os.path.join` for cross-version compatibility.
+- Avoid reserved Windows filenames (e.g., `CON`, `PRN`, `AUX`, `NUL`, etc.).
+- Be aware that Windows file systems are case-insensitive by default.
+- Spaces in filenames are allowed, but consider using underscores or CamelCase for consistency.
+- Always test file and directory creation on Windows to ensure compatibility.
+
+This note should be reviewed by all contributors.
 
 ## Future Ideas
 - GUI for bot configuration.

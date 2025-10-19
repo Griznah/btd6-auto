@@ -4,7 +4,7 @@ Handles launching the game and map selection.
 
 import os
 import logging
-from .config import selected_map, selected_difficulty, selected_mode
+## Config values are now passed in as arguments
 from .vision import capture_screen, find_element_on_screen, is_mostly_black
 from .input import click
 from .overlay import show_overlay_text
@@ -15,16 +15,12 @@ def get_image_path(name):
     """Helper to get full path for image asset."""
     return os.path.join(DATA_IMAGE_PATH, name)
 
-def start_map():
+def start_map(map_config, global_config):
     """
     Automate starting the selected map with chosen difficulty and mode.
-    Steps:
-    1. Click 'Play' button
-    2. Select map (Monkey Meadow)
-    3. Select difficulty (Easy)
-    4. Select mode (Standard)
+    Config values are passed in as arguments.
     """
-    if not activate_btd6_window():
+    if not activate_btd6_window(map_config, global_config):
         logging.error("BTD6 window not activated.")
         return False
 
@@ -44,19 +40,14 @@ def start_map():
 
     # Step 2: Wait and click coordinates to open map search
     time.sleep(0.5)
-    #pyautogui.click(55, 115) # 720p coords
-    #logging.info("Clicked at (55, 115) to open map search box.")
     pyautogui.click(80, 170) # 1080p coords
     logging.info("Clicked at (80, 170) to open map search box.")
     time.sleep(0.5)
-    #pyautogui.click(615, 30) # 720p coords
-    #logging.info("Clicked at (615, 30) to focus map search input.")
     pyautogui.click(830, 50) # 1080p coords
-    #logging.info("Clicked at (830, 50) to focus map search input.")
 
     # Step 3: Enter map name and select
-    pyautogui.typewrite(selected_map, interval=0.05)
-    logging.info(f"Entered map name: {selected_map}")
+    pyautogui.typewrite(map_config.get("map_name", "Monkey Meadow"), interval=0.05)
+    logging.info(f"Entered map name: {map_config.get('map_name', 'Monkey Meadow')}")
     time.sleep(0.05)
     #pyautogui.click(360, 225) # 720p coords
     #logging.info("Clicked at (360, 225) to select map.")
@@ -65,7 +56,13 @@ def start_map():
     time.sleep(0.5) # let next screen load
 
     # Step 4: Continue with difficulty and mode selection using image matching
-    for img_name, desc in [("button_easy1080p.png", "Easy difficulty"), ("button_standard1080p.png", "Standard mode/start")]:
+    # Step 4: Continue with difficulty and mode selection using image matching
+    difficulty = map_config.get("difficulty", "Easy")
+    mode = map_config.get("mode", "Standard")
+    # Map difficulty/mode to image filenames
+    difficulty_img = f"button_{difficulty.lower()}1080p.png"
+    mode_img = f"button_{mode.lower().replace(' ', '_')}1080p.png"
+    for img_name, desc in [(difficulty_img, f"{difficulty} difficulty"), (mode_img, f"{mode} mode/start")]:
         time.sleep(0.5) # let next screen load
         img_path = get_image_path(img_name)
         screen = capture_screen()
@@ -116,18 +113,25 @@ def start_map():
 
 import pygetwindow as gw
 import time
-from .config import BTD6_WINDOW_TITLE
 
-def activate_btd6_window() -> bool:
+def activate_btd6_window(map_config=None, global_config=None) -> bool:
     """
     Activate the BTD6 game window before automation (Windows-only).
+    Uses config values if provided.
     Returns:
         bool: True if successful, False otherwise.
     """
+    window_title = None
+    if map_config and "game_settings" in map_config:
+        window_title = map_config["game_settings"].get("window_title")
+    if not window_title and global_config and "window_title" in global_config:
+        window_title = global_config["window_title"]
+    if not window_title:
+        window_title = "BloonsTD6"
     try:
-        windows = gw.getWindowsWithTitle(BTD6_WINDOW_TITLE)
+        windows = gw.getWindowsWithTitle(window_title)
         if not windows:
-            print(f"Error: Could not find window with title '{BTD6_WINDOW_TITLE}'. (Windows-only)")
+            print(f"Error: Could not find window with title '{window_title}'. (Windows-only)")
             return False
         win = windows[0]
         win.activate()

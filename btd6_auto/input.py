@@ -10,7 +10,6 @@ import time
 import logging
 import os  # For hard termination
 from pynput import keyboard as pynput_keyboard
-from .config import CLICK_DELAY, KILL_SWITCH
 
 
 def esc_listener():
@@ -32,7 +31,7 @@ def esc_listener():
     return listener
 
 
-def click(x: int, y: int, delay: float = CLICK_DELAY) -> None:
+def click(x: int, y: int, delay: float = 0.2) -> None:
     """
     Move mouse to (x, y) and click, with optional delay.
     Args:
