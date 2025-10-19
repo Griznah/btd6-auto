@@ -56,7 +56,7 @@ def main() -> None:
             time.sleep(0.5)  # Wait for monkey to be placed
             logging.info("Automation step complete. Press ESC to exit.")
             while True:
-                currency = read_currency_amount(debug=True, fps_limit=2)
+                currency = read_currency_amount(debug=True, fps_limit=5)
                 logging.info(f"Current currency: {currency}")
                 currency_string = str(currency)
                 show_overlay_text(currency_string, 0.5)

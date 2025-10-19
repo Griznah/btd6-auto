@@ -20,7 +20,7 @@ easyocr_available = easyocr is not None
 def read_currency_amount(
     region: tuple = (370, 26, 515, 60),
     debug: bool = False,
-    fps_limit: int = 2,
+    fps_limit: int = 5,
     max_reads: int = None
 ) -> int:
     """
@@ -96,9 +96,8 @@ def read_currency_amount(
             # OCR
             try:
                 # EasyOCR returns a list of (bbox, text, confidence)
-                results = ocr.readtext(thresh, allowlist='0123456789', detail=0)
-                digits = ''.join(results)
-                digits = ''.join(ch for ch in digits if ch.isdigit())
+                results = ocr.readtext(thresh, allowlist='0123456789', detail=1)
+                digits = "".join([text for _, text, conf in results if isinstance(text, str) and text.isdigit()])
                 value = int(digits) if digits else 0
             except Exception as e:
                 logging.error(f"OCR error: {e}")

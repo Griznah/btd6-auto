@@ -10,6 +10,6 @@ pygetwindow
 keyboard
 dxcam
 pywin32>=311
-torch
-torchvision --index-url https://download.pytorch.org/whl/cu130
 easyocr
+# seperate file for PyTorch
+-r pytorch_requirements.txt
