@@ -25,7 +25,7 @@ def esc_listener():
         if key == pynput_keyboard.Key.esc:
             logging.info("ESC pressed! Exiting...")
             config.KILL_SWITCH = True
-            # Hard terminate the process immediately (MVP requirement)
+            # Hard terminate the process immediately
             os._exit(0)
     listener = pynput_keyboard.Listener(on_press=on_press)
     listener.start()

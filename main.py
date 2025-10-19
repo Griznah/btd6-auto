@@ -1,5 +1,5 @@
 """
-Main entry point for BTD6 Automation Bot MVP
+Main entry point for BTD6 Automation Bot
 Windows-only version
 """
 
@@ -33,7 +33,7 @@ def main() -> None:
     Main automation loop for BTD6 Automation Bot (Windows-only).
     """
     logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
-    logging.info("BTD6 Automation Bot MVP starting (Windows-only)...")
+    logging.info("BTD6 Automation Bot starting, press ESC to exit at any time.")
 
     # Start killswitch listener
     esc_listener()
@@ -54,13 +54,13 @@ def main() -> None:
             time.sleep(0.5)  # Wait for hero to be placed
             place_monkey(MONKEY_COORDS, MONKEY_KEY)
             time.sleep(0.5)  # Wait for monkey to be placed
-            logging.info("Automation step complete. Press ESC to exit.")
+            logging.info("Opening sequence complete. Press ESC to exit at any time.")
             while True:
-                currency = read_currency_amount(debug=True, fps_limit=5)
+                currency = read_currency_amount(debug=False, fps_limit=5)
                 logging.info(f"Current currency: {currency}")
                 currency_string = str(currency)
                 show_overlay_text(currency_string, 0.5)
-                time.sleep(1)
+                time.sleep(0.1)
             #break  # Remove or modify for continuous automation
     except Exception as e:
         logging.exception(f"Automation error: {e}")

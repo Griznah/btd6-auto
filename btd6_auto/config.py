@@ -3,7 +3,7 @@ Configuration management.
 """
 
 
-# --- Windows-only Constants for MVP ---
+# --- Constants ---
 MONKEY_TYPE = "Dart Monkey"
 HERO_TYPE = "Quincy"
 
