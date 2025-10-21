@@ -20,7 +20,6 @@ from btd6_auto.vision import capture_screen, read_currency_amount
 # Options
 pyautogui.PAUSE = 0.1  # Pause after each PyAutoGUI call
 pyautogui.FAILSAFE = True  # Move mouse to top-left to abort
-logging.basicConfig(level=logging.INFO)
 
 def main() -> None:
     """
