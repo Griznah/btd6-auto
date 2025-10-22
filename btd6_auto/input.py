@@ -40,8 +40,11 @@ def click(x: int, y: int, delay: float = 0.2) -> None:
         delay (float): Delay after click.
     """
     try:
+        logging.debug(f"Moving mouse to ({x}, {y})")
         pyautogui.moveTo(x, y)
+        logging.debug(f"Clicking at ({x}, {y})")
         pyautogui.click()
+        logging.debug(f"Sleeping for {delay} seconds after click")
         time.sleep(delay)
     except Exception as e:
         logging.error(f"Failed to click at ({x}, {y}): {e}")

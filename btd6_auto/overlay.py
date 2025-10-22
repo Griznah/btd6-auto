@@ -13,6 +13,7 @@ import sys
 import threading
 import time
 import logging
+from typing import Optional
 
 
 if sys.platform.startswith("win"):
@@ -22,6 +23,11 @@ if sys.platform.startswith("win"):
     _class_lock = threading.Lock()
 else:
     raise ImportError("overlay.py only works on Windows platforms.")
+
+# Singleton overlay management
+_current_overlay_thread: Optional[threading.Thread] = None
+_current_overlay_hwnd: Optional[int] = None
+_overlay_lock = threading.Lock()
 
 
 class OverlayWindow:
@@ -117,6 +123,11 @@ class OverlayWindow:
         win32gui.ShowWindow(self.hwnd, win32con.SW_SHOWNORMAL)
         logging.info(f"Overlay shown: '{self.text}' at ({x},{y}) for {duration}s.")
 
+        # Store hwnd for singleton management
+        global _current_overlay_hwnd
+        with _overlay_lock:
+            _current_overlay_hwnd = self.hwnd
+
         # Timer to close window after duration
         def close_after_delay():
             time.sleep(duration)
@@ -133,9 +144,15 @@ class OverlayWindow:
             win32gui.TranslateMessage(msg)
             win32gui.DispatchMessage(msg)
 
+        # Cleanup hwnd after window closes
+        with _overlay_lock:
+            if _current_overlay_hwnd == self.hwnd:
+                _current_overlay_hwnd = None
+
 def show_overlay_text(overlay_text: str, seconds: int):
     """
     Display a transparent, always-on-top, click-through overlay with the given text for a specified duration.
+    Now supports updating the overlay text between calls (singleton overlay window).
 
     Parameters:
         overlay_text (str): The text to display.
@@ -149,10 +166,25 @@ def show_overlay_text(overlay_text: str, seconds: int):
         - Fully transparent background (no gray box)
         - Click-through, always-on-top
     """
-    def overlay_thread():
-        # Window size and position
-        x, y = 200, 800
-        width, height = 600, 60
-        OverlayWindow(overlay_text).run(x, y, width, height, seconds)
+    global _current_overlay_thread, _current_overlay_hwnd
+    with _overlay_lock:
+        # If an overlay is running, close it
+        if _current_overlay_hwnd:
+            try:
+                win32gui.PostMessage(_current_overlay_hwnd, win32con.WM_CLOSE, 0, 0)
+            except Exception:
+                pass
+            _current_overlay_hwnd = None
+        # Optionally join previous thread (not strictly necessary)
+        if _current_overlay_thread and _current_overlay_thread.is_alive():
+            # Let the thread exit naturally
+            pass
 
-    threading.Thread(target=overlay_thread, daemon=True).start()
+        def overlay_thread():
+            x, y = 200, 800
+            width, height = 600, 60
+            OverlayWindow(overlay_text).run(x, y, width, height, seconds)
+
+        t = threading.Thread(target=overlay_thread, daemon=True)
+        _current_overlay_thread = t
+        t.start()

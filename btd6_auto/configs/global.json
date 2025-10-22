@@ -12,7 +12,7 @@
   },
   "error_handling": {
     "max_consecutive_failures": 2,
-    "recovery_delay": 2.0,
+    "recovery_delay": 1.0,
     "screenshot_on_error": true
   }
 }

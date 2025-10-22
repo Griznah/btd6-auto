@@ -7,6 +7,22 @@
     "resolution": "1920x1080",
     "fullscreen": true
   },
+  "pre_play_actions": [
+    {
+      "step": 0,
+      "action": "buy",
+      "target": "Dart Monkey 01",
+      "position": { "x": 700, "y": 600 },
+      "key_binding": "q"
+    },
+    {
+      "step": 1,
+      "action": "buy",
+      "target": "Dart Monkey 02",
+      "position": { "x": 650, "y": 520 },
+      "key_binding": "q"
+    }
+  ],
   "hero": {
     "name": "Quincy",
     "key_binding": "u",
@@ -32,35 +48,28 @@
       "at_money": 210,
       "action": "buy",
       "target": "Wizard Monkey 01",
-      "position": { "x": 700, "y": 450 }
+      "position": { "x": 400, "y": 395 }
     },
     {
       "step": 3,
       "at_money": 170,
       "action": "upgrade",
       "target": "Dart Monkey 01",
-      "upgrade_path": "0-0-2"
+      "upgrade_path": "0-0-1"
     },
     {
       "step": 4,
       "at_money": 700,
       "action": "buy",
       "target": "Spike Factory 01",
-      "position": { "x": 800, "y": 500 }
+      "position": { "x": 680, "y": 765 }
     },
     {
       "step": 5,
-      "at_money": 215,
-      "action": "buy",
-      "target": "Dart Monkey 02",
-      "position": { "x": 650, "y": 520 }
-    },
-    {
-      "step": 6,
-      "at_money": 100,
+      "at_money": 500,
       "action": "upgrade",
       "target": "Dart Monkey 02",
-      "upgrade_path": "0-2-0"
+      "upgrade_path": "0-1-0"
     }
   ],
   "timing": {

@@ -103,7 +103,7 @@ def start_map(map_config, global_config):
             break
         time.sleep(poll_interval)
         elapsed += poll_interval
-        show_overlay_text(f"Loading: {elapsed:.1f}s", 0.5) # showing how long we have waited
+        #show_overlay_text(f"Loading: {elapsed:.1f}s", 0.5) # showing how long we have waited
     else:
         logging.error("Loading screen did not disappear in time.")
         return False
