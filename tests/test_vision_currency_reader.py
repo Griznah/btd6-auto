@@ -36,5 +36,5 @@ def test_read_currency_amount_mock(monkeypatch):
     monkeypatch.setattr(vision, 'easyocr', DummyEasyOCR)
     monkeypatch.setattr(__import__('dxcam'), 'create', lambda output_idx=0: DummyCamera())
     # Run the function (debug off, should return 12345)
-    value = vision.read_currency_amount(debug=False, fps_limit=2)
+    value = vision.read_currency_amount(debug=False)
     assert value == 12345

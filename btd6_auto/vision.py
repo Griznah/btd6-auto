@@ -16,29 +16,24 @@ except ImportError:
     easyocr = None
 
 easyocr_available = easyocr is not None
-
 def read_currency_amount(
     region: tuple = (370, 26, 515, 60),
-    debug: bool = False,
-    fps_limit: int = 5,
-    max_reads: int = None
+    debug: bool = False
 ) -> int:
     """
     Reads the currency amount from the defined screen region using OCR.
 
     Parameters:
         region (tuple): (left, top, right, bottom) coordinates of the region.
-        debug (bool): If True, logs the value every other second for one second.
-        fps_limit (int): Max reads per second (default 2).
-        max_reads (int, optional): Maximum number of reads before returning (for testing/demo).
+        debug (bool): If True, logs the detected value and optionally shows the processed image.
 
     Returns:
         int: Parsed currency value, or 0 if not found or error.
 
-    Edge Cases:
+    Notes:
         - Returns 0 if OCR or camera initialization fails.
         - Handles KeyboardInterrupt gracefully.
-        - If OCR result is malformed, returns 0 and logs warning.
+        - If OCR result is malformed, returns 0 and logs a warning.
     """
     if not easyocr_available:
         logging.error("EasyOCR not installed. Cannot perform OCR.")
@@ -57,68 +52,54 @@ def read_currency_amount(
     ocr = read_currency_amount._ocr
     camera = read_currency_amount._camera
 
-    last_time = time.time()
-    start_time = last_time
-    show_debug = False
-    debug_interval = 1  # seconds
-    debug_duration = 1  # seconds
-    debug_last_shown = 0.0
-    value = 0
-    read_count = 0
-
-    logging.info(f"[OCR] Capturing currency region: {region}")
-    logging.info("Press Ctrl+C to stop.")
-
     try:
-        while True:
-            now = time.time()
-            elapsed = now - last_time
-            if elapsed < 1 / fps_limit:
-                time.sleep(1 / fps_limit - elapsed)
-            last_time = time.time()
+        frame = camera.grab(region=region)
+        if frame is None:
+            logging.warning("No frame captured for currency region.")
+            return 0
 
-            frame = camera.grab(region=region)
-            if frame is None:
-                logging.warning("No frame captured for currency region.")
-                continue
+        # Preprocess
+        try:
+            cv2.setUseOptimized(True)
+            cv2.setNumThreads(1)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
+            norm = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
+            _, thresh = cv2.threshold(norm, 180, 255, cv2.THRESH_BINARY)
+        except Exception as e:
+            logging.error(f"Preprocessing error: {e}")
+            return 0
 
-            # Preprocess
-            try:
-                cv2.setUseOptimized(True)
-                cv2.setNumThreads(1)
-                gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
-                norm = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
-                _, thresh = cv2.threshold(norm, 180, 255, cv2.THRESH_BINARY)
-            except Exception as e:
-                logging.error(f"Preprocessing error: {e}")
-                continue
+        try:
+            results = ocr.readtext(thresh, allowlist='0123456789', detail=1)
+            digits = "".join([text for _, text, conf in results if isinstance(text, str) and text.isdigit()])
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
+            norm = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
+            _, thresh = cv2.threshold(norm, 180, 255, cv2.THRESH_BINARY)
+        except Exception as e:
+            logging.error(f"Preprocessing error: {e}")
+            return 0
 
-            # OCR
-            try:
-                # EasyOCR returns a list of (bbox, text, confidence)
-                results = ocr.readtext(thresh, allowlist='0123456789', detail=1)
-                digits = "".join([text for _, text, conf in results if isinstance(text, str) and text.isdigit()])
-                value = int(digits) if digits else 0
-            except Exception as e:
-                logging.error(f"OCR error: {e}")
-                value = 0
+        # OCR
+        try:
+            # EasyOCR returns a list of (bbox, text, confidence)
+            results = ocr.readtext(thresh, allowlist='0123456789', detail=1)
+            digits = "".join([
+                text for _, text, conf in results if isinstance(text, str) and text.isdigit()
+            ])
+            value = int(digits) if digits else 0
+        except Exception as e:
+            logging.error(f"OCR error: {e}")
+            value = 0
 
-            # Debug print logic: log every 1 seconds if debug is enabled
-            if debug and now - debug_last_shown > 1:
-                logging.info(f"[OCR] Currency: {value}")
-                debug_last_shown = now
+        if debug:
+            logging.info(f"[OCR] Currency: {value}")
+            cv2.imshow("Currency Region", thresh)
+            cv2.waitKey(1000)  # Show for 1 second
+            cv2.destroyAllWindows()
 
-            read_count += 1
-            # For test/demo, break after max_reads or 5 seconds total if not debug
-            if (max_reads is not None and read_count >= max_reads) or (not debug and now - start_time > 5):
-                break
-
-            # Optional: show window for visual debug
-            # cv2.imshow("Currency Region", thresh)
-            # if cv2.waitKey(1) == 27:
-            #     break
     except KeyboardInterrupt:
         logging.info("[OCR] Stopped by user.")
+        value = 0
     finally:
         try:
             camera.stop()
@@ -126,10 +107,6 @@ def read_currency_amount(
             pass
         try:
             cv2.destroyAllWindows()
-        except Exception:
-            pass
-        try:
-            del ocr
         except Exception:
             pass
     return value

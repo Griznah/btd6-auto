@@ -87,10 +87,10 @@ def main() -> None:
                     time.sleep(map_config.get("timing", {}).get("upgrade_delay", 0.5))
 
             while True:
-                currency = read_currency_amount(debug=False, fps_limit=5)
+                currency = read_currency_amount(debug=False)
                 logging.info(f"Current currency: {currency}")
                 currency_string = str(currency)
-                show_overlay_text(currency_string, 0.5)
+                #show_overlay_text(currency_string, 0.5)
                 time.sleep(global_config.get("automation", {}).get("pause_between_actions", 0.1))
             #break  # Remove or modify for continuous automation
     except Exception as e:
