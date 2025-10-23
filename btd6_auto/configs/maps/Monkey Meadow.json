@@ -12,7 +12,7 @@
       "step": 0,
       "action": "buy",
       "target": "Dart Monkey 01",
-      "position": { "x": 700, "y": 600 },
+      "position": { "x": 490, "y": 500 },
       "key_binding": "q"
     },
     {
@@ -55,7 +55,7 @@
       "at_money": 170,
       "action": "upgrade",
       "target": "Dart Monkey 01",
-      "upgrade_path": "0-0-1"
+      "upgrade_path": "0-0-2"
     },
     {
       "step": 4,

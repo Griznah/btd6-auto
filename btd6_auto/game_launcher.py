@@ -15,7 +15,7 @@ def get_image_path(name):
     """Helper to get full path for image asset."""
     return os.path.join(DATA_IMAGE_PATH, name)
 
-def start_map(map_config, global_config):
+def load_map(map_config, global_config):
     """
     Automate starting the selected map with chosen difficulty and mode.
     Config values are passed in as arguments.
@@ -28,6 +28,7 @@ def start_map(map_config, global_config):
     import pyautogui
 
     # Step 1: Click 'Play' button using image matching
+    logging.info("Entry for map selection")
     play_img = get_image_path("button_play1080p.png")
     screen = capture_screen()
     play_coords = find_element_on_screen(play_img)
@@ -89,6 +90,7 @@ def start_map(map_config, global_config):
             logging.error("Could not find Overwrite OK button on screen.")
             return False
     # Wait for loading screen to disappear (mostly black with some yellow/gold)
+    logging.info("Entry for loading screen wait time")
     max_wait = 15  # seconds
     poll_interval = 0.5
     elapsed = 0

@@ -1,15 +1,15 @@
-pyautogui
+pyautogui==0.9.54
 # cv2
 opencv-python
 numpy>=2.0,<3.0
 # PIL
-Pillow
+Pillow==12.0.0
 pyscreeze
 pynput
 pygetwindow
 keyboard
-dxcam
+dxcam==0.0.5
 pywin32>=311
-easyocr
-# seperate file for PyTorch
+easyocr==1.7.2
+# separate file for PyTorch
 -r pytorch_requirements.txt

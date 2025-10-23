@@ -11,7 +11,7 @@ import pyautogui
 # Import configuration loader and modules
 from btd6_auto.config_loader import ConfigLoader
 from btd6_auto.config import KILL_SWITCH
-from btd6_auto.game_launcher import activate_btd6_window, start_map
+from btd6_auto.game_launcher import activate_btd6_window, load_map
 from btd6_auto.input import esc_listener
 from btd6_auto.overlay import show_overlay_text
 from btd6_auto.monkey_manager import place_monkey, place_hero
@@ -23,7 +23,7 @@ pyautogui.FAILSAFE = True  # Move mouse to top-left to abort
 
 def main() -> None:
     """
-    Main automation loop for BTD6 Automation Bot (Windows-only).
+    Main automation loop for BTD6 Automation Bot
     """
     # Load configs
     global_config = ConfigLoader.load_global_config()
@@ -42,12 +42,24 @@ def main() -> None:
     esc_listener()
     try:
         while not KILL_SWITCH:
-            # Activate BTD6 window and start map
-            #if not activate_btd6_window():
-            #    logging.error("Exiting due to missing game window.")
-            #    return
+            # Load map
+            logging.info("Entry for loading map")
+            if not load_map(map_config, global_config):
+                logging.error("Exiting due to failure to load map.")
+                return
+
+            # Place hero after map loads
+            logging.info("Entry for hero placement")
+            time.sleep(map_config.get("timing", {}).get("placement_delay", 0.5))
+            hero = map_config["hero"]
+            hero_pos = hero["position"]
+            if isinstance(hero_pos, dict):
+                hero_pos = (hero_pos["x"], hero_pos["y"])
+            place_hero(hero_pos, hero["key_binding"])
+            time.sleep(map_config.get("timing", {}).get("placement_delay", 0.5))
 
             # Place pre-play monkeys before starting the map
+            logging.info("Entry for pre_play_actions")
             pre_play_actions = map_config.get("pre_play_actions", [])
             for action in sorted(pre_play_actions, key=lambda a: a.get("step", 0)):
                 if action["action"] == "buy":
@@ -58,20 +70,14 @@ def main() -> None:
                     place_monkey(monkey_pos, key_binding)
                     time.sleep(map_config.get("timing", {}).get("placement_delay", 0.5))
 
-            if not start_map(map_config, global_config):
-                logging.error("Exiting due to failure to start map.")
-                return
+            logging.info("Opening hero and monkey sequence complete. Press ESC to exit at any time.")
 
-            # Place hero after map loads
-            time.sleep(map_config.get("timing", {}).get("placement_delay", 0.5))
-            hero = map_config["hero"]
-            hero_pos = hero["position"]
-            if isinstance(hero_pos, dict):
-                hero_pos = (hero_pos["x"], hero_pos["y"])
-            place_hero(hero_pos, hero["key_binding"])
-            time.sleep(map_config.get("timing", {}).get("placement_delay", 0.5))
-
-            logging.info("Opening sequence complete. Press ESC to exit at any time.")
+            while not KILL_SWITCH:
+                currency = read_currency_amount(debug=False)
+                logging.debug(f"Current currency: {currency}")
+                currency_string = str(currency)
+                #show_overlay_text(currency_string, 0.5)
+                time.sleep(global_config.get("automation", {}).get("pause_between_actions", 0.2))
 
             # Place monkeys and upgrades as per actions, in order
             for action in sorted(map_config.get("actions", []), key=lambda a: a.get("step", 0)):
@@ -86,12 +92,6 @@ def main() -> None:
                     # Implement upgrade logic here
                     time.sleep(map_config.get("timing", {}).get("upgrade_delay", 0.5))
 
-            while True:
-                currency = read_currency_amount(debug=False)
-                logging.info(f"Current currency: {currency}")
-                currency_string = str(currency)
-                #show_overlay_text(currency_string, 0.5)
-                time.sleep(global_config.get("automation", {}).get("pause_between_actions", 0.1))
             #break  # Remove or modify for continuous automation
     except Exception as e:
         logging.exception(f"Automation error: {e}")
