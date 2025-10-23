@@ -12,13 +12,33 @@ from .overlay import show_overlay_text
 DATA_IMAGE_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'images')
 
 def get_image_path(name):
-    """Helper to get full path for image asset."""
+    """
+    Return the full filesystem path to an image asset by filename.
+    
+    Parameters:
+    	name (str): Image filename or relative path within the module's images data directory.
+    
+    Returns:
+    	path (str): Absolute path to the image file within the data/images directory.
+    """
     return os.path.join(DATA_IMAGE_PATH, name)
 
 def load_map(map_config, global_config):
     """
-    Automate starting the selected map with chosen difficulty and mode.
-    Config values are passed in as arguments.
+    Start the specified game map using UI automation based on the provided configuration.
+    
+    Uses values in map_config to determine which map, difficulty, and mode to select and to resolve a window title when present.
+    
+    Parameters:
+        map_config (dict): Map-specific configuration. Recognized keys:
+            - "map_name": map name to search (default "Monkey Meadow").
+            - "difficulty": difficulty name (default "Easy").
+            - "mode": game mode/start type (default "Standard").
+            - "game_settings" (optional): dict that may contain "window_title" to override the window title used for activation.
+        global_config (dict): Global configuration; may contain "window_title" used if map_config does not provide one.
+    
+    Returns:
+        bool: `True` if the map was started successfully, `False` otherwise.
     """
     if not activate_btd6_window(map_config, global_config):
         logging.error("BTD6 window not activated.")
@@ -118,10 +138,16 @@ import time
 
 def activate_btd6_window(map_config=None, global_config=None) -> bool:
     """
-    Activate the BTD6 game window before automation (Windows-only).
-    Uses config values if provided.
+    Activate the Bloons TD6 game window using a title resolved from provided configuration.
+    
+    Resolves the window title in this order: map_config["game_settings"].get("window_title"), global_config["window_title"], then "BloonsTD6". Only effective on Windows; attempts to find and activate the first window matching the resolved title.
+    
+    Parameters:
+        map_config (dict | None): Optional map-specific configuration that may contain a nested `game_settings.window_title`.
+        global_config (dict | None): Optional global configuration that may contain `window_title`.
+    
     Returns:
-        bool: True if successful, False otherwise.
+        bool: `true` if a matching window was found and activated, `false` otherwise.
     """
     window_title = None
     if map_config and "game_settings" in map_config:

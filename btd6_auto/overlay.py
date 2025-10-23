@@ -32,6 +32,12 @@ _overlay_lock = threading.Lock()
 
 class OverlayWindow:
     def __init__(self, text):
+        """
+        Initialize the OverlayWindow instance with the text to display and prepare identifiers needed to create the Win32 window.
+        
+        Parameters:
+            text (str): The text to be shown in the overlay window.
+        """
         self.text = text
         self.hInstance = win32api.GetModuleHandle(None)
         self.className = "OverlayWindowClass"
@@ -79,7 +85,16 @@ class OverlayWindow:
 
     def run(self, x, y, width, height, duration):
         """
-        Create and show the overlay window. Handles window class registration and resource management.
+        Create and display the overlay window at the specified position and size for a limited duration.
+        
+        Registers the window class (thread-safe), creates a layered, topmost, color-key transparent window, stores its HWND for singleton management, schedules an automatic close after `duration` seconds, processes the window message loop until the window closes, and clears the stored HWND when done.
+        
+        Parameters:
+            x (int): X coordinate of the window's top-left corner.
+            y (int): Y coordinate of the window's top-left corner.
+            width (int): Width of the window in pixels.
+            height (int): Height of the window in pixels.
+            duration (float): Seconds to display the overlay before it is automatically closed.
         """
         with _class_lock:
             wndclass = win32gui.WNDCLASS()
@@ -130,6 +145,16 @@ class OverlayWindow:
 
         # Timer to close window after duration
         def close_after_delay():
+            """
+            Sleep for `duration` seconds and then post a WM_CLOSE message to the overlay window if it still exists.
+            
+            Parameters:
+                duration (float): Number of seconds to wait before attempting to close the window (captured from outer scope).
+                self: The OverlayWindow instance whose `hwnd` (captured from outer scope) will receive the WM_CLOSE message.
+            
+            Notes:
+                If `self.hwnd` is falsy when the wait completes, no message is posted.
+            """
             time.sleep(duration)
             if self.hwnd:
                 win32gui.PostMessage(self.hwnd, win32con.WM_CLOSE, 0, 0)
@@ -151,20 +176,14 @@ class OverlayWindow:
 
 def show_overlay_text(overlay_text: str, seconds: int):
     """
-    Display a transparent, always-on-top, click-through overlay with the given text for a specified duration.
-    Now supports updating the overlay text between calls (singleton overlay window).
-
+    Show a singleton transparent, always-on-top, click-through text overlay.
+    
     Parameters:
-        overlay_text (str): The text to display.
-        seconds (int): How many seconds to show the overlay.
-
-    Platform:
-        Windows only. Uses Win32 API via pywin32.
-
-    Overlay:
-        - Large, bold, left-aligned red text
-        - Fully transparent background (no gray box)
-        - Click-through, always-on-top
+    	overlay_text (str): Text to display in a large, left-aligned red font.
+    	seconds (int): Duration in seconds to show the overlay.
+    
+    Notes:
+    	Windows only — uses the Win32 API. If an overlay is already active, it will be closed before the new one is shown.
     """
     global _current_overlay_thread, _current_overlay_hwnd
     with _overlay_lock:
@@ -181,6 +200,11 @@ def show_overlay_text(overlay_text: str, seconds: int):
             pass
 
         def overlay_thread():
+            """
+            Create and display an OverlayWindow at a fixed position and size showing the provided text for the specified duration.
+            
+            The overlay is created with position (200, 800) and size (600x60) and will remain visible for `seconds` seconds before closing.
+            """
             x, y = 200, 800
             width, height = 600, 60
             OverlayWindow(overlay_text).run(x, y, width, height, seconds)

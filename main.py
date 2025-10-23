@@ -23,7 +23,17 @@ pyautogui.FAILSAFE = True  # Move mouse to top-left to abort
 
 def main() -> None:
     """
-    Main automation loop for BTD6 Automation Bot
+    Orchestrates the automation lifecycle for the BTD6 bot: load configuration, start the map, place hero and monkeys, and run configured actions while respecting the kill switch.
+    
+    This function:
+    - Loads global and map configurations (falls back to "Monkey Meadow" on map-load failure) and initializes logging.
+    - Starts an ESC listener that toggles a global killswitch to stop automation.
+    - Repeatedly attempts to load the map; if loading fails the function exits.
+    - Places the configured hero, executes any pre-play "buy" actions (monkey placements), and then enters a runtime loop that monitors currency and pauses between action cycles.
+    - After runtime monitoring, processes the map's ordered actions (e.g., "buy" for monkey placement and placeholder handling for "upgrade") using configured timing and key bindings.
+    - Logs unexpected exceptions encountered during automation.
+    
+    No value is returned.
     """
     # Load configs
     global_config = ConfigLoader.load_global_config()
