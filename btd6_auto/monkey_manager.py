@@ -1,11 +1,8 @@
-
 """
 Handles selection and placement of monkeys and heroes.
 """
 
-
 from .input import click
-from .config import CLICK_DELAY
 import logging
 import time
 
@@ -25,29 +22,44 @@ def select_hero(hero_name: str) -> None:
     """
     pass
 
-def place_monkey(coords: tuple[int, int], monkey_key: str) -> None:
+def place_monkey(coords: tuple[int, int], monkey_key: str, delay: float = 0.2) -> None:
     """
-    Simulate mouse action to place monkey at given coordinates (Windows-only).
-    Uses input utilities and config for delays.
+    Place a monkey at the given screen coordinates by sending the selection key and performing a click.
+    
+    Parameters:
+        coords (tuple[int, int]): (x, y) screen coordinates where the monkey should be placed.
+        monkey_key (str): Key or key sequence used to select the monkey before placing.
+        delay (float): Seconds to wait after sending the selection key and used for the click timing (default 0.2).
+    
+    Notes:
+        This function performs real input actions (keyboard send and mouse click) and is intended for Windows environments where the required input libraries are available. Failures are logged and not raised.
     """
     try:
         import keyboard
+        logging.debug(f"Selecting monkey with key '{monkey_key}'")
         keyboard.send(monkey_key)
-        time.sleep(CLICK_DELAY)
-        click(coords[0], coords[1], delay=CLICK_DELAY)
+        time.sleep(delay)
+        logging.debug(f"Placing monkey at coordinates {coords}")
+        click(coords[0], coords[1], delay=delay)
     except Exception as e:
         logging.error(f"Failed to place monkey at {coords} with key {monkey_key}: {e}")
 
-def place_hero(coords: tuple[int, int], hero_key: str) -> None:
+def place_hero(coords: tuple[int, int], hero_key: str, delay: float = 0.2) -> None:
     """
-    Simulate mouse action to place hero at given coordinates (Windows-only).
-    Uses input utilities and config for delays.
+    Selects the specified hero key and clicks at the given screen coordinates to place the hero.
+    
+    Parameters:
+        coords (tuple[int, int]): Screen (x, y) coordinates where the hero will be placed.
+        hero_key (str): Keyboard key used to select the hero.
+        delay (float): Seconds to wait after pressing the key and before clicking (default 0.2).
     """
     try:
         import keyboard
+        logging.debug(f"Selecting hero with key '{hero_key}'")
         keyboard.press(hero_key)
-        time.sleep(CLICK_DELAY)
+        time.sleep(delay)
         keyboard.release(hero_key)
-        click(coords[0], coords[1], delay=CLICK_DELAY)
+        logging.debug(f"Placing hero at coordinates {coords}")
+        click(coords[0], coords[1], delay=delay)
     except Exception as e:
         logging.error(f"Failed to place hero at {coords} with key {hero_key}: {e}")

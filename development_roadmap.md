@@ -36,73 +36,62 @@ This document outlines the next phases of development for the BTD6 Automation Bo
   "hero": {
     "name": "Quincy",
     "key_binding": "u",
-    "position": {
-      "x": 485,
-        "y": 395
-      },
-      "abilities": [
-        {
-          "round": 1,
-          "ability_type": "storm",
-          "cooldown_rounds": 60
-        }
-      ]
-    },
-    "monkeys": [
+    "position": { "x": 485, "y": 395 },
+    "abilities": [
+      {
+        "round": 1,
+        "ability_type": "storm",
+        "cooldown_rounds": 60
+      }
+    ]
+  },
+  "actions": [
     {
-      "name": "Dart Monkey",
-      "key_binding": "q",
-      "position": {
-        "x": 625,
-        "y": 500
-      },
-      "upgrade_path": "0-0-2",
-      "purchase_round": 1,
-      "upgrades": [
-        {
-          "round": 3,
-          "path": 0,
-          "tier": 1
-        },
-        {
-          "round": 6,
-          "path": 0,
-          "tier": 2
-        },
-        {
-          "round": 10,
-          "path": 2,
-          "tier": 1
-        }
-      ]
+      "step": 1,
+      "at_money": 75,
+      "action": "upgrade",
+      "target": "Dart Monkey 01",
+      "upgrade_path": "0-0-1"
     },
     {
-      "name": "Bomb Shooter",
-      "key_binding": "e",
-      "position": {
-        "x": 700,
-        "y": 450
-      },
-      "upgrade_path": "2-0-3",
-      "purchase_round": 4,
-      "upgrades": [
-        {
-          "round": 7,
-          "path": 2,
-          "tier": 1
-        },
-        {
-          "round": 12,
-          "path": 0,
-          "tier": 1
-        }
-      ]
+      "step": 2,
+      "at_money": 210,
+      "action": "buy",
+      "target": "Wizard Monkey 01",
+      "position": { "x": 700, "y": 450 }
+    },
+    {
+      "step": 3,
+      "at_money": 170,
+      "action": "upgrade",
+      "target": "Dart Monkey 01",
+      "upgrade_path": "0-0-2"
+    },
+    {
+      "step": 4,
+      "at_money": 700,
+      "action": "buy",
+      "target": "Spike Factory 01",
+      "position": { "x": 800, "y": 500 }
+    },
+    {
+      "step": 5,
+      "at_money": 215,
+      "action": "buy",
+      "target": "Dart Monkey 02",
+      "position": { "x": 650, "y": 520 }
+    },
+    {
+      "step": 6,
+      "at_money": 100,
+      "action": "upgrade",
+      "target": "Dart Monkey 02",
+      "upgrade_path": "0-2-0"
     }
-    ],
+  ],
   "timing": {
-    "map_load_delay": 7,
     "placement_delay": 0.5,
-    "upgrade_delay": 1.0,
+    "upgrade_delay": 0.5,
     "ability_delay": 0.3
   },
   "retries": {
@@ -129,7 +118,7 @@ This document outlines the next phases of development for the BTD6 Automation Bo
     "screenshot_delay": 0.2
   },
   "error_handling": {
-    "max_consecutive_failures": 5,
+    "max_consecutive_failures": 2,
     "recovery_delay": 2.0,
     "screenshot_on_error": true
   }

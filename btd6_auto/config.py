@@ -3,35 +3,20 @@ Configuration management.
 """
 
 
-# --- Windows-only Constants for MVP ---
-MONKEY_TYPE = "Dart Monkey"
-HERO_TYPE = "Quincy"
 
-# Example coordinates (update for actual game window)
-MONKEY_COORDS = (625, 500) # 1080p
-HERO_COORDS = (485, 395) # 1080p
-MONKEY_KEY = 'q'  # Key to select Dart Monkey
-HERO_KEY = 'u'    # Key to select Hero
+# All configuration values are now loaded via config_loader.py
+# This file may be used for shared state or utility functions only.
 
-# Window title for BTD6 (Windows)
-BTD6_WINDOW_TITLE = "BloonsTD6"
-
-# Global killswitch flag
+# Global killswitch flag (shared state)
 KILL_SWITCH = False
 
-# Delay after mouse click (seconds)
-CLICK_DELAY = 0.2
-
-# Map selection (default: Monkey Meadow)
-selected_map = "Monkey Meadow"
-
-# Difficulty selection (default: Easy)
-selected_difficulty = "Easy"  # Options: "Easy", "Medium", "Hard"
-
-# Mode selection (default: Standard)
-selected_mode = "Standard"  # Options: "Standard", "Alternate Bloons Rounds", etc.
-
 def load_config(config_path):
+    """
+    Entry point for loading application configuration from the given path.
+    
+    Parameters:
+        config_path (str): Filesystem path to the configuration file to load. This function is currently a no-op placeholder and does not modify application state.
+    """
     pass
 
 def save_config(config, config_path):

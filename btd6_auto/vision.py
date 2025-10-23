@@ -7,6 +7,127 @@ import numpy as np
 import logging
 import os
 import sys
+import time
+
+# EasyOCR import
+try:
+    import easyocr
+except ImportError:
+    easyocr = None
+
+easyocr_available = easyocr is not None
+def read_currency_amount(
+    region: tuple = (370, 26, 515, 60),
+    debug: bool = False
+) -> int:
+    """
+    Reads the currency amount from the defined screen region using OCR.
+
+    Parameters:
+        region (tuple): (left, top, right, bottom) coordinates of the region.
+        debug (bool): If True, logs the detected value and optionally shows the processed image.
+
+    Returns:
+        int: Parsed currency value, or 0 if not found or error.
+
+    Notes:
+        - Returns 0 if OCR or camera initialization fails.
+        - Handles KeyboardInterrupt gracefully.
+        - If OCR result is malformed, returns 0 and logs a warning.
+    """
+    if not easyocr_available:
+        logging.error("EasyOCR not installed. Cannot perform OCR.")
+        return 0
+
+    # Static initialization for camera and OCR
+    if not hasattr(read_currency_amount, "_ocr") or not hasattr(read_currency_amount, "_camera"):
+        # Import dxcam with targeted ImportError handling
+        try:
+            import dxcam
+        except ImportError as e:
+            logging.exception("Failed to import dxcam. OCR will not work.")
+            return 0
+        # Try to initialize EasyOCR Reader with GPU, fallback to CPU if needed
+        try:
+            try:
+                read_currency_amount._ocr = easyocr.Reader(['en'], gpu=True)
+            except (RuntimeError, ValueError, Exception) as e:
+                logging.exception("Failed to initialize easyocr.Reader with GPU. Falling back to CPU.")
+                try:
+                    read_currency_amount._ocr = easyocr.Reader(['en'], gpu=False)
+                except Exception as e_cpu:
+                    logging.exception("Failed to initialize easyocr.Reader with CPU fallback.")
+                    return 0
+            # Try to create dxcam camera
+            try:
+                read_currency_amount._camera = dxcam.create(output_idx=0)
+            except Exception as e_cam:
+                logging.exception("Failed to create dxcam camera.")
+                return 0
+        except ImportError as e:
+            logging.exception("Failed to import easyocr. OCR will not work.")
+            return 0
+    ocr = read_currency_amount._ocr
+    camera = read_currency_amount._camera
+
+    try:
+        frame = camera.grab(region=region)
+        if frame is None:
+            logging.warning("No frame captured for currency region.")
+            return 0
+
+        # Preprocess
+        try:
+            cv2.setUseOptimized(True)
+            cv2.setNumThreads(1)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
+            norm = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
+            _, thresh = cv2.threshold(norm, 180, 255, cv2.THRESH_BINARY)
+        except Exception as e:
+            logging.exception(f"Preprocessing error: {e}")
+            return 0
+
+        try:
+            results = ocr.readtext(thresh, allowlist='0123456789', detail=1)
+            digits = "".join([text for _, text, conf in results if isinstance(text, str) and text.isdigit()])
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
+            norm = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
+            _, thresh = cv2.threshold(norm, 180, 255, cv2.THRESH_BINARY)
+        except Exception as e:
+            logging.exception(f"Preprocessing error: {e}")
+            return 0
+
+        # OCR
+        try:
+            # EasyOCR returns a list of (bbox, text, confidence)
+            results = ocr.readtext(thresh, allowlist='0123456789', detail=1)
+            digits = "".join([
+                text for _, text, conf in results if isinstance(text, str) and text.isdigit()
+            ])
+            value = int(digits) if digits else 0
+        except Exception as e:
+            logging.exception(f"OCR error: {e}")
+            value = 0
+
+        if debug:
+            logging.info(f"[OCR] Currency: {value}")
+            cv2.imshow("Currency Region", thresh)
+            cv2.waitKey(1000)  # Show for 1 second
+            cv2.destroyAllWindows()
+
+    except KeyboardInterrupt:
+        logging.info("[OCR] Stopped by user.")
+        value = 0
+    finally:
+        try:
+            camera.stop()
+        except Exception:
+            pass
+        try:
+            cv2.destroyAllWindows()
+        except Exception:
+            pass
+    return value
 
 from datetime import datetime
 
@@ -75,12 +196,13 @@ def capture_screen(region=None) -> np.ndarray:
 
 def find_element_on_screen(element_image):
     """
-    Find the given element on the current screen using template matching.
-    Args:
-        element_image (str): Path to the template image file.
+    Locate the center coordinates of a template image on the current screen.
+    
+    Parameters:
+        element_image (str): Filesystem path to the template image to search for.
+    
     Returns:
-        tuple: (x, y) coordinates of the center of the matched region, or None if not found.
-    Additionally, saves the screenshot to the screenshots folder for debugging.
+        (x, y) tuple: Center coordinates of the matched region if a sufficiently strong match is found, `None` otherwise.
     """
     import time
     start_time = time.time()
@@ -112,7 +234,7 @@ def find_element_on_screen(element_image):
         res = cv2.matchTemplate(screen_gray, template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
         match_end = time.time()
-        threshold = 0.85  # Adjust as needed for reliability
+        threshold = 0.75  # Adjust as needed for reliability
         logging.info(f"Template matching for {element_image} took {match_end - match_start:.3f}s (max_val={max_val:.2f})")
         if max_val >= threshold:
             h, w = template.shape[:2]
