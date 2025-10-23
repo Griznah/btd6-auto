@@ -41,13 +41,31 @@ def read_currency_amount(
 
     # Static initialization for camera and OCR
     if not hasattr(read_currency_amount, "_ocr") or not hasattr(read_currency_amount, "_camera"):
+        # Import dxcam with targeted ImportError handling
         try:
             import dxcam
-            # Pre-allocate EasyOCR Reader with English language and GPU
-            read_currency_amount._ocr = easyocr.Reader(['en'], gpu=True)
-            read_currency_amount._camera = dxcam.create(output_idx=0)
-        except Exception as e:
-            logging.error(f"OCR/camera init failed: {e}")
+        except ImportError as e:
+            logging.exception("Failed to import dxcam. OCR will not work.")
+            return 0
+        # Try to initialize EasyOCR Reader with GPU, fallback to CPU if needed
+        try:
+            try:
+                read_currency_amount._ocr = easyocr.Reader(['en'], gpu=True)
+            except (RuntimeError, ValueError, Exception) as e:
+                logging.exception("Failed to initialize easyocr.Reader with GPU. Falling back to CPU.")
+                try:
+                    read_currency_amount._ocr = easyocr.Reader(['en'], gpu=False)
+                except Exception as e_cpu:
+                    logging.exception("Failed to initialize easyocr.Reader with CPU fallback.")
+                    return 0
+            # Try to create dxcam camera
+            try:
+                read_currency_amount._camera = dxcam.create(output_idx=0)
+            except Exception as e_cam:
+                logging.exception("Failed to create dxcam camera.")
+                return 0
+        except ImportError as e:
+            logging.exception("Failed to import easyocr. OCR will not work.")
             return 0
     ocr = read_currency_amount._ocr
     camera = read_currency_amount._camera
@@ -66,7 +84,7 @@ def read_currency_amount(
             norm = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
             _, thresh = cv2.threshold(norm, 180, 255, cv2.THRESH_BINARY)
         except Exception as e:
-            logging.error(f"Preprocessing error: {e}")
+            logging.exception(f"Preprocessing error: {e}")
             return 0
 
         try:
@@ -76,7 +94,7 @@ def read_currency_amount(
             norm = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
             _, thresh = cv2.threshold(norm, 180, 255, cv2.THRESH_BINARY)
         except Exception as e:
-            logging.error(f"Preprocessing error: {e}")
+            logging.exception(f"Preprocessing error: {e}")
             return 0
 
         # OCR
@@ -88,7 +106,7 @@ def read_currency_amount(
             ])
             value = int(digits) if digits else 0
         except Exception as e:
-            logging.error(f"OCR error: {e}")
+            logging.exception(f"OCR error: {e}")
             value = 0
 
         if debug:
