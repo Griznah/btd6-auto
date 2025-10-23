@@ -1,4 +1,3 @@
-
 """
 Input automation utilities for BTD6 automation bot.
 Centralizes mouse/keyboard actions and error handling.
@@ -14,13 +13,23 @@ from pynput import keyboard as pynput_keyboard
 
 def esc_listener():
     """
-    Listen for ESC key to set killswitch flag (Windows-only).
-    Performs hard termination using os._exit(0) for immediate exit.
+    Start a keyboard listener that triggers a killswitch when the Escape key is pressed.
+    
+    On Escape press, sets config.KILL_SWITCH to True and immediately terminates the process (Windows-only).
+    
     Returns:
-        pynput.keyboard.Listener: The listener object.
+        pynput.keyboard.Listener: The started listener instance.
     """
     from btd6_auto import config
     def on_press(key):
+        """
+        Handle a keyboard key press and trigger an immediate hard shutdown when ESC is pressed.
+        
+        If the pressed key is the ESC key, logs an informational message, sets config.KILL_SWITCH to True, and immediately terminates the process using os._exit(0).
+        
+        Parameters:
+            key: The key event object received from the keyboard listener.
+        """
         if key == pynput_keyboard.Key.esc:
             logging.info("ESC pressed! Exiting...")
             config.KILL_SWITCH = True
@@ -33,11 +42,12 @@ def esc_listener():
 
 def click(x: int, y: int, delay: float = 0.2) -> None:
     """
-    Move mouse to (x, y) and click, with optional delay.
-    Args:
-        x (int): X coordinate.
-        y (int): Y coordinate.
-        delay (float): Delay after click.
+    Move the mouse to the specified screen coordinates and perform a left click.
+    
+    Parameters:
+        x (int): Horizontal screen coordinate in pixels.
+        y (int): Vertical screen coordinate in pixels.
+        delay (float): Seconds to wait after the click (default 0.2).
     """
     try:
         logging.debug(f"Moving mouse to ({x}, {y})")

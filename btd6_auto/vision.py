@@ -178,12 +178,13 @@ def capture_screen(region=None) -> np.ndarray:
 
 def find_element_on_screen(element_image):
     """
-    Find the given element on the current screen using template matching.
-    Args:
-        element_image (str): Path to the template image file.
+    Locate the center coordinates of a template image on the current screen.
+    
+    Parameters:
+        element_image (str): Filesystem path to the template image to search for.
+    
     Returns:
-        tuple: (x, y) coordinates of the center of the matched region, or None if not found.
-    Additionally, saves the screenshot to the screenshots folder for debugging.
+        (x, y) tuple: Center coordinates of the matched region if a sufficiently strong match is found, `None` otherwise.
     """
     import time
     start_time = time.time()

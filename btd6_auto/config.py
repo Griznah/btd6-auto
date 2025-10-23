@@ -11,6 +11,12 @@ Configuration management.
 KILL_SWITCH = False
 
 def load_config(config_path):
+    """
+    Entry point for loading application configuration from the given path.
+    
+    Parameters:
+        config_path (str): Filesystem path to the configuration file to load. This function is currently a no-op placeholder and does not modify application state.
+    """
     pass
 
 def save_config(config, config_path):
