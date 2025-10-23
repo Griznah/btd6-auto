@@ -1,13 +1,107 @@
 """
 Screen capture and image recognition (OpenCV).
+And some dxcam
 """
-
 import cv2
 import numpy as np
 import logging
 import os
 import sys
 import time
+import keyboard
+
+def _find_in_region(template_path: str, region: tuple) -> bool:
+    """
+    Check if a template image is present in a given screen region using OpenCV template matching.
+
+    Parameters:
+        template_path (str): Path to the template image file.
+        region (tuple): (left, top, right, bottom) coordinates of the region to search.
+
+    Returns:
+        bool: True if the template is found with sufficient confidence, False otherwise.
+    """
+    template = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
+    if template is None:
+        logging.error(f"Template image not found: {template_path}")
+        return False
+    from .vision import capture_screen
+    left, top, right, bottom = region
+    width, height = right - left, bottom - top
+    _, screen_gray = capture_screen(region=(left, top, width, height))
+    if screen_gray is None:
+        return False
+    res = cv2.matchTemplate(screen_gray, template, cv2.TM_CCOEFF_NORMED)
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+    threshold = 0.75
+    return max_val >= threshold
+
+def set_round_state(state: str, region: tuple = (1768, 947, 1900, 1069), max_retries: int = 3, delay: float = 0.2, find_in_region=None) -> bool:
+    """
+    Set the round state by ensuring the correct speed or start button is active.
+
+    This function uses image recognition to detect the current round state ("fast", "slow", or "start")
+    and simulates pressing the Spacebar to toggle speed as needed. For the "start" state, it ensures
+    the start button is visible and the speed is set to fast. The function retries up to max_retries
+    times, waiting delay seconds between attempts.
+
+    Parameters:
+        state (str): One of "fast", "slow", or "start".
+        region (tuple): (left, top, right, bottom) coordinates to search for the state image.
+        max_retries (int): Maximum number of attempts to set the state.
+        delay (float): Delay in seconds between attempts.
+        find_in_region (callable, optional): Function to check for template in region (for testing/mocking).
+
+    Returns:
+        bool: True if the requested state was set successfully, False otherwise.
+    """
+    if find_in_region is None:
+        find_in_region = lambda template_path: _find_in_region(template_path, region)
+
+    # Map state to image filename
+    image_map = {
+        "fast": "map_fast1080p.png",
+        "slow": "map_slow1080p.png",
+        "start": "map_start1080p.png"
+    }
+    if state not in image_map:
+        logging.error(f"Invalid state '{state}' for set_round_state.")
+        return False
+
+    images_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'images')
+    img_fast = os.path.join(images_dir, image_map["fast"])
+    img_slow = os.path.join(images_dir, image_map["slow"])
+    img_start = os.path.join(images_dir, image_map["start"])
+
+    for attempt in range(1, max_retries + 1):
+        logging.info(f"[set_round_state] Attempt {attempt} for state '{state}'")
+        if state == "fast":
+            if find_in_region(img_fast):
+                logging.info("Speed is already FAST.")
+                return True
+            keyboard.press_and_release('space')
+            time.sleep(delay)
+        elif state == "slow":
+            if find_in_region(img_slow):
+                logging.info("Speed is already SLOW.")
+                return True
+            keyboard.press_and_release('space')
+            time.sleep(delay)
+        elif state == "start":
+            # Wait for start button, then ensure speed is fast
+            if find_in_region(img_start):
+                logging.info("Start button detected. Ensuring speed is FAST.")
+                # Try to set speed to fast
+                for _ in range(max_retries):
+                    if find_in_region(img_fast):
+                        return True
+                    keyboard.press_and_release('space')
+                    time.sleep(delay)
+                # If unable to set fast, still return True (start is visible)
+                return True
+            time.sleep(delay)
+    logging.warning(f"[set_round_state] Failed to set state '{state}' after {max_retries} attempts.")
+    return False
 
 # EasyOCR import
 try:

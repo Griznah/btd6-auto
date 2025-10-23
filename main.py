@@ -15,7 +15,7 @@ from btd6_auto.game_launcher import activate_btd6_window, load_map
 from btd6_auto.input import esc_listener
 from btd6_auto.overlay import show_overlay_text
 from btd6_auto.monkey_manager import place_monkey, place_hero
-from btd6_auto.vision import capture_screen, read_currency_amount
+from btd6_auto.vision import capture_screen, read_currency_amount, set_round_state
 
 # Options
 pyautogui.PAUSE = 0.1  # Pause after each PyAutoGUI call
@@ -82,6 +82,12 @@ def main() -> None:
 
         logging.info("Opening hero and monkey sequence complete. Press ESC to exit at any time.")
 
+        # Start the round
+        try:
+            set_round_state("slow")
+        except Exception as e:
+            logging.exception("Unable to set round state(start map)")
+        
         # Runtime loop: monitor currency until a condition is met or KILL_SWITCH is triggered
         # For now, we use a placeholder: monitor for a fixed time or until KILL_SWITCH
         monitor_duration = global_config.get("automation", {}).get("monitor_duration", 1.0)  # seconds
