@@ -5,26 +5,29 @@ Windows-only version
 
 import logging
 import time
-import numpy as np
+
+# import numpy as np
 import pyautogui
 
 # Import configuration loader and modules
 from btd6_auto.config_loader import ConfigLoader
 from btd6_auto.config import KILL_SWITCH
-from btd6_auto.game_launcher import activate_btd6_window, load_map
+from btd6_auto.game_launcher import load_map
 from btd6_auto.input import esc_listener
-from btd6_auto.overlay import show_overlay_text
+
+# from btd6_auto.overlay import show_overlay_text
 from btd6_auto.monkey_manager import place_monkey, place_hero
-from btd6_auto.vision import capture_screen, read_currency_amount, set_round_state
+from btd6_auto.vision import read_currency_amount, set_round_state
 
 # Options
 pyautogui.PAUSE = 0.1  # Pause after each PyAutoGUI call
 pyautogui.FAILSAFE = True  # Move mouse to top-left to abort
 
+
 def main() -> None:
     """
     Orchestrates the automation lifecycle for the BTD6 bot: load configuration, start the map, place hero and monkeys, and run configured actions while respecting the kill switch.
-    
+
     This function:
     - Loads global and map configurations (falls back to "Monkey Meadow" on map-load failure) and initializes logging.
     - Starts an ESC listener that toggles a global killswitch to stop automation.
@@ -32,7 +35,7 @@ def main() -> None:
     - Places the configured hero, executes any pre-play "buy" actions (monkey placements), and then enters a runtime loop that monitors currency and pauses between action cycles.
     - After runtime monitoring, processes the map's ordered actions (e.g., "buy" for monkey placement and placeholder handling for "upgrade") using configured timing and key bindings.
     - Logs unexpected exceptions encountered during automation.
-    
+
     No value is returned.
     """
     # Load configs
@@ -41,13 +44,18 @@ def main() -> None:
     try:
         map_config = ConfigLoader.load_map_config(map_name)
     except Exception:
-        logging.warning(f"Could not load map config for '{map_name}', falling back to 'Monkey Meadow'.")
+        logging.warning(
+            f"Could not load map config for '{map_name}', falling back to 'Monkey Meadow'."
+        )
         map_config = ConfigLoader.load_map_config("Monkey Meadow")
 
-    logging.basicConfig(level=getattr(logging, global_config.get("automation", {}).get("logging_level", "INFO")),
-                        format='%(asctime)s %(levelname)s: %(message)s')
+    logging.basicConfig(
+        level=getattr(
+            logging, global_config.get("automation", {}).get("logging_level", "INFO")
+        ),
+        format="%(asctime)s %(levelname)s: %(message)s",
+    )
     logging.info("BTD6 Automation Bot starting, press ESC to exit at any time.")
-
 
     # Start killswitch listener
     esc_listener()
@@ -76,29 +84,39 @@ def main() -> None:
                 monkey_pos = action["position"]
                 if isinstance(monkey_pos, dict):
                     monkey_pos = (monkey_pos["x"], monkey_pos["y"])
-                key_binding = action["key_binding"] if "key_binding" in action else global_config.get("default_monkey_key", "q")
+                key_binding = (
+                    action["key_binding"]
+                    if "key_binding" in action
+                    else global_config.get("default_monkey_key", "q")
+                )
                 place_monkey(monkey_pos, key_binding)
                 time.sleep(map_config.get("timing", {}).get("placement_delay", 0.5))
 
-        logging.info("Opening hero and monkey sequence complete. Press ESC to exit at any time.")
+        logging.info(
+            "Opening hero and monkey sequence complete. Press ESC to exit at any time."
+        )
 
         # Start the round
         try:
             set_round_state("slow")
         except Exception as e:
             logging.exception("Unable to set round state(start map)")
-        
+
         # Runtime loop: monitor currency until a condition is met or KILL_SWITCH is triggered
         # For now, we use a placeholder: monitor for a fixed time or until KILL_SWITCH
-        monitor_duration = global_config.get("automation", {}).get("monitor_duration", 1.0)  # seconds
+        monitor_duration = global_config.get("automation", {}).get(
+            "monitor_duration", 1.0
+        )  # seconds
         start_time = time.time()
         while not KILL_SWITCH:
             logging.info("Entrypoint for currency monitoring")
             currency = read_currency_amount(debug=False)
             logging.debug(f"Current currency: {currency}")
-            currency_string = str(currency)
-            #show_overlay_text(currency_string, 0.5)
-            time.sleep(global_config.get("automation", {}).get("pause_between_actions", 0.2))
+            # currency_string = str(currency)
+            # show_overlay_text(currency_string, 0.5)
+            time.sleep(
+                global_config.get("automation", {}).get("pause_between_actions", 0.2)
+            )
             # Example exit condition: monitor for monitor_duration seconds
             if (time.time() - start_time) > monitor_duration:
                 break
@@ -108,7 +126,9 @@ def main() -> None:
             return
 
         # Place monkeys and upgrades as per actions, in order
-        for action in sorted(map_config.get("actions", []), key=lambda a: a.get("step", 0)):
+        for action in sorted(
+            map_config.get("actions", []), key=lambda a: a.get("step", 0)
+        ):
             if KILL_SWITCH:
                 logging.info("Kill switch activated. Exiting during actions.")
                 return
@@ -116,7 +136,11 @@ def main() -> None:
                 monkey_pos = action["position"]
                 if isinstance(monkey_pos, dict):
                     monkey_pos = (monkey_pos["x"], monkey_pos["y"])
-                key_binding = action["key_binding"] if "key_binding" in action else global_config.get("default_monkey_key", "q")
+                key_binding = (
+                    action["key_binding"]
+                    if "key_binding" in action
+                    else global_config.get("default_monkey_key", "q")
+                )
                 place_monkey(monkey_pos, key_binding)
                 time.sleep(map_config.get("timing", {}).get("placement_delay", 0.5))
             elif action["action"] == "upgrade":
@@ -125,6 +149,7 @@ def main() -> None:
 
     except Exception as e:
         logging.exception(f"Automation error: {e}")
+
 
 if __name__ == "__main__":
     main()
