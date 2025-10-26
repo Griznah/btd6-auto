@@ -227,14 +227,13 @@ def read_currency_amount(
             return 0
 
         try:
-            results = ocr.readtext(thresh, allowlist="0123456789", detail=1)
-            digits = "".join(
-                [
-                    text
-                    for _, text, conf in results
-                    if isinstance(text, str) and text.isdigit()
-                ]
-            )
+            results = ocr.readtext(thresh, allowlist="0123456789,", detail=1)
+            # Concatenate all recognized text, remove commas, and extract digits
+            raw_text = "".join([
+                text for _, text, conf in results if isinstance(text, str)
+            ])
+            # Remove commas and non-digit characters
+            digits = "".join([c for c in raw_text if c.isdigit()])
             gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
             norm = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
             _, thresh = cv2.threshold(norm, 180, 255, cv2.THRESH_BINARY)
@@ -245,14 +244,12 @@ def read_currency_amount(
         # OCR
         try:
             # EasyOCR returns a list of (bbox, text, confidence)
-            results = ocr.readtext(thresh, allowlist="0123456789", detail=1)
-            digits = "".join(
-                [
-                    text
-                    for _, text, conf in results
-                    if isinstance(text, str) and text.isdigit()
-                ]
-            )
+            results = ocr.readtext(thresh, allowlist="0123456789,", detail=1)
+            raw_text = "".join([
+                text for _, text, conf in results if isinstance(text, str)
+            ])
+            # Remove commas and non-digit characters
+            digits = "".join([c for c in raw_text if c.isdigit()])
             value = int(digits) if digits else 0
         except Exception as e:
             logging.exception(f"OCR error: {e}")
