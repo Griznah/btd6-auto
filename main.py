@@ -17,7 +17,8 @@ from btd6_auto.input import esc_listener
 
 # from btd6_auto.overlay import show_overlay_text
 from btd6_auto.monkey_manager import place_monkey, place_hero
-from btd6_auto.vision import read_currency_amount, set_round_state
+from btd6_auto.vision import set_round_state
+from btd6_auto.currency_reader import CurrencyReader
 
 # Options
 pyautogui.PAUSE = 0.1  # Pause after each PyAutoGUI call
@@ -102,24 +103,26 @@ def main() -> None:
         except Exception:
             logging.exception("Unable to set round state(start map)")
 
+        # Start currency reader thread
+        currency_reader = CurrencyReader()
+        currency_reader.start()
+
         # Runtime loop: monitor currency until a condition is met or KILL_SWITCH is triggered
-        # For now, we use a placeholder: monitor for a fixed time or until KILL_SWITCH
         monitor_duration = global_config.get("automation", {}).get(
             "monitor_duration", 1.0
         )  # seconds
         start_time = time.time()
         while not KILL_SWITCH:
             logging.info("Entrypoint for currency monitoring")
-            currency = read_currency_amount(debug=False)
-            logging.debug(f"Current currency: {currency}")
-            # currency_string = str(currency)
-            # show_overlay_text(currency_string, 0.5)
+            currency = currency_reader.get_currency()
+            logging.info(f"Current currency: {currency}")
             time.sleep(
                 global_config.get("automation", {}).get("pause_between_actions", 0.2)
             )
-            # Example exit condition: monitor for monitor_duration seconds
             if (time.time() - start_time) > monitor_duration:
                 break
+
+        currency_reader.stop()
 
         if KILL_SWITCH:
             logging.info("Kill switch activated. Exiting before actions.")

@@ -96,7 +96,7 @@ def load_map(map_config: dict, global_config: dict) -> bool:
     ]:
         time.sleep(0.5)  # let next screen load
         img_path = get_image_path(img_name)
-        screen = capture_screen()
+        #screen = capture_screen()
         coords = find_element_on_screen(img_path)
         if coords:
             click(*coords)
