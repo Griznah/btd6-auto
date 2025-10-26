@@ -2,6 +2,7 @@
 Screen capture and image recognition (OpenCV).
 And some dxcam
 """
+
 import cv2
 import numpy as np
 import logging
@@ -9,6 +10,8 @@ import os
 import sys
 import time
 import keyboard
+#from datetime import datetime
+
 
 def _find_in_region(template_path: str, region: tuple) -> bool:
     """
@@ -26,6 +29,7 @@ def _find_in_region(template_path: str, region: tuple) -> bool:
         logging.error(f"Template image not found: {template_path}")
         return False
     from .vision import capture_screen
+
     left, top, right, bottom = region
     width, height = right - left, bottom - top
     _, screen_gray = capture_screen(region=(left, top, width, height))
@@ -36,7 +40,14 @@ def _find_in_region(template_path: str, region: tuple) -> bool:
     threshold = 0.75
     return max_val >= threshold
 
-def set_round_state(state: str, region: tuple = (1768, 947, 1900, 1069), max_retries: int = 3, delay: float = 0.2, find_in_region=None) -> bool:
+
+def set_round_state(
+    state: str,
+    region: tuple = (1768, 947, 1900, 1069),
+    max_retries: int = 3,
+    delay: float = 0.2,
+    find_in_region=None,
+) -> bool:
     """
     Set the round state by ensuring the correct speed or start button is active.
 
@@ -56,19 +67,22 @@ def set_round_state(state: str, region: tuple = (1768, 947, 1900, 1069), max_ret
         bool: True if the requested state was set successfully, False otherwise.
     """
     if find_in_region is None:
-        find_in_region = lambda template_path: _find_in_region(template_path, region)
+        def find_in_region(template_path):
+            return _find_in_region(template_path, region)
 
     # Map state to image filename
     image_map = {
         "fast": "map_fast1080p.png",
         "slow": "map_slow1080p.png",
-        "start": "map_start1080p.png"
+        "start": "map_start1080p.png",
     }
     if state not in image_map:
         logging.error(f"Invalid state '{state}' for set_round_state.")
         return False
 
-    images_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'images')
+    images_dir = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "data", "images"
+    )
     img_fast = os.path.join(images_dir, image_map["fast"])
     img_slow = os.path.join(images_dir, image_map["slow"])
     img_start = os.path.join(images_dir, image_map["start"])
@@ -79,13 +93,13 @@ def set_round_state(state: str, region: tuple = (1768, 947, 1900, 1069), max_ret
             if find_in_region(img_fast):
                 logging.info("Speed is already FAST.")
                 return True
-            keyboard.press_and_release('space')
+            keyboard.press_and_release("space")
             time.sleep(delay)
         elif state == "slow":
             if find_in_region(img_slow):
                 logging.info("Speed is already SLOW.")
                 return True
-            keyboard.press_and_release('space')
+            keyboard.press_and_release("space")
             time.sleep(delay)
         elif state == "start":
             # Wait for start button, then ensure speed is fast
@@ -95,13 +109,16 @@ def set_round_state(state: str, region: tuple = (1768, 947, 1900, 1069), max_ret
                 for _ in range(max_retries):
                     if find_in_region(img_fast):
                         return True
-                    keyboard.press_and_release('space')
+                    keyboard.press_and_release("space")
                     time.sleep(delay)
                 # If unable to set fast, still return True (start is visible)
                 return True
             time.sleep(delay)
-    logging.warning(f"[set_round_state] Failed to set state '{state}' after {max_retries} attempts.")
+    logging.warning(
+        f"[set_round_state] Failed to set state '{state}' after {max_retries} attempts."
+    )
     return False
+
 
 # EasyOCR import
 try:
@@ -110,9 +127,10 @@ except ImportError:
     easyocr = None
 
 easyocr_available = easyocr is not None
+
+
 def read_currency_amount(
-    region: tuple = (370, 26, 515, 60),
-    debug: bool = False
+    region: tuple = (370, 26, 515, 60), debug: bool = False
 ) -> int:
     """
     Reads the currency amount from the defined screen region using OCR.
@@ -134,31 +152,37 @@ def read_currency_amount(
         return 0
 
     # Static initialization for camera and OCR
-    if not hasattr(read_currency_amount, "_ocr") or not hasattr(read_currency_amount, "_camera"):
+    if not hasattr(read_currency_amount, "_ocr") or not hasattr(
+        read_currency_amount, "_camera"
+    ):
         # Import dxcam with targeted ImportError handling
         try:
             import dxcam
-        except ImportError as e:
+        except ImportError:
             logging.exception("Failed to import dxcam. OCR will not work.")
             return 0
         # Try to initialize EasyOCR Reader with GPU, fallback to CPU if needed
         try:
             try:
-                read_currency_amount._ocr = easyocr.Reader(['en'], gpu=True)
-            except (RuntimeError, ValueError, Exception) as e:
-                logging.exception("Failed to initialize easyocr.Reader with GPU. Falling back to CPU.")
+                read_currency_amount._ocr = easyocr.Reader(["en"], gpu=True)
+            except (RuntimeError, ValueError, Exception):
+                logging.exception(
+                    "Failed to initialize easyocr.Reader with GPU. Falling back to CPU."
+                )
                 try:
-                    read_currency_amount._ocr = easyocr.Reader(['en'], gpu=False)
-                except Exception as e_cpu:
-                    logging.exception("Failed to initialize easyocr.Reader with CPU fallback.")
+                    read_currency_amount._ocr = easyocr.Reader(["en"], gpu=False)
+                except Exception:
+                    logging.exception(
+                        "Failed to initialize easyocr.Reader with CPU fallback."
+                    )
                     return 0
             # Try to create dxcam camera
             try:
                 read_currency_amount._camera = dxcam.create(output_idx=0)
-            except Exception as e_cam:
+            except Exception:
                 logging.exception("Failed to create dxcam camera.")
                 return 0
-        except ImportError as e:
+        except ImportError:
             logging.exception("Failed to import easyocr. OCR will not work.")
             return 0
     ocr = read_currency_amount._ocr
@@ -182,8 +206,14 @@ def read_currency_amount(
             return 0
 
         try:
-            results = ocr.readtext(thresh, allowlist='0123456789', detail=1)
-            digits = "".join([text for _, text, conf in results if isinstance(text, str) and text.isdigit()])
+            results = ocr.readtext(thresh, allowlist="0123456789", detail=1)
+            digits = "".join(
+                [
+                    text
+                    for _, text, conf in results
+                    if isinstance(text, str) and text.isdigit()
+                ]
+            )
             gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
             norm = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
             _, thresh = cv2.threshold(norm, 180, 255, cv2.THRESH_BINARY)
@@ -194,10 +224,14 @@ def read_currency_amount(
         # OCR
         try:
             # EasyOCR returns a list of (bbox, text, confidence)
-            results = ocr.readtext(thresh, allowlist='0123456789', detail=1)
-            digits = "".join([
-                text for _, text, conf in results if isinstance(text, str) and text.isdigit()
-            ])
+            results = ocr.readtext(thresh, allowlist="0123456789", detail=1)
+            digits = "".join(
+                [
+                    text
+                    for _, text, conf in results
+                    if isinstance(text, str) and text.isdigit()
+                ]
+            )
             value = int(digits) if digits else 0
         except Exception as e:
             logging.exception(f"OCR error: {e}")
@@ -223,9 +257,9 @@ def read_currency_amount(
             pass
     return value
 
-from datetime import datetime
-
-def is_mostly_black(image: np.ndarray, threshold: float = 0.9, black_level: int = 30) -> bool:
+def is_mostly_black(
+    image: np.ndarray, threshold: float = 0.9, black_level: int = 30
+) -> bool:
     """
     Determine if the given image is mostly black.
 
@@ -251,8 +285,11 @@ def is_mostly_black(image: np.ndarray, threshold: float = 0.9, black_level: int 
     total_pixels = image_gray.size
     black_pixels = np.sum(image_gray < black_level)
     proportion_black = black_pixels / total_pixels
-    logging.info(f"is_mostly_black: {proportion_black:.3f} black pixels (threshold={threshold})")
+    logging.info(
+        f"is_mostly_black: {proportion_black:.3f} black pixels (threshold={threshold})"
+    )
     return proportion_black >= threshold
+
 
 def capture_screen(region=None) -> np.ndarray:
     """
@@ -264,10 +301,13 @@ def capture_screen(region=None) -> np.ndarray:
         tuple: (img_bgr, img_gray) OpenCV images (numpy arrays)
     """
     if not sys.platform.startswith("win"):
-        logging.warning("capture_screen: dxcam is only supported on Windows. Returning (None, None).")
+        logging.warning(
+            "capture_screen: dxcam is only supported on Windows. Returning (None, None)."
+        )
         return None, None
     try:
         import dxcam
+
         # dxcam expects region as (left, top, right, bottom)
         cam = dxcam.create()
         if region is not None:
@@ -288,34 +328,40 @@ def capture_screen(region=None) -> np.ndarray:
         logging.error(f"Failed to capture screen region {region}: {e}")
         return None, None
 
+
 def find_element_on_screen(element_image):
     """
     Locate the center coordinates of a template image on the current screen.
-    
+
     Parameters:
         element_image (str): Filesystem path to the template image to search for.
-    
+
     Returns:
         (x, y) tuple: Center coordinates of the matched region if a sufficiently strong match is found, `None` otherwise.
     """
     import time
+
     start_time = time.time()
     screen_bgr, screen_gray = capture_screen()
     if screen_gray is None:
         return None
     # Debug: Save screenshot with timestamp and sanitized element name
     try:
-        screenshots_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'screenshots')
+        screenshots_dir = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), "screenshots"
+        )
         if not os.path.exists(screenshots_dir):
             os.makedirs(screenshots_dir)
         element_base = os.path.basename(element_image)
         element_name = os.path.splitext(element_base)[0]
-        element_name = ''.join(c if c.isalnum() or c in ('-', '_') else '_' for c in element_name)
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        screenshot_filename = f"{timestamp}_{element_name}.png"
-        screenshot_path = os.path.join(screenshots_dir, screenshot_filename)
-        #cv2.imwrite(screenshot_path, screen_bgr)
-        #logging.info(f"Saved screenshot for debug: {screenshot_path}")
+        element_name = "".join(
+            c if c.isalnum() or c in ("-", "_") else "_" for c in element_name
+        )
+        #timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        #screenshot_filename = f"{timestamp}_{element_name}.png"
+        #screenshot_path = os.path.join(screenshots_dir, screenshot_filename)
+        # cv2.imwrite(screenshot_path, screen_bgr)
+        # logging.info(f"Saved screenshot for debug: {screenshot_path}")
     except Exception as e:
         logging.error(f"Failed to save debug screenshot: {e}")
 
@@ -329,7 +375,9 @@ def find_element_on_screen(element_image):
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
         match_end = time.time()
         threshold = 0.75  # Adjust as needed for reliability
-        logging.info(f"Template matching for {element_image} took {match_end - match_start:.3f}s (max_val={max_val:.2f})")
+        logging.info(
+            f"Template matching for {element_image} took {match_end - match_start:.3f}s (max_val={max_val:.2f})"
+        )
         if max_val >= threshold:
             h, w = template.shape[:2]
             center_x = max_loc[0] + w // 2
