@@ -67,8 +67,21 @@ def set_round_state(
         bool: True if the requested state was set successfully, False otherwise.
     """
     if find_in_region is None:
-        def find_in_region(template_path):
-            return _find_in_region(template_path, region)
+        def find_in_region(template_path, threshold=0.75):
+            # Custom version to return (found, max_val) for logging
+            template = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
+            if template is None:
+                logging.error(f"Template image not found: {template_path}")
+                return False, None
+            from .vision import capture_screen
+            left, top, right, bottom = region
+            width, height = right - left, bottom - top
+            _, screen_gray = capture_screen(region=(left, top, width, height))
+            if screen_gray is None:
+                return False, None
+            res = cv2.matchTemplate(screen_gray, template, cv2.TM_CCOEFF_NORMED)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+            return max_val >= threshold, max_val
 
     # Map state to image filename
     image_map = {
@@ -90,24 +103,32 @@ def set_round_state(
     for attempt in range(1, max_retries + 1):
         logging.info(f"[set_round_state] Attempt {attempt} for state '{state}'")
         if state == "fast":
-            if find_in_region(img_fast):
+            found, max_val = find_in_region(img_fast, threshold=0.93)
+            logging.info(f"[set_round_state] FAST: max_val={max_val}")
+            if found:
                 logging.info("Speed is already FAST.")
                 return True
             keyboard.press_and_release("space")
             time.sleep(delay)
         elif state == "slow":
-            if find_in_region(img_slow):
+            found, max_val = find_in_region(img_slow)
+            logging.info(f"[set_round_state] SLOW: max_val={max_val}")
+            if found:
                 logging.info("Speed is already SLOW.")
                 return True
             keyboard.press_and_release("space")
             time.sleep(delay)
         elif state == "start":
+            found, max_val = find_in_region(img_start)
+            logging.info(f"[set_round_state] START: max_val={max_val}")
             # Wait for start button, then ensure speed is fast
-            if find_in_region(img_start):
+            if found:
                 logging.info("Start button detected. Ensuring speed is FAST.")
                 # Try to set speed to fast
                 for _ in range(max_retries):
-                    if find_in_region(img_fast):
+                    found_fast, max_val_fast = find_in_region(img_fast, threshold=0.93)
+                    logging.info(f"[set_round_state] FAST (after START): max_val={max_val_fast}")
+                    if found_fast:
                         return True
                     keyboard.press_and_release("space")
                     time.sleep(delay)
@@ -238,10 +259,7 @@ def read_currency_amount(
             value = 0
 
         if debug:
-            logging.info(f"[OCR] Currency: {value}")
-            cv2.imshow("Currency Region", thresh)
-            cv2.waitKey(1000)  # Show for 1 second
-            cv2.destroyAllWindows()
+            logging.debug(f"[OCR] Currency: {value}")
 
     except KeyboardInterrupt:
         logging.info("[OCR] Stopped by user.")

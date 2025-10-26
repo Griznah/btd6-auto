@@ -4,21 +4,21 @@ import cv2
 import numpy as np
 import time
 import pytest
+import pygetwindow as gw
+
+# Import capture_screen from vision.py
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'btd6_auto'))
+from vision import capture_screen
 
 pytestmark = pytest.mark.skipif(
     not sys.platform.startswith("win"),
     reason="Actual automation only available on Windows"
 )
 
-# Import capture_screen from vision.py
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'btd6_auto'))
-from vision import capture_screen
-
 DATA_IMAGE_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'images')
 print(f"[INFO] Data image path: {DATA_IMAGE_PATH}")
 
 # Actual implementation for window activation (Windows-only)
-import pygetwindow as gw
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 try:
     from config import BTD6_WINDOW_TITLE
@@ -85,7 +85,7 @@ def main():
     print(f"[INFO] Loading template: {template_path}")
     template = cv2.imread(template_path)
     if template is None:
-        print(f"[ERROR] Failed to load template image.")
+        print("[ERROR] Failed to load template image.")
         sys.exit(1)
 
     print("[INFO] Performing template matching...")
