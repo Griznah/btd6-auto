@@ -99,7 +99,7 @@ def main() -> None:
         # Start the round
         try:
             set_round_state("slow")
-        except Exception as e:
+        except Exception:
             logging.exception("Unable to set round state(start map)")
 
         # Runtime loop: monitor currency until a condition is met or KILL_SWITCH is triggered
