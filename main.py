@@ -5,6 +5,7 @@ Windows-only version
 
 import logging
 import time
+#import sys
 
 # import numpy as np
 import pyautogui
@@ -67,6 +68,25 @@ def main() -> None:
             logging.error("Exiting due to failure to load map.")
             return
 
+
+        # Start currency reader thread
+        currency_reader = CurrencyReader()
+        currency_reader.start()
+
+        # Wait for first nonzero currency value or timeout (5 seconds)
+        ocr_timeout = 5.0
+        ocr_start = time.time()
+        while True:
+            currency = currency_reader.get_currency()
+            logging.info(f"currency in checker: {currency}")
+            if currency > 0:
+                #sys.exit(1)
+                break
+            if (time.time() - ocr_start) > ocr_timeout:
+                logging.exception("Timeout: OCR did not return a nonzero currency value within 5 seconds.")
+                break
+            time.sleep(0.1)
+
         # Place hero after map loads
         logging.info("Entry for hero placement")
         time.sleep(map_config.get("timing", {}).get("placement_delay", 0.5))
@@ -77,8 +97,25 @@ def main() -> None:
         place_hero(hero_pos, hero["key_binding"])
         time.sleep(map_config.get("timing", {}).get("placement_delay", 0.5))
 
+#        # Runtime loop: monitor currency until a condition is met or KILL_SWITCH is triggered
+#        monitor_duration = global_config.get("automation", {}).get(
+#            "monitor_duration", 1.0
+#        )  # seconds
+#        start_time = time.time()
+#        while not KILL_SWITCH:
+#            logging.info("Entrypoint for currency monitoring")
+#            currency = currency_reader.get_currency()
+#            logging.info(f"Current currency 01: {currency}")
+#            time.sleep(
+#                global_config.get("automation", {}).get("pause_between_actions", 0.2)
+#            )
+#            if (time.time() - start_time) > monitor_duration:
+#                break
+
         # Place pre-play monkeys before starting the map
         logging.info("Entry for pre_play_actions")
+        currency = currency_reader.get_currency()
+        logging.info(f"Current currency 02: {currency}")
         pre_play_actions = map_config.get("pre_play_actions", [])
         for action in sorted(pre_play_actions, key=lambda a: a.get("step", 0)):
             if action["action"] == "buy":
@@ -97,30 +134,23 @@ def main() -> None:
             "Opening hero and monkey sequence complete. Press ESC to exit at any time."
         )
 
+        currency = currency_reader.get_currency()
+        logging.info(f"Current currency 03: {currency}")
+
         # Start the round
         try:
-            set_round_state("slow")
+            set_round_state("start")
         except Exception:
             logging.exception("Unable to set round state(start map)")
 
-        # Start currency reader thread
-        currency_reader = CurrencyReader()
-        currency_reader.start()
-
-        # Runtime loop: monitor currency until a condition is met or KILL_SWITCH is triggered
-        monitor_duration = global_config.get("automation", {}).get(
-            "monitor_duration", 1.0
-        )  # seconds
-        start_time = time.time()
+        curr_check_count = 0
         while not KILL_SWITCH:
-            logging.info("Entrypoint for currency monitoring")
-            currency = currency_reader.get_currency()
-            logging.info(f"Current currency: {currency}")
-            time.sleep(
-                global_config.get("automation", {}).get("pause_between_actions", 0.2)
-            )
-            if (time.time() - start_time) > monitor_duration:
+            if curr_check_count >= 25:
                 break
+            currency = currency_reader.get_currency()
+            logging.info(f"Current currency 04: {currency}")
+            curr_check_count += 1
+            time.sleep(0.3)
 
         currency_reader.stop()
 
@@ -128,27 +158,27 @@ def main() -> None:
             logging.info("Kill switch activated. Exiting before actions.")
             return
 
-        # Place monkeys and upgrades as per actions, in order
-        for action in sorted(
-            map_config.get("actions", []), key=lambda a: a.get("step", 0)
-        ):
-            if KILL_SWITCH:
-                logging.info("Kill switch activated. Exiting during actions.")
-                return
-            if action["action"] == "buy":
-                monkey_pos = action["position"]
-                if isinstance(monkey_pos, dict):
-                    monkey_pos = (monkey_pos["x"], monkey_pos["y"])
-                key_binding = (
-                    action["key_binding"]
-                    if "key_binding" in action
-                    else global_config.get("default_monkey_key", "q")
-                )
-                place_monkey(monkey_pos, key_binding)
-                time.sleep(map_config.get("timing", {}).get("placement_delay", 0.5))
-            elif action["action"] == "upgrade":
-                # Implement upgrade logic here
-                time.sleep(map_config.get("timing", {}).get("upgrade_delay", 0.5))
+#        # Place monkeys and upgrades as per actions, in order
+#        for action in sorted(
+#            map_config.get("actions", []), key=lambda a: a.get("step", 0)
+#        ):
+#            if KILL_SWITCH:
+#                logging.info("Kill switch activated. Exiting during actions.")
+#                return
+#            if action["action"] == "buy":
+#                monkey_pos = action["position"]
+#                if isinstance(monkey_pos, dict):
+#                    monkey_pos = (monkey_pos["x"], monkey_pos["y"])
+#                key_binding = (
+#                    action["key_binding"]
+#                    if "key_binding" in action
+#                    else global_config.get("default_monkey_key", "q")
+#                )
+#                place_monkey(monkey_pos, key_binding)
+#                time.sleep(map_config.get("timing", {}).get("placement_delay", 0.5))
+#            elif action["action"] == "upgrade":
+#                # Implement upgrade logic here
+#                time.sleep(map_config.get("timing", {}).get("upgrade_delay", 0.5))
 
     except Exception as e:
         logging.exception(f"Automation error: {e}")
