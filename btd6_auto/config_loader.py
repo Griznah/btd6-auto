@@ -16,41 +16,54 @@ class ConfigLoader:
     def load_global_config() -> Dict[str, Any]:
         """
         Load the global configuration from the module's GLOBAL_CONFIG_PATH.
-        
         Returns:
             Dict[str, Any]: Parsed JSON content of the global configuration.
-        
         Raises:
             FileNotFoundError: If the global configuration file does not exist.
             json.JSONDecodeError: If the file contains invalid JSON.
         """
         with open(GLOBAL_CONFIG_PATH, 'r', encoding='utf-8') as f:
             return json.load(f)
-        """  
-        Load global configuration from global.json.  
-        Returns:  
-            Dict[str, Any]: Global configuration dictionary.  
-        Raises:  
-            FileNotFoundError: If global.json is missing.  
-            json.JSONDecodeError: If global.json is malformed.  
-        """
+
     @staticmethod
-    def load_map_config(map_name: str) -> Dict[str, Any]:
+    def get_map_filename(map_display_name: str) -> str:
         """
-        Load a map-specific configuration by name.
-        
+        Resolve the config filename for a given map display name using map_filenames in global config.
+        Handles case and space insensitivity for Windows compatibility.
         Parameters:
-            map_name (str): Map filename without extension; on Linux/macOS the case must match the filename.
-        
+            map_display_name (str): The display name of the map (e.g., 'Monkey Meadow').
+        Returns:
+            str: The config filename (e.g., 'monkey_meadow.json').
+        Raises:
+            KeyError: If the map display name is not found in the mapping.
+        """
+        def normalize(name: str) -> str:
+            return name.replace(" ", "").replace("'", "").lower()
+        global_config = ConfigLoader.load_global_config()
+        display_to_filename = {
+            normalize(v): k for k, v in global_config.get('map_filenames', {}).items()
+        }
+        normalized_input = normalize(map_display_name)
+        if normalized_input not in display_to_filename:
+            raise KeyError(f"Map display name not found in config: {map_display_name}")
+        return display_to_filename[normalized_input]
+
+    @staticmethod
+    def load_map_config(map_display_name: str) -> Dict[str, Any]:
+        """
+        Load a map-specific configuration by display name using the map_filenames mapping.
+        Parameters:
+            map_display_name (str): The display name of the map (e.g., 'Monkey Meadow').
         Returns:
             Dict[str, Any]: Parsed JSON configuration for the specified map.
-        
         Raises:
-            FileNotFoundError: If configs/maps/{map_name}.json does not exist.
+            FileNotFoundError: If the map config file does not exist or map display name is not found.
             json.JSONDecodeError: If the map configuration file contains invalid JSON.
         """
-        # Windows filenames are case-insensitive, but we use the exact name for clarity
-        filename = f"{map_name}.json"
+        try:
+            filename = ConfigLoader.get_map_filename(map_display_name)
+        except KeyError:
+            raise FileNotFoundError(f"Map config not found for display name: {map_display_name}")
         path = os.path.join(MAPS_DIR, filename)
         if not os.path.exists(path):
             raise FileNotFoundError(f"Map config not found: {path}")
@@ -61,14 +74,11 @@ class ConfigLoader:
     def validate_config(config: Dict[str, Any], required_fields: list) -> bool:
         """
         Validate that all required fields exist in the given configuration.
-        
         Parameters:
             config (Dict[str, Any]): Configuration dictionary to check.
             required_fields (list): Sequence of field names that must be present in `config`.
-        
         Returns:
             bool: `True` if all required fields are present.
-        
         Raises:
             ValueError: If any required fields are missing; the exception message lists the missing fields.
         """

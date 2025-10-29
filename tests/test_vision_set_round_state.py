@@ -3,7 +3,6 @@ Unit tests for set_round_state in vision.py
 """
 import sys
 import os
-import pytest
 from unittest import mock
 
 # Ensure btd6_auto is importable
@@ -57,5 +56,6 @@ def test_set_round_state_start_success(mock_keyboard):
     assert vision.set_round_state('start', find_in_region=_mock) is True
     mock_keyboard.press_and_release.assert_not_called()
 
-def test_set_round_state_invalid():
+@mock.patch('btd6_auto.vision.keyboard')
+def test_set_round_state_invalid(mock_keyboard):
     assert vision.set_round_state('invalid') is False

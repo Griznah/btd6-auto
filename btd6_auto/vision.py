@@ -66,9 +66,10 @@ def set_round_state(
     Returns:
         bool: True if the requested state was set successfully, False otherwise.
     """
-    if find_in_region is None:
-        def find_in_region(template_path, threshold=0.75):
-            # Custom version to return (found, max_val) for logging
+    def _find_in_region_adapter(template_path, threshold=0.75):
+        # Adapts test/mocked find_in_region to always accept threshold and return (found, max_val)
+        if find_in_region is None:
+            # Use the default implementation
             template = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
             if template is None:
                 logging.error(f"Template image not found: {template_path}")
@@ -82,6 +83,22 @@ def set_round_state(
             res = cv2.matchTemplate(screen_gray, template, cv2.TM_CCOEFF_NORMED)
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
             return max_val >= threshold, max_val
+        else:
+            import inspect
+            sig = inspect.signature(find_in_region)
+            params = sig.parameters
+            try:
+                if len(params) == 2:
+                    result = find_in_region(template_path, threshold)
+                else:
+                    result = find_in_region(template_path)
+            except TypeError:
+                result = find_in_region(template_path)
+            # If result is a tuple, return as is; if bool, convert to (bool, None)
+            if isinstance(result, tuple):
+                return result
+            else:
+                return result, None
 
     # Map state to image filename
     image_map = {
@@ -103,7 +120,7 @@ def set_round_state(
     for attempt in range(1, max_retries + 1):
         logging.info(f"[set_round_state] Attempt {attempt} for state '{state}'")
         if state == "fast":
-            found, max_val = find_in_region(img_fast, threshold=0.93)
+            found, max_val = _find_in_region_adapter(img_fast, threshold=0.93)
             logging.info(f"[set_round_state] FAST: max_val={max_val}")
             if found:
                 logging.info("Speed is already FAST.")
@@ -111,7 +128,7 @@ def set_round_state(
             keyboard.press_and_release("space")
             time.sleep(delay)
         elif state == "slow":
-            found, max_val = find_in_region(img_slow)
+            found, max_val = _find_in_region_adapter(img_slow)
             logging.info(f"[set_round_state] SLOW: max_val={max_val}")
             if found:
                 logging.info("Speed is already SLOW.")
@@ -119,14 +136,14 @@ def set_round_state(
             keyboard.press_and_release("space")
             time.sleep(delay)
         elif state == "start":
-            found, max_val = find_in_region(img_start)
+            found, max_val = _find_in_region_adapter(img_start)
             logging.info(f"[set_round_state] START: max_val={max_val}")
             # Wait for start button, then ensure speed is fast
             if found:
                 logging.info("Start button detected. Ensuring speed is FAST.")
                 # Try to set speed to fast
                 for _ in range(max_retries):
-                    found_fast, max_val_fast = find_in_region(img_fast, threshold=0.93)
+                    found_fast, max_val_fast = _find_in_region_adapter(img_fast, threshold=0.93)
                     logging.info(f"[set_round_state] FAST (after START): max_val={max_val_fast}")
                     if found_fast:
                         return True
