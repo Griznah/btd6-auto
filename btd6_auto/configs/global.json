@@ -97,5 +97,10 @@
     "max_consecutive_failures": 2,
     "recovery_delay": 1.0,
     "screenshot_on_error": true
+  },
+  "hotkeys": {
+    "Upgrade Path 1": "Comma",
+    "Upgrade Path 2": "Period",
+    "Upgrade Path 3": "Slash"
   }
 }
