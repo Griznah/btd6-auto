@@ -1,0 +1,118 @@
+"""
+Unit tests for btd6_auto.actions module and its integration in main automation flow.
+"""
+from unittest.mock import patch
+from btd6_auto.actions import ActionManager, can_afford
+
+# Sample configs for testing
+global_config = {
+    "default_monkey_key": "q",
+    "automation": {"logging_level": "INFO"}
+}
+
+map_config = {
+    "hero": {
+        "name": "Quincy",
+        "key_binding": "u",
+        "position": {"x": 100, "y": 200}
+    },
+    "pre_play_actions": [
+        {"step": 0, "action": "buy", "target": "Dart Monkey 01", "position": {"x": 10, "y": 20}, "key_binding": "q"},
+        {"step": 1, "action": "buy", "target": "Dart Monkey 02", "position": {"x": 30, "y": 40}, "key_binding": "q"}
+    ],
+    "actions": [
+        {"step": 2, "at_money": 75, "action": "upgrade", "target": "Dart Monkey 01", "upgrade_path": "0-0-1"},
+        {"step": 3, "at_money": 210, "action": "buy", "target": "Wizard Monkey 01", "position": {"x": 50, "y": 60}},
+    ],
+    "timing": {"placement_delay": 0.01, "upgrade_delay": 0.01}
+}
+
+def test_monkey_position_lookup():
+    am = ActionManager(map_config, global_config)
+    assert am.get_monkey_position("Dart Monkey 01") == (10, 20)
+    assert am.get_monkey_position("Dart Monkey 02") == (30, 40)
+    assert am.get_monkey_position("Wizard Monkey 01") == (50, 60)
+    assert am.get_monkey_position("Nonexistent") is None
+
+def test_get_next_action_and_mark_completed():
+    am = ActionManager(map_config, global_config)
+    assert am.get_next_action()["step"] == 2
+    am.mark_completed(2)
+    assert am.get_next_action()["step"] == 3
+    am.mark_completed(3)
+    assert am.get_next_action() is None
+
+def test_steps_remaining():
+    am = ActionManager(map_config, global_config)
+    assert am.steps_remaining() == 2
+    am.mark_completed(2)
+    assert am.steps_remaining() == 1
+    am.mark_completed(3)
+    assert am.steps_remaining() == 0
+
+def test_can_afford():
+    action = {"at_money": 100}
+    assert can_afford(150, action)
+    assert not can_afford(50, action)
+    assert can_afford(100, action)
+    # No at_money key
+    assert can_afford(0, {"action": "buy"})
+
+@patch("btd6_auto.actions.place_hero")
+@patch("btd6_auto.actions.place_monkey")
+def test_run_pre_play(mock_place_monkey, mock_place_hero):
+    am = ActionManager(map_config, global_config)
+    am.run_pre_play()
+    mock_place_hero.assert_called_once_with((100, 200), "u")
+    assert mock_place_monkey.call_count == 2
+    mock_place_monkey.assert_any_call((10, 20), "q")
+    mock_place_monkey.assert_any_call((30, 40), "q")
+
+@patch("btd6_auto.actions.place_monkey")
+def test_run_buy_action(mock_place_monkey):
+    am = ActionManager(map_config, global_config)
+    buy_action = {"step": 3, "action": "buy", "target": "Wizard Monkey 01", "position": {"x": 50, "y": 60}}
+    am.run_buy_action(buy_action)
+    mock_place_monkey.assert_called_once_with((50, 60), "q")
+
+@patch("time.sleep", return_value=None)
+def test_run_upgrade_action(mock_sleep):
+    am = ActionManager(map_config, global_config)
+    upgrade_action = {"step": 2, "action": "upgrade", "target": "Dart Monkey 01", "upgrade_path": "0-0-1"}
+    # Just check it logs and sleeps, no error
+    am.run_upgrade_action(upgrade_action)
+
+
+# --- Integration test for action manager orchestration logic ---
+@patch("btd6_auto.actions.place_monkey")
+@patch("btd6_auto.actions.place_hero")
+def test_action_manager_integration(mock_place_hero, mock_place_monkey):
+    # Simulate currency values for pre-play and main actions
+    currency_values = [0, 100, 100, 250, 250, 250]
+    currency_iter = iter(currency_values)
+    def fake_get_currency():
+        return next(currency_iter, 250)
+
+    am = ActionManager(map_config, global_config)
+    # Run pre-play actions
+    am.run_pre_play()
+    mock_place_hero.assert_called_once_with((100, 200), "u")
+    assert mock_place_monkey.call_count == 2
+    # Main action loop (simulate main.py logic)
+    steps_done = 0
+    while True:
+        next_action = am.get_next_action()
+        if not next_action:
+            break
+        currency = fake_get_currency()
+        if not can_afford(currency, next_action):
+            continue
+        if next_action["action"] == "buy":
+            am.run_buy_action(next_action)
+        elif next_action["action"] == "upgrade":
+            am.run_upgrade_action(next_action)
+        am.mark_completed(next_action["step"])
+        steps_done += 1
+    # Should have completed all steps
+    assert steps_done == 2
+    assert mock_place_monkey.call_count == 3  # 2 pre-play + 1 buy

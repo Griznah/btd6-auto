@@ -48,7 +48,8 @@
       "at_money": 210,
       "action": "buy",
       "target": "Wizard Monkey 01",
-      "position": { "x": 400, "y": 395 }
+      "position": { "x": 400, "y": 395 },
+      "key_binding": "a"
     },
     {
       "step": 3,
@@ -62,7 +63,8 @@
       "at_money": 700,
       "action": "buy",
       "target": "Spike Factory 01",
-      "position": { "x": 680, "y": 765 }
+      "position": { "x": 680, "y": 765 },
+      "key_binding": "j"
     },
     {
       "step": 5,

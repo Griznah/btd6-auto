@@ -1,0 +1,122 @@
+"""
+Action management and execution for BTD6 automation routines.
+
+This module defines the ActionManager class, which tracks and manages the current action list for a map run, provides lookup for monkey positions, and orchestrates execution of pre-play and buy actions. Low-level stateless helpers are kept as standalone functions for testability and clarity.
+"""
+
+from typing import Any, Dict, Optional, Tuple
+import logging
+import time
+from btd6_auto.monkey_manager import place_monkey, place_hero
+
+class ActionManager:
+    """
+    Manages the list of actions for a BTD6 map run, including pre-play and main actions.
+    Provides lookup for monkey positions and orchestrates action execution.
+    """
+    def __init__(self, map_config: Dict[str, Any], global_config: Dict[str, Any]):
+        self.map_config = map_config
+        self.global_config = global_config
+        self.actions = sorted(map_config.get("actions", []), key=lambda a: a.get("step", 0))
+        self.pre_play_actions = sorted(map_config.get("pre_play_actions", []), key=lambda a: a.get("step", 0))
+        self.hero = map_config.get("hero", {})
+        self.monkey_positions = self._build_monkey_position_lookup()
+        self.completed_steps = set()
+        self.timing = map_config.get("timing", {})
+
+    def _build_monkey_position_lookup(self) -> Dict[str, Tuple[int, int]]:
+        """
+        Build a lookup table for monkey positions from pre-play and buy actions.
+        Returns:
+            Dict[str, Tuple[int, int]]: Mapping from monkey name to (x, y) position.
+        """
+        lookup = {}
+        for action in self.pre_play_actions + self.actions:
+            if action.get("action") == "buy" and "target" in action and "position" in action:
+                pos = action["position"]
+                if isinstance(pos, dict):
+                    pos = (pos["x"], pos["y"])
+                lookup[action["target"]] = pos
+        return lookup
+
+    def get_next_action(self) -> Optional[Dict[str, Any]]:
+        """
+        Get the next pending action (lowest step not completed).
+        Returns:
+            The next action dict, or None if all actions are completed.
+        """
+        for action in self.actions:
+            if action.get("step") not in self.completed_steps:
+                return action
+        return None
+
+    def mark_completed(self, step: int) -> None:
+        """
+        Mark an action step as completed.
+        """
+        self.completed_steps.add(step)
+
+    def steps_remaining(self) -> int:
+        """
+        Return the number of steps left in the routine.
+        """
+        return len([a for a in self.actions if a.get("step") not in self.completed_steps])
+
+    def get_monkey_position(self, monkey_name: str) -> Optional[Tuple[int, int]]:
+        """
+        Lookup the position of a monkey by name.
+        """
+        return self.monkey_positions.get(monkey_name)
+
+    def run_pre_play(self) -> None:
+        """
+        Execute pre-play actions, including hero placement and monkey buys.
+        """
+        # Place hero
+        hero = self.hero
+        if hero and "position" in hero and "key_binding" in hero:
+            pos = hero["position"]
+            if isinstance(pos, dict):
+                pos = (pos["x"], pos["y"])
+            logging.info(f"Placing hero {hero.get('name', '')} at {pos}")
+            place_hero(pos, hero["key_binding"])
+            time.sleep(self.timing.get("placement_delay", 0.5))
+        # Place pre-play monkeys
+        for action in self.pre_play_actions:
+            if action.get("action") == "buy":
+                pos = action["position"]
+                if isinstance(pos, dict):
+                    pos = (pos["x"], pos["y"])
+                key_binding = action.get("key_binding", self.global_config.get("default_monkey_key", "q"))
+                logging.info(f"Placing {action['target']} at {pos}")
+                place_monkey(pos, key_binding)
+                time.sleep(self.timing.get("placement_delay", 0.5))
+
+    def run_buy_action(self, action: Dict[str, Any]) -> None:
+        """
+        Execute a buy action (place a monkey at a position).
+        """
+        pos = action["position"]
+        if isinstance(pos, dict):
+            pos = (pos["x"], pos["y"])
+        key_binding = action.get("key_binding", self.global_config.get("default_monkey_key", "q"))
+        logging.info(f"Placing {action['target']} at {pos}")
+        place_monkey(pos, key_binding)
+        time.sleep(self.timing.get("placement_delay", 0.5))
+
+    def run_upgrade_action(self, action: Dict[str, Any]) -> None:
+        """
+        Dummy function for upgrade actions. To be implemented.
+        """
+        logging.info(f"[DUMMY] Would upgrade {action['target']} to {action.get('upgrade_path', '')}")
+        time.sleep(self.timing.get("upgrade_delay", 0.5))
+
+# --- Stateless helpers ---
+def can_afford(current_money: int, action: Dict[str, Any]) -> bool:
+    """
+    Dummy check if we can afford an action. Replace with real price logic.
+    """
+    at_money = action.get("at_money", 0)
+    return current_money >= at_money
+
+# Add more stateless helpers as needed.
