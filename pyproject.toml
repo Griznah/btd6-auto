@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "btd6-auto"
+version = "0.1.0"
+description = "Automation bot for Bloons Tower Defense 6 (BTD6) on Windows"
+requires-python = ">=3.12"
+dependencies = [
+  "pyautogui>=0.9.54",
+  "opencv-python",
+  "numpy>=2.0,<3.0",
+  "Pillow>=11.3.0",
+  "pyscreeze",
+  "pynput",
+  "pygetwindow",
+  "keyboard",
+  "dxcam>=0.0.5",
+  "pywin32>=311",
+  "easyocr>=1.7.2",
+]
