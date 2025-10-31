@@ -1,5 +1,5 @@
 @echo off
-SET ENV_NAME=btd6env
+SET ENV_NAME=.venv
 
 REM Create the virtual environment if it doesn't exist
 IF NOT EXIST "%ENV_NAME%\Scripts\activate.bat" (
