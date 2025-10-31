@@ -1,0 +1,1712 @@
+{
+  "monkeys": {
+    "Primary": {
+      "Dart Monkey": {
+        "cost": {
+          "Easy": 170,
+          "Medium": 200,
+          "Hard": 215,
+          "Impoppable": 240
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Sharp Shots",
+              "cost": {"Easy": 95, "Medium": 110, "Hard": 120, "Impoppable": 130}
+            },
+            {
+              "name": "Razor Sharp Shots",
+              "cost": {"Easy": 190, "Medium": 225, "Hard": 245, "Impoppable": 270}
+            },
+            {
+              "name": "Spike-O-Pult",
+              "cost": {"Easy": 340, "Medium": 400, "Hard": 430, "Impoppable": 480}
+            },
+            {
+              "name": "Juggernaut",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "Ultra-Juggernaut",
+              "cost": {"Easy": 8500, "Medium": 10000, "Hard": 10800, "Impoppable": 12000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Quick Shots",
+              "cost": {"Easy": 95, "Medium": 110, "Hard": 120, "Impoppable": 130}
+            },
+            {
+              "name": "Very Quick Shots",
+              "cost": {"Easy": 230, "Medium": 275, "Hard": 300, "Impoppable": 330}
+            },
+            {
+              "name": "Triple Shot",
+              "cost": {"Easy": 340, "Medium": 400, "Hard": 430, "Impoppable": 480}
+            },
+            {
+              "name": "Super Monkey Fan Club",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Plasma Monkey Fan Club",
+              "cost": {"Easy": 21250, "Medium": 25000, "Hard": 27000, "Impoppable": 30000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Long Range Darts",
+              "cost": {"Easy": 75, "Medium": 90, "Hard": 95, "Impoppable": 110}
+            },
+            {
+              "name": "Enhanced Eyesight",
+              "cost": {"Easy": 120, "Medium": 140, "Hard": 150, "Impoppable": 170}
+            },
+            {
+              "name": "Crossbow",
+              "cost": {"Easy": 595, "Medium": 700, "Hard": 755, "Impoppable": 840}
+            },
+            {
+              "name": "Sharp Shooter",
+              "cost": {"Easy": 1275, "Medium": 1500, "Hard": 1620, "Impoppable": 1800}
+            },
+            {
+              "name": "Crossbow Master",
+              "cost": {"Easy": 12750, "Medium": 15000, "Hard": 16200, "Impoppable": 18000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Apex Plasma Master",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Boomerang Monkey": {
+        "cost": {
+          "Easy": 255,
+          "Medium": 300,
+          "Hard": 325,
+          "Impoppable": 360
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Improved Rangs",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Glaives",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Glaive Ricochet",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "M.O.A.R. Glaives",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Glaive Lord",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Faster Rangs",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Faster Throwing",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Bionic Boomerang",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Turbo Charge",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Perma Charge",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Long Range Rangs",
+              "cost": {"Easy": 85, "Medium": 100, "Hard": 110, "Impoppable": 120}
+            },
+            {
+              "name": "Red Hot Rangs",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Kylie Boomerang",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "MOAB Press",
+              "cost": {"Easy": 2125, "Medium": 2500, "Hard": 2700, "Impoppable": 3000}
+            },
+            {
+              "name": "MOAB Domination",
+              "cost": {"Easy": 17000, "Medium": 20000, "Hard": 21600, "Impoppable": 24000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Glaive Dominus",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Bomb Shooter": {
+        "cost": {
+          "Easy": 425,
+          "Medium": 500,
+          "Hard": 540,
+          "Impoppable": 600
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Bigger Bombs",
+              "cost": {"Easy": 190, "Medium": 225, "Hard": 245, "Impoppable": 270}
+            },
+            {
+              "name": "Heavy Bombs",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Really Big Bombs",
+              "cost": {"Easy": 850, "Medium": 1000, "Hard": 1080, "Impoppable": 1200}
+            },
+            {
+              "name": "Bloon Impact",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3780, "Impoppable": 4200}
+            },
+            {
+              "name": "Bloon Crush",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Faster Reload",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Missile Launcher",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "MOAB Mauler",
+              "cost": {"Easy": 1275, "Medium": 1500, "Hard": 1620, "Impoppable": 1800}
+            },
+            {
+              "name": "MOAB Assassin",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3780, "Impoppable": 4200}
+            },
+            {
+              "name": "MOAB Eliminator",
+              "cost": {"Easy": 21250, "Medium": 25000, "Hard": 27000, "Impoppable": 30000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Extra Range",
+              "cost": {"Easy": 85, "Medium": 100, "Hard": 110, "Impoppable": 120}
+            },
+            {
+              "name": "Frag Bombs",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Cluster Bombs",
+              "cost": {"Easy": 595, "Medium": 700, "Hard": 755, "Impoppable": 840}
+            },
+            {
+              "name": "Recursive Cluster",
+              "cost": {"Easy": 1275, "Medium": 1500, "Hard": 1620, "Impoppable": 1800}
+            },
+            {
+              "name": "Bomb Blitz",
+              "cost": {"Easy": 12750, "Medium": 15000, "Hard": 16200, "Impoppable": 18000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Goliath Doomship",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Tack Shooter": {
+        "cost": {
+          "Easy": 255,
+          "Medium": 300,
+          "Hard": 325,
+          "Impoppable": 360
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Faster Shooting",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Even Faster Shooting",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Tack Sprayer",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Ring of Fire",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "Inferno Ring",
+              "cost": {"Easy": 12750, "Medium": 15000, "Hard": 16200, "Impoppable": 18000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Long Range Tacks",
+              "cost": {"Easy": 85, "Medium": 100, "Hard": 110, "Impoppable": 120}
+            },
+            {
+              "name": "Super Range Tacks",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Blade Shooter",
+              "cost": {"Easy": 510, "Medium": 600, "Hard": 645, "Impoppable": 720}
+            },
+            {
+              "name": "Blade Maelstrom",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Super Maelstrom",
+              "cost": {"Easy": 17000, "Medium": 20000, "Hard": 21600, "Impoppable": 24000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "More Tacks",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Even More Tacks",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Tack Attack",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "The Tack Zone",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Super Brittle",
+              "cost": {"Easy": 21250, "Medium": 25000, "Hard": 27000, "Impoppable": 30000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "The Bloon Solver",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Ice Monkey": {
+        "cost": {
+          "Easy": 425,
+          "Medium": 500,
+          "Hard": 540,
+          "Impoppable": 600
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Permafrost",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Cold Snap",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Ice Shards",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Glacier",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "Arctic Wind",
+              "cost": {"Easy": 12750, "Medium": 15000, "Hard": 16200, "Impoppable": 18000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Enhanced Freeze",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Deep Freeze",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Arctic Wind",
+              "cost": {"Easy": 850, "Medium": 1000, "Hard": 1080, "Impoppable": 1200}
+            },
+            {
+              "name": "Snowstorm",
+              "cost": {"Easy": 2125, "Medium": 2500, "Hard": 2700, "Impoppable": 3000}
+            },
+            {
+              "name": "Absolute Zero",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Larger Radius",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Re-Freeze",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Cryo Cannon",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Icicles",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "Super Brittle",
+              "cost": {"Easy": 21250, "Medium": 25000, "Hard": 27000, "Impoppable": 30000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Absolute Zero",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Glue Gunner": {
+        "cost": {
+          "Easy": 255,
+          "Medium": 300,
+          "Hard": 325,
+          "Impoppable": 360
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Glue Soak",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Corrosive Glue",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Bloon Dissolver",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Bloon Liquefier",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "The Bloon Solver",
+              "cost": {"Easy": 12750, "Medium": 15000, "Hard": 16200, "Impoppable": 18000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Bigger Globs",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Glue Splatter",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Glue Hose",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Glue Strike",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Glue Storm",
+              "cost": {"Easy": 17000, "Medium": 20000, "Hard": 21600, "Impoppable": 24000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Stickier Glue",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Stronger Glue",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "MOAB Glue",
+              "cost": {"Easy": 850, "Medium": 1000, "Hard": 1080, "Impoppable": 1200}
+            },
+            {
+              "name": "Relentless Glue",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "Super Glue",
+              "cost": {"Easy": 21250, "Medium": 25000, "Hard": 27000, "Impoppable": 30000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Glaive Dominus",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      }
+    },
+    "Military": {
+      "Sniper Monkey": {
+        "cost": {
+          "Easy": 340,
+          "Medium": 400,
+          "Hard": 430,
+          "Impoppable": 480
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Full Metal Jacket",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Large Calibre",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Deadly Precision",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Maim MOAB",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Cripple MOAB",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Night Vision Goggles",
+              "cost": {"Easy": 85, "Medium": 100, "Hard": 110, "Impoppable": 120}
+            },
+            {
+              "name": "Shrapnel Shot",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Bouncing Bullet",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Supply Drop",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Elite Sniper",
+              "cost": {"Easy": 17000, "Medium": 20000, "Hard": 21600, "Impoppable": 24000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Faster Firing",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Even Faster Firing",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Semi-Automatic",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Full Auto Rifle",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "Elite Defender",
+              "cost": {"Easy": 12750, "Medium": 15000, "Hard": 16200, "Impoppable": 18000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Navarch of the Seas",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Monkey Sub": {
+        "cost": {
+          "Easy": 340,
+          "Medium": 400,
+          "Hard": 430,
+          "Impoppable": 480
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Longer Range",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Advanced Intel",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Submerge and Support",
+              "cost": {"Easy": 850, "Medium": 1000, "Hard": 1080, "Impoppable": 1200}
+            },
+            {
+              "name": "Energizer",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Pre-emptive Strike",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Barbed Darts",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Heat-Tipped Darts",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Ballistic Missile",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "First Strike Capability",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Pre-emptive Strike",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Twin Guns",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Airburst Darts",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Triple Guns",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Armor Piercing Darts",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "Sub Commander",
+              "cost": {"Easy": 12750, "Medium": 15000, "Hard": 16200, "Impoppable": 18000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Navarch of the Seas",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Monkey Buccaneer": {
+        "cost": {
+          "Easy": 425,
+          "Medium": 500,
+          "Hard": 540,
+          "Impoppable": 600
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Faster Shooting",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Double Shot",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Destroyer",
+              "cost": {"Easy": 1275, "Medium": 1500, "Hard": 1620, "Impoppable": 1800}
+            },
+            {
+              "name": "Aircraft Carrier",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Carrier Flagship",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Long Range",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Crow's Nest",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Merchantman",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Favored Trades",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Trade Empire",
+              "cost": {"Easy": 17000, "Medium": 20000, "Hard": 21600, "Impoppable": 24000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Hot Shot",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Cannon Ship",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Monkey Pirates",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "Pirate Lord",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Navarch of the Seas",
+              "cost": {"Easy": 42500, "Medium": 50000, "Hard": 54000, "Impoppable": 60000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Navarch of the Seas",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Monkey Ace": {
+        "cost": {
+          "Easy": 680,
+          "Medium": 800,
+          "Hard": 860,
+          "Impoppable": 960
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Rapid Fire",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Lots More Darts",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Fighter Plane",
+              "cost": {"Easy": 1275, "Medium": 1500, "Hard": 1620, "Impoppable": 1800}
+            },
+            {
+              "name": "Operation: Dart Storm",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Sky Shredder",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Exploding Pineapple",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Spy Plane",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Bomber Ace",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Ground Zero",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Tsar Bomba",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Sharper Darts",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Centered Path",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Neva-Miss Targeting",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Spectre",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Flying Fortress",
+              "cost": {"Easy": 34000, "Medium": 40000, "Hard": 43200, "Impoppable": 48000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Goliath Doomship",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Heli Pilot": {
+        "cost": {
+          "Easy": 1275,
+          "Medium": 1500,
+          "Hard": 1620,
+          "Impoppable": 1800
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Bigger Jets",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "IFR",
+              "cost": {"Easy": 340, "Medium": 400, "Hard": 430, "Impoppable": 480}
+            },
+            {
+              "name": "Dart Storm",
+              "cost": {"Easy": 1275, "Medium": 1500, "Hard": 1620, "Impoppable": 1800}
+            },
+            {
+              "name": "Operation: Dart Storm",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Sky Shredder",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Faster Darts",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Faster Firing",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "MOAB Shove",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Apache Dartship",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Apache Prime",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Pursuit",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Razor Rotors",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Downdraft",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Support Chinook",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "Special Poperations",
+              "cost": {"Easy": 12750, "Medium": 15000, "Hard": 16200, "Impoppable": 18000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Goliath Doomship",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      }
+    },
+    "Magic": {
+      "Wizard Monkey": {
+        "cost": {
+          "Easy": 425,
+          "Medium": 500,
+          "Hard": 540,
+          "Impoppable": 600
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Fireball",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Wall of Fire",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Dragon's Breath",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Summon Phoenix",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Wizard Lord Phoenix",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Arcane Spike",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Arcane Blast",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Arcane Mastery",
+              "cost": {"Easy": 850, "Medium": 1000, "Hard": 1080, "Impoppable": 1200}
+            },
+            {
+              "name": "Arcane Spike",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Archmage",
+              "cost": {"Easy": 21250, "Medium": 25000, "Hard": 27000, "Impoppable": 30000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Intense Magic",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Monkey Sense",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Shimmer",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Necromancer: Unpopped Army",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "Prince of Darkness",
+              "cost": {"Easy": 12750, "Medium": 15000, "Hard": 16200, "Impoppable": 18000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Glaive Dominus",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Super Monkey": {
+        "cost": {
+          "Easy": 2125,
+          "Medium": 2500,
+          "Hard": 2700,
+          "Impoppable": 3000
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Laser Blasts",
+              "cost": {"Easy": 340, "Medium": 400, "Hard": 430, "Impoppable": 480}
+            },
+            {
+              "name": "Plasma Blasts",
+              "cost": {"Easy": 510, "Medium": 600, "Hard": 650, "Impoppable": 720}
+            },
+            {
+              "name": "Sun Avatar",
+              "cost": {"Easy": 2550, "Medium": 3000, "Hard": 3240, "Impoppable": 3600}
+            },
+            {
+              "name": "Sun Temple",
+              "cost": {"Easy": 34000, "Medium": 40000, "Hard": 43200, "Impoppable": 48000}
+            },
+            {
+              "name": "True Sun God",
+              "cost": {"Easy": 340000, "Medium": 400000, "Hard": 432000, "Impoppable": 480000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Epic Range",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Robo Monkey",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Tech Terror",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "The Anti-Bloon",
+              "cost": {"Easy": 34000, "Medium": 40000, "Hard": 43200, "Impoppable": 48000}
+            },
+            {
+              "name": "Legend of the Night",
+              "cost": {"Easy": 340000, "Medium": 400000, "Hard": 432000, "Impoppable": 480000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Knockback",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Ultravision",
+              "cost": {"Easy": 340, "Medium": 400, "Hard": 430, "Impoppable": 480}
+            },
+            {
+              "name": "Dark Knight",
+              "cost": {"Easy": 2550, "Medium": 3000, "Hard": 3240, "Impoppable": 3600}
+            },
+            {
+              "name": "Dark Champion",
+              "cost": {"Easy": 12750, "Medium": 15000, "Hard": 16200, "Impoppable": 18000}
+            },
+            {
+              "name": "The Anti-Bloon",
+              "cost": {"Easy": 34000, "Medium": 40000, "Hard": 43200, "Impoppable": 48000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Apex Plasma Master",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Ninja Monkey": {
+        "cost": {
+          "Easy": 425,
+          "Medium": 500,
+          "Hard": 540,
+          "Impoppable": 600
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Ninja Discipline",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Sharp Shurikens",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Double Shot",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Bloonjitsu",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Grandmaster Ninja",
+              "cost": {"Easy": 17000, "Medium": 20000, "Hard": 21600, "Impoppable": 24000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Distraction",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Counter-Espionage",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Shinobi Tactics",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Bloon Sabotage",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "Grand Saboteur",
+              "cost": {"Easy": 12750, "Medium": 15000, "Hard": 16200, "Impoppable": 18000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Seeking Shuriken",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Caltrops",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Flash Bomb",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Sticky Bomb",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "Master Bomber",
+              "cost": {"Easy": 12750, "Medium": 15000, "Hard": 16200, "Impoppable": 18000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Ascended Shadow",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Alchemist": {
+        "cost": {
+          "Easy": 510,
+          "Medium": 600,
+          "Hard": 650,
+          "Impoppable": 720
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Larger Potions",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Acid Pool",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Berserker Brew",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Stronger Stimulant",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Permanent Brew",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Stronger Acid",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Perishing Potions",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Unstable Concoction",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Transforming Tonic",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Total Transformation",
+              "cost": {"Easy": 17000, "Medium": 20000, "Hard": 21600, "Impoppable": 24000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Faster Throwing",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Acidic Mixture Dip",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Berserker Brew",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Stronger Stimulant",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "Permanent Brew",
+              "cost": {"Easy": 12750, "Medium": 15000, "Hard": 16200, "Impoppable": 18000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Master Alchemist",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Druid": {
+        "cost": {
+          "Easy": 340,
+          "Medium": 400,
+          "Hard": 430,
+          "Impoppable": 480
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Heart of Thunder",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Druid of the Storm",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Ball Lightning",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Superstorm",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Spirit of the Forest",
+              "cost": {"Easy": 21250, "Medium": 25000, "Hard": 27000, "Impoppable": 30000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Thorn Swarm",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Heart of Oak",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Druid of the Jungle",
+              "cost": {"Easy": 850, "Medium": 1000, "Hard": 1080, "Impoppable": 1200}
+            },
+            {
+              "name": "Jungle's Bounty",
+              "cost": {"Easy": 2125, "Medium": 2500, "Hard": 2700, "Impoppable": 3000}
+            },
+            {
+              "name": "Spirit of the Forest",
+              "cost": {"Easy": 17000, "Medium": 20000, "Hard": 21600, "Impoppable": 24000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Druid of Wrath",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Poplust",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Heart of Vengeance",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Avatar of Wrath",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Superstorm",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Master Alchemist",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      }
+    },
+    "Support": {
+      "Banana Farm": {
+        "cost": {
+          "Easy": 1020,
+          "Medium": 1200,
+          "Hard": 1300,
+          "Impoppable": 1440
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Increased Production",
+              "cost": {"Easy": 510, "Medium": 600, "Hard": 650, "Impoppable": 720}
+            },
+            {
+              "name": "Greater Production",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Banana Plantation",
+              "cost": {"Easy": 2550, "Medium": 3000, "Hard": 3240, "Impoppable": 3600}
+            },
+            {
+              "name": "Banana Research Facility",
+              "cost": {"Easy": 8500, "Medium": 10000, "Hard": 10800, "Impoppable": 12000}
+            },
+            {
+              "name": "Banana Central",
+              "cost": {"Easy": 51000, "Medium": 60000, "Hard": 64800, "Impoppable": 72000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Long Life Bananas",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Valuable Bananas",
+              "cost": {"Easy": 765, "Medium": 900, "Hard": 970, "Impoppable": 1080}
+            },
+            {
+              "name": "Monkey Bank",
+              "cost": {"Easy": 2550, "Medium": 3000, "Hard": 3240, "Impoppable": 3600}
+            },
+            {
+              "name": "IMF Loan",
+              "cost": {"Easy": 5950, "Medium": 7000, "Hard": 7560, "Impoppable": 8400}
+            },
+            {
+              "name": "Monkey-Nomics",
+              "cost": {"Easy": 34000, "Medium": 40000, "Hard": 43200, "Impoppable": 48000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "EZ-Collect",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Banana Salvage",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Marketplace",
+              "cost": {"Easy": 1275, "Medium": 1500, "Hard": 1620, "Impoppable": 1800}
+            },
+            {
+              "name": "Central Market",
+              "cost": {"Easy": 2550, "Medium": 3000, "Hard": 3240, "Impoppable": 3600}
+            },
+            {
+              "name": "Monkey Wall Street",
+              "cost": {"Easy": 17000, "Medium": 20000, "Hard": 21600, "Impoppable": 24000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Master Builder",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Spike Factory": {
+        "cost": {
+          "Easy": 680,
+          "Medium": 800,
+          "Hard": 860,
+          "Impoppable": 960
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Bigger Stacks",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "White Hot Spikes",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Spiked Balls",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Spike Storm",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Super Mines",
+              "cost": {"Easy": 42500, "Medium": 50000, "Hard": 54000, "Impoppable": 60000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Faster Production",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Even Faster Production",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "MOAB SHREDR",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Spike Storm",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Carpet of Spikes",
+              "cost": {"Easy": 25500, "Medium": 30000, "Hard": 32400, "Impoppable": 36000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Smart Spikes",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Long Reach",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Deadly Spikes",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Perma-Spike",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Super Mines",
+              "cost": {"Easy": 34000, "Medium": 40000, "Hard": 43200, "Impoppable": 48000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Master Builder",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Monkey Village": {
+        "cost": {
+          "Easy": 1020,
+          "Medium": 1200,
+          "Hard": 1300,
+          "Impoppable": 1440
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Bigger Radius",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Jungle Drums",
+              "cost": {"Easy": 425, "Medium": 500, "Hard": 540, "Impoppable": 600}
+            },
+            {
+              "name": "Primary Training",
+              "cost": {"Easy": 1275, "Medium": 1500, "Hard": 1620, "Impoppable": 1800}
+            },
+            {
+              "name": "Primary Mentoring",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Primary Expertise",
+              "cost": {"Easy": 17000, "Medium": 20000, "Hard": 21600, "Impoppable": 24000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Monkey Business",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Monkey Commerce",
+              "cost": {"Easy": 425, "Medium": 500, "Hard": 540, "Impoppable": 600}
+            },
+            {
+              "name": "Monkey City",
+              "cost": {"Easy": 1275, "Medium": 1500, "Hard": 1620, "Impoppable": 1800}
+            },
+            {
+              "name": "Monkeyopolis",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Monkey Wall Street",
+              "cost": {"Easy": 17000, "Medium": 20000, "Hard": 21600, "Impoppable": 24000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Call to Arms",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Monkey Intelligence Bureau",
+              "cost": {"Easy": 510, "Medium": 600, "Hard": 650, "Impoppable": 720}
+            },
+            {
+              "name": "Monkey Fort",
+              "cost": {"Easy": 1275, "Medium": 1500, "Hard": 1620, "Impoppable": 1800}
+            },
+            {
+              "name": "Sentry Gun",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Sentry Champion",
+              "cost": {"Easy": 17000, "Medium": 20000, "Hard": 21600, "Impoppable": 24000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Master Builder",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      },
+      "Engineer Monkey": {
+        "cost": {
+          "Easy": 595,
+          "Medium": 700,
+          "Hard": 755,
+          "Impoppable": 840
+        },
+        "upgrades": {
+          "path_1": [
+            {
+              "name": "Larger Service Area",
+              "cost": {"Easy": 170, "Medium": 200, "Hard": 215, "Impoppable": 240}
+            },
+            {
+              "name": "Deconstruction",
+              "cost": {"Easy": 255, "Medium": 300, "Hard": 325, "Impoppable": 360}
+            },
+            {
+              "name": "Sentry Gun",
+              "cost": {"Easy": 1020, "Medium": 1200, "Hard": 1300, "Impoppable": 1440}
+            },
+            {
+              "name": "Sentry Champion",
+              "cost": {"Easy": 3400, "Medium": 4000, "Hard": 4300, "Impoppable": 4800}
+            },
+            {
+              "name": "Master Builder",
+              "cost": {"Easy": 42500, "Medium": 50000, "Hard": 54000, "Impoppable": 60000}
+            }
+          ],
+          "path_2": [
+            {
+              "name": "Faster Engineering",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Sprockets",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Faster Engineering",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Ultra-Boost",
+              "cost": {"Easy": 2975, "Medium": 3500, "Hard": 3800, "Impoppable": 4200}
+            },
+            {
+              "name": "Master Builder",
+              "cost": {"Easy": 34000, "Medium": 40000, "Hard": 43200, "Impoppable": 48000}
+            }
+          ],
+          "path_3": [
+            {
+              "name": "Oversize Nails",
+              "cost": {"Easy": 130, "Medium": 150, "Hard": 165, "Impoppable": 180}
+            },
+            {
+              "name": "Pin",
+              "cost": {"Easy": 195, "Medium": 230, "Hard": 245, "Impoppable": 275}
+            },
+            {
+              "name": "Double Gun",
+              "cost": {"Easy": 680, "Medium": 800, "Hard": 860, "Impoppable": 960}
+            },
+            {
+              "name": "Bloon Trap",
+              "cost": {"Easy": 1700, "Medium": 2000, "Hard": 2150, "Impoppable": 2400}
+            },
+            {
+              "name": "XXXL Trap",
+              "cost": {"Easy": 12750, "Medium": 15000, "Hard": 16200, "Impoppable": 18000}
+            }
+          ]
+        },
+        "paragon": {
+          "name": "Master Builder",
+          "cost": {
+            "Easy": 500000,
+            "Medium": 500000,
+            "Hard": 500000,
+            "Impoppable": 500000
+          }
+        }
+      }
+    }
+  }
+}
