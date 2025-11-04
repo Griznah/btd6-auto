@@ -15,24 +15,24 @@ def esc_listener():
     """
     Start a keyboard listener that triggers a killswitch when the Escape key is pressed.
     
-    On Escape press, sets config.KILL_SWITCH to True and immediately terminates the process (Windows-only).
+    On Escape press, sets KILL_SWITCH to True and immediately terminates the process (Windows-only).
     
     Returns:
         pynput.keyboard.Listener: The started listener instance.
     """
-    from btd6_auto import config
     def on_press(key):
         """
         Handle a keyboard key press and trigger an immediate hard shutdown when ESC is pressed.
         
-        If the pressed key is the ESC key, logs an informational message, sets config.KILL_SWITCH to True, and immediately terminates the process using os._exit(0).
+        If the pressed key is the ESC key, logs an informational message, sets KILL_SWITCH to True (using globals()), and immediately terminates the process using os._exit(0).
         
         Parameters:
             key: The key event object received from the keyboard listener.
         """
         if key == pynput_keyboard.Key.esc:
             logging.info("ESC pressed! Exiting...")
-            config.KILL_SWITCH = True
+            # Set the global KILL_SWITCH variable
+            globals()["KILL_SWITCH"] = True
             # Hard terminate the process immediately
             os._exit(0)
     listener = pynput_keyboard.Listener(on_press=on_press)
