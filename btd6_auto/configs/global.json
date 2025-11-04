@@ -5,7 +5,7 @@
     "killswitch_key": "esc",
     "monitor_duration": 1,
     "logging_level": "INFO"
-    },
+  },
   "map_filenames": {
     "midnight_mansion.json": "Midnight Mansion",
     "sunken_columns.json": "Sunken Columns",
@@ -91,7 +91,9 @@
   "image_recognition": {
     "confidence_threshold": 0.8,
     "template_matching_method": "cv2.TM_CCOEFF_NORMED",
-    "screenshot_delay": 0.2
+    "screenshot_delay": 0.2,
+    "capture_screen_retry": 2,
+    "capture_screen_delay": 1.0
   },
   "error_handling": {
     "max_consecutive_failures": 2,

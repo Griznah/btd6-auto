@@ -2,7 +2,6 @@
   "python.terminal.activateEnvInCurrentTerminal": true,
   "python.terminal.activateEnvironment": true,
   "python-envs.pythonProjects": [
-
   ],
   "python.testing.pytestArgs": [
     "tests"

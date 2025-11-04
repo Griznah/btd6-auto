@@ -69,16 +69,14 @@ def main() -> None:
         currency_reader.start()
 
         # Show overlay message "Loading the CurrencyReader" for 3 seconds
-        show_overlay_text("Loading the CurrencyReader 03", 1)
-        show_overlay_text("Loading the CurrencyReader 02", 1)
-        show_overlay_text("Loading the CurrencyReader 01", 1)
+        show_overlay_text("Loading the CurrencyReader", 3)
 
         # Wait for first nonzero currency value or timeout (5 seconds)
         ocr_timeout = 5.0
         ocr_start = time.time()
         while True:
             currency = currency_reader.get_currency()
-            logging.info(f"currency in checker: {currency}")
+            #logging.info(f"currency in checker: {currency}")
             if currency > 0:
                 break
             if (time.time() - ocr_start) > ocr_timeout:
