@@ -2,15 +2,18 @@
 Handles launching the game and map selection.
 """
 
+# Standard library imports
 import logging
 import os
+import time
 
+# Third-party imports
+import pyautogui
+import pygetwindow as gw
+
+# Local imports
 from .input import click
-from .overlay import (
-    show_overlay_text,  # pyright: ignore[reportUnusedImport]  # noqa: F401
-)
-
-## Config values are now passed in as arguments
+from .overlay import show_overlay_text  # pyright: ignore[reportUnusedImport]  # noqa: F401
 from .vision import capture_screen, find_element_on_screen, is_mostly_black
 
 DATA_IMAGE_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "images")
@@ -50,14 +53,11 @@ def load_map(map_config: dict, global_config: dict) -> bool:
         logging.error("BTD6 window not activated.")
         return False
 
-    import time
-
-    import pyautogui
+    # ...existing code...
 
     # Step 1: Click 'Play' button using image matching
     logging.info("Entry for map selection")
     play_img = get_image_path("button_play1080p.png")
-    screen = capture_screen()
     play_coords = find_element_on_screen(play_img)
     if play_coords:
         click(*play_coords)
@@ -83,7 +83,6 @@ def load_map(map_config: dict, global_config: dict) -> bool:
     logging.info("Clicked at (550, 350) to select map.")
     time.sleep(0.5)  # let next screen load
 
-    # Step 4: Continue with difficulty and mode selection using image matching
     # Step 4: Continue with difficulty and mode selection using image matching
     difficulty = map_config.get("difficulty", "Easy")
     mode = map_config.get("mode", "Standard")
@@ -143,9 +142,7 @@ def load_map(map_config: dict, global_config: dict) -> bool:
     return True
 
 
-import time
 
-import pygetwindow as gw
 
 
 def activate_btd6_window(map_config=None, global_config=None) -> bool:

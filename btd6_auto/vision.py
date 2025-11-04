@@ -10,7 +10,24 @@ import os
 import sys
 import time
 import keyboard
-#from datetime import datetime
+# from datetime import datetime
+
+
+# Use ConfigLoader for config loading
+from .config_loader import ConfigLoader
+
+try:
+    _GLOBAL_CONFIG = ConfigLoader.load_global_config()
+    _CAPTURE_RETRIES = _GLOBAL_CONFIG.get("image_recognition", {}).get(
+        "capture_screen_retry", 2
+    )
+    _CAPTURE_DELAY = _GLOBAL_CONFIG.get("image_recognition", {}).get(
+        "capture_screen_delay", 1.0
+    )
+except Exception as e:
+    logging.warning(f"Failed to load global config via ConfigLoader: {e}")
+    _CAPTURE_RETRIES = 2
+    _CAPTURE_DELAY = 1.0
 
 
 def _find_in_region(template_path: str, region: tuple) -> bool:
@@ -66,6 +83,7 @@ def set_round_state(
     Returns:
         bool: True if the requested state was set successfully, False otherwise.
     """
+
     def _find_in_region_adapter(template_path, threshold=0.75):
         # Adapts test/mocked find_in_region to always accept threshold and return (found, max_val)
         if find_in_region is None:
@@ -75,16 +93,20 @@ def set_round_state(
                 logging.error(f"Template image not found: {template_path}")
                 return False, None
             from .vision import capture_screen
+
             left, top, right, bottom = region
             width, height = right - left, bottom - top
             _, screen_gray = capture_screen(region=(left, top, width, height))
             if screen_gray is None:
                 return False, None
-            res = cv2.matchTemplate(screen_gray, template, cv2.TM_CCOEFF_NORMED)
+            res = cv2.matchTemplate(
+                screen_gray, template, cv2.TM_CCOEFF_NORMED
+            )
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
             return max_val >= threshold, max_val
         else:
             import inspect
+
             sig = inspect.signature(find_in_region)
             params = sig.parameters
             try:
@@ -118,7 +140,9 @@ def set_round_state(
     img_start = os.path.join(images_dir, image_map["start"])
 
     for attempt in range(1, max_retries + 1):
-        logging.info(f"[set_round_state] Attempt {attempt} for state '{state}'")
+        logging.info(
+            f"[set_round_state] Attempt {attempt} for state '{state}'"
+        )
         if state == "fast":
             found, max_val = _find_in_region_adapter(img_fast, threshold=0.93)
             logging.info(f"[set_round_state] FAST: max_val={max_val}")
@@ -143,8 +167,12 @@ def set_round_state(
                 logging.info("Start button detected. Ensuring speed is FAST.")
                 # Try to set speed to fast
                 for _ in range(max_retries):
-                    found_fast, max_val_fast = _find_in_region_adapter(img_fast, threshold=0.93)
-                    logging.info(f"[set_round_state] FAST (after START): max_val={max_val_fast}")
+                    found_fast, max_val_fast = _find_in_region_adapter(
+                        img_fast, threshold=0.93
+                    )
+                    logging.info(
+                        f"[set_round_state] FAST (after START): max_val={max_val_fast}"
+                    )
                     if found_fast:
                         return True
                     keyboard.press_and_release("space")
@@ -208,7 +236,9 @@ def read_currency_amount(
                     "Failed to initialize easyocr.Reader with GPU. Falling back to CPU."
                 )
                 try:
-                    read_currency_amount._ocr = easyocr.Reader(["en"], gpu=False)
+                    read_currency_amount._ocr = easyocr.Reader(
+                        ["en"], gpu=False
+                    )
                 except Exception:
                     logging.exception(
                         "Failed to initialize easyocr.Reader with CPU fallback."
@@ -227,9 +257,25 @@ def read_currency_amount(
     camera = read_currency_amount._camera
 
     try:
-        frame = camera.grab(region=region)
+        frame = None
+        for attempt in range(3):
+            try:
+                frame = camera.grab(region=region)
+            except Exception as e:
+                logging.info(
+                    f"camera.grab exception on attempt {attempt + 1}: {e}"
+                )
+                frame = None
+            if frame is not None:
+                break
+            logging.info(
+                f"No frame captured for currency region (attempt {attempt + 1}/3). Retrying..."
+            )
+            time.sleep(0.2)
         if frame is None:
-            logging.warning("No frame captured for currency region.")
+            logging.warning(
+                "No frame captured for currency region after 3 attempts."
+            )
             return 0
 
         # Preprocess
@@ -246,9 +292,9 @@ def read_currency_amount(
         try:
             results = ocr.readtext(thresh, allowlist="0123456789,", detail=1)
             # Concatenate all recognized text, remove commas, and extract digits
-            raw_text = "".join([
-                text for _, text, conf in results if isinstance(text, str)
-            ])
+            raw_text = "".join(
+                [text for _, text, conf in results if isinstance(text, str)]
+            )
             # Remove commas and non-digit characters
             digits = "".join([c for c in raw_text if c.isdigit()])
             gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
@@ -262,9 +308,9 @@ def read_currency_amount(
         try:
             # EasyOCR returns a list of (bbox, text, confidence)
             results = ocr.readtext(thresh, allowlist="0123456789,", detail=1)
-            raw_text = "".join([
-                text for _, text, conf in results if isinstance(text, str)
-            ])
+            raw_text = "".join(
+                [text for _, text, conf in results if isinstance(text, str)]
+            )
             # Remove commas and non-digit characters
             digits = "".join([c for c in raw_text if c.isdigit()])
             value = int(digits) if digits else 0
@@ -288,6 +334,7 @@ def read_currency_amount(
         except Exception:
             pass
     return value
+
 
 def is_mostly_black(
     image: np.ndarray, threshold: float = 0.9, black_level: int = 30
@@ -326,6 +373,7 @@ def is_mostly_black(
 def capture_screen(region=None) -> np.ndarray:
     """
     Capture a screenshot of the specified region using dxcam (Windows-only).
+    Retries if no new frame is available, up to _CAPTURE_RETRIES times, waiting _CAPTURE_DELAY seconds between attempts.
     On non-Windows platforms, always returns (None, None) and logs a warning.
     Args:
         region (tuple or None): (left, top, width, height) or None for full screen.
@@ -340,7 +388,6 @@ def capture_screen(region=None) -> np.ndarray:
     try:
         import dxcam
 
-        # dxcam expects region as (left, top, right, bottom)
         cam = dxcam.create()
         if region is not None:
             left, top, width, height = region
@@ -349,11 +396,22 @@ def capture_screen(region=None) -> np.ndarray:
             dxcam_region = (left, top, right, bottom)
         else:
             dxcam_region = None
-        img = cam.grab(region=dxcam_region)
+        img = None
+        for attempt in range(_CAPTURE_RETRIES):
+            img = cam.grab(region=dxcam_region)
+            if img is not None:
+                break
+            logging.info(
+                f"capture_screen: No new frame, retrying ({attempt + 1}/{_CAPTURE_RETRIES}) after {_CAPTURE_DELAY}s..."
+            )
+            time.sleep(_CAPTURE_DELAY)
         if img is None:
-            raise RuntimeError("dxcam returned None image")
-        # dxcam returns BGRA, convert to BGR
-        img_bgr = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+            logging.warning(
+                f"capture_screen: No frame captured after {_CAPTURE_RETRIES} attempts."
+            )
+            return None, None
+        # dxcam returns RGB, convert to BGR
+        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
         return img_bgr, img_gray
     except Exception as e:
@@ -389,9 +447,9 @@ def find_element_on_screen(element_image):
         element_name = "".join(
             c if c.isalnum() or c in ("-", "_") else "_" for c in element_name
         )
-        #timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        #screenshot_filename = f"{timestamp}_{element_name}.png"
-        #screenshot_path = os.path.join(screenshots_dir, screenshot_filename)
+        # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # screenshot_filename = f"{timestamp}_{element_name}.png"
+        # screenshot_path = os.path.join(screenshots_dir, screenshot_filename)
         # cv2.imwrite(screenshot_path, screen_bgr)
         # logging.info(f"Saved screenshot for debug: {screenshot_path}")
     except Exception as e:
@@ -415,10 +473,14 @@ def find_element_on_screen(element_image):
             center_x = max_loc[0] + w // 2
             center_y = max_loc[1] + h // 2
             total_time = time.time() - start_time
-            logging.info(f"find_element_on_screen total time: {total_time:.3f}s")
+            logging.info(
+                f"find_element_on_screen total time: {total_time:.3f}s"
+            )
             return (center_x, center_y)
         else:
-            logging.info(f"No match for {element_image} (max_val={max_val:.2f})")
+            logging.info(
+                f"No match for {element_image} (max_val={max_val:.2f})"
+            )
             return None
     except Exception as e:
         logging.error(f"Error in find_element_on_screen: {e}")
