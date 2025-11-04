@@ -10,8 +10,9 @@ IF NOT EXIST "%ENV_NAME%\Scripts\activate.bat" (
 REM Activate the virtual environment
 call "%ENV_NAME%\Scripts\activate.bat"
 
-REM Install dependencies from requirements.txt
+REM Install dependencies from pyproject.toml after ensuring torch is installed first
 echo Installing dependencies...
+uv pip install torch torchvision --torch-backend=auto
 uv sync
 
 REM Run the BTD6 automation bot
