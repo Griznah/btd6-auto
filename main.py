@@ -8,7 +8,6 @@ import logging
 import time
 import pyautogui
 from btd6_auto.config_loader import ConfigLoader
-from btd6_auto.config import KILL_SWITCH
 from btd6_auto.game_launcher import load_map
 from btd6_auto.input import esc_listener
 from btd6_auto.vision import set_round_state
@@ -19,6 +18,7 @@ from btd6_auto.actions import ActionManager, can_afford
 # Options
 pyautogui.PAUSE = 0.1  # Pause after each PyAutoGUI call
 pyautogui.FAILSAFE = True  # Move mouse to top-left to abort
+KILL_SWITCH = False  # Global kill switch
 
 
 def main() -> None:
