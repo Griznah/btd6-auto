@@ -16,7 +16,9 @@ from .input import click
 from .overlay import show_overlay_text  # pyright: ignore[reportUnusedImport]  # noqa: F401
 from .vision import capture_screen, find_element_on_screen, is_mostly_black
 
-DATA_IMAGE_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "images")
+DATA_IMAGE_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "data", "images"
+)
 
 
 def get_image_path(name: str) -> str:
@@ -74,8 +76,12 @@ def load_map(map_config: dict, global_config: dict) -> bool:
     pyautogui.click(830, 50)  # 1080p coords
 
     # Step 3: Enter map name and select
-    pyautogui.typewrite(map_config.get("map_name", "Monkey Meadow"), interval=0.05)
-    logging.info(f"Entered map name: {map_config.get('map_name', 'Monkey Meadow')}")
+    pyautogui.typewrite(
+        map_config.get("map_name", "Monkey Meadow"), interval=0.05
+    )
+    logging.info(
+        f"Entered map name: {map_config.get('map_name', 'Monkey Meadow')}"
+    )
     time.sleep(0.05)
     # pyautogui.click(360, 225) # 720p coords
     # logging.info("Clicked at (360, 225) to select map.")
@@ -95,7 +101,7 @@ def load_map(map_config: dict, global_config: dict) -> bool:
     ]:
         time.sleep(0.5)  # let next screen load
         img_path = get_image_path(img_name)
-        #screen = capture_screen()
+        # screen = capture_screen()
         coords = find_element_on_screen(img_path)
         if coords:
             click(*coords)
@@ -120,7 +126,7 @@ def load_map(map_config: dict, global_config: dict) -> bool:
             return False
     # Wait for loading screen to disappear (mostly black with some yellow/gold)
     logging.info("Entry for loading screen wait time")
-    max_wait = 15  # seconds
+    max_wait = 25  # seconds
     poll_interval = 0.5
     elapsed = 0
     while elapsed < max_wait:
@@ -140,9 +146,6 @@ def load_map(map_config: dict, global_config: dict) -> bool:
         return False
     logging.info("Map started successfully.")
     return True
-
-
-
 
 
 def activate_btd6_window(map_config=None, global_config=None) -> bool:
