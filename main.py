@@ -3,7 +3,6 @@ Main entry point for BTD6 Automation Bot
 Windows-only version
 """
 
-
 import logging
 import time
 import pyautogui
@@ -48,11 +47,14 @@ def main() -> None:
 
     logging.basicConfig(
         level=getattr(
-            logging, global_config.get("automation", {}).get("logging_level", "INFO")
+            logging,
+            global_config.get("automation", {}).get("logging_level", "INFO"),
         ),
         format="%(asctime)s %(levelname)s: %(message)s",
     )
-    logging.info("BTD6 Automation Bot starting, press ESC to exit at any time.")
+    logging.info(
+        "BTD6 Automation Bot starting, press ESC to exit at any time."
+    )
 
     # Start killswitch listener
     esc_listener()
@@ -72,15 +74,17 @@ def main() -> None:
         show_overlay_text("Loading the CurrencyReader", 3)
 
         # Wait for first nonzero currency value or timeout (5 seconds)
-        ocr_timeout = 5.0
+        ocr_timeout = 8.0
         ocr_start = time.time()
         while True:
             currency = currency_reader.get_currency()
-            #logging.info(f"currency in checker: {currency}")
+            # logging.info(f"currency in checker: {currency}")
             if currency > 0:
                 break
             if (time.time() - ocr_start) > ocr_timeout:
-                logging.exception("Timeout: OCR did not return a nonzero currency value within 5 seconds.")
+                logging.exception(
+                    "Timeout: OCR did not return a nonzero currency value within 5 seconds."
+                )
                 break
             time.sleep(0.1)
 
@@ -91,7 +95,9 @@ def main() -> None:
         logging.info("Running pre-play actions (hero and monkeys)")
         action_manager.run_pre_play()
 
-        logging.info("Opening hero and monkey sequence complete. Press ESC to exit at any time.")
+        logging.info(
+            "Opening hero and monkey sequence complete. Press ESC to exit at any time."
+        )
 
         currency = currency_reader.get_currency()
         logging.info(f"Current currency 03: {currency}")
@@ -111,7 +117,7 @@ def main() -> None:
             curr_check_count += 1
             time.sleep(0.3)
 
-#        currency_reader.stop()
+        #        currency_reader.stop()
 
         if KILL_SWITCH:
             logging.info("Kill switch activated. Exiting before actions.")
@@ -133,9 +139,13 @@ def main() -> None:
             elif next_action["action"] == "upgrade":
                 action_manager.run_upgrade_action(next_action)
             else:
-                logging.warning(f"Unknown action type: {next_action['action']}")
+                logging.warning(
+                    f"Unknown action type: {next_action['action']}"
+                )
             action_manager.mark_completed(next_action["step"])
-            logging.info(f"Steps remaining: {action_manager.steps_remaining()}")
+            logging.info(
+                f"Steps remaining: {action_manager.steps_remaining()}"
+            )
 
     except Exception as e:
         logging.exception(f"Automation error: {e}")
