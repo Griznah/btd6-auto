@@ -9,20 +9,45 @@ import logging
 import time
 from btd6_auto.monkey_manager import place_monkey, place_hero
 
+
 class ActionManager:
     """
     Manages the list of actions for a BTD6 map run, including pre-play and main actions.
     Provides lookup for monkey positions and orchestrates action execution.
     """
-    def __init__(self, map_config: Dict[str, Any], global_config: Dict[str, Any]):
+
+    def __init__(
+        self, map_config: Dict[str, Any], global_config: Dict[str, Any]
+    ) -> None:
         self.map_config = map_config
         self.global_config = global_config
-        self.actions = sorted(map_config.get("actions", []), key=lambda a: a.get("step", 0))
-        self.pre_play_actions = sorted(map_config.get("pre_play_actions", []), key=lambda a: a.get("step", 0))
+        self.actions = sorted(
+            map_config.get("actions", []), key=lambda a: a.get("step", 0)
+        )
+        self.pre_play_actions = sorted(
+            map_config.get("pre_play_actions", []),
+            key=lambda a: a.get("step", 0),
+        )
         self.hero = map_config.get("hero", {})
         self.monkey_positions = self._build_monkey_position_lookup()
         self.completed_steps = set()
         self.timing = map_config.get("timing", {})
+
+    def _normalize_position(self, pos: Any) -> Tuple[int, int]:
+        """
+        Normalize a position to an (x, y) tuple.
+        Validates presence of 'x' and 'y' if pos is a dict, else expects a tuple/list of length 2.
+        Raises ValueError on invalid formats.
+        """
+        if isinstance(pos, dict):
+            if "x" in pos and "y" in pos:
+                return (pos["x"], pos["y"])
+            else:
+                raise ValueError(f"Position dict missing 'x' or 'y': {pos}")
+        elif isinstance(pos, (tuple, list)) and len(pos) == 2:
+            return tuple(pos)
+        else:
+            raise ValueError(f"Invalid position format: {pos}")
 
     def _build_monkey_position_lookup(self) -> Dict[str, Tuple[int, int]]:
         """
@@ -32,11 +57,18 @@ class ActionManager:
         """
         lookup = {}
         for action in self.pre_play_actions + self.actions:
-            if action.get("action") == "buy" and "target" in action and "position" in action:
-                pos = action["position"]
-                if isinstance(pos, dict):
-                    pos = (pos["x"], pos["y"])
-                lookup[action["target"]] = pos
+            if (
+                action.get("action") == "buy"
+                and "target" in action
+                and "position" in action
+            ):
+                try:
+                    pos = self._normalize_position(action["position"])
+                    lookup[action["target"]] = pos
+                except ValueError as e:
+                    logging.error(
+                        f"Invalid position for monkey '{action['target']}': {e}"
+                    )
         return lookup
 
     def get_next_action(self) -> Optional[Dict[str, Any]]:
@@ -60,9 +92,17 @@ class ActionManager:
         """
         Return the number of steps left in the routine.
         """
-        return len([a for a in self.actions if a.get("step") not in self.completed_steps])
+        return len(
+            [
+                a
+                for a in self.actions
+                if a.get("step") not in self.completed_steps
+            ]
+        )
 
-    def get_monkey_position(self, monkey_name: str) -> Optional[Tuple[int, int]]:
+    def get_monkey_position(
+        self, monkey_name: str
+    ) -> Optional[Tuple[int, int]]:
         """
         Lookup the position of a monkey by name.
         """
@@ -75,41 +115,92 @@ class ActionManager:
         # Place hero
         hero = self.hero
         if hero and "position" in hero and "key_binding" in hero:
-            pos = hero["position"]
-            if isinstance(pos, dict):
-                pos = (pos["x"], pos["y"])
+            try:
+                pos = self._normalize_position(hero["position"])
+            except ValueError as e:
+                logging.error(f"Invalid hero position: {e}")
+                raise
             logging.info(f"Placing hero {hero.get('name', '')} at {pos}")
-            place_hero(pos, hero["key_binding"])
+            try:
+                result = place_hero(pos, hero["key_binding"])
+                if result is False:
+                    logging.error(
+                        f"Failed to place hero {hero.get('name', '')} at {pos}"
+                    )
+                    raise RuntimeError(
+                        f"Failed to place hero {hero.get('name', '')} at {pos}"
+                    )
+            except Exception as exc:
+                logging.error(f"Exception during hero placement: {exc}")
+                raise
             time.sleep(self.timing.get("placement_delay", 0.5))
         # Place pre-play monkeys
         for action in self.pre_play_actions:
             if action.get("action") == "buy":
-                pos = action["position"]
-                if isinstance(pos, dict):
-                    pos = (pos["x"], pos["y"])
-                key_binding = action.get("key_binding", self.global_config.get("default_monkey_key", "q"))
+                try:
+                    pos = self._normalize_position(action["position"])
+                except ValueError as e:
+                    logging.error(
+                        f"Invalid position for monkey '{action['target']}': {e}"
+                    )
+                    raise
+                key_binding = action.get(
+                    "key_binding",
+                    self.global_config.get("default_monkey_key", "q"),
+                )
                 logging.info(f"Placing {action['target']} at {pos}")
-                place_monkey(pos, key_binding)
+                try:
+                    result = place_monkey(pos, key_binding)
+                    if result is False:
+                        logging.error(
+                            f"Failed to place monkey {action['target']} at {pos}"
+                        )
+                        raise RuntimeError(
+                            f"Failed to place monkey {action['target']} at {pos}"
+                        )
+                except Exception as exc:
+                    logging.error(f"Exception during monkey placement: {exc}")
+                    raise
                 time.sleep(self.timing.get("placement_delay", 0.5))
 
     def run_buy_action(self, action: Dict[str, Any]) -> None:
         """
         Execute a buy action (place a monkey at a position).
         """
-        pos = action["position"]
-        if isinstance(pos, dict):
-            pos = (pos["x"], pos["y"])
-        key_binding = action.get("key_binding", self.global_config.get("default_monkey_key", "q"))
+        try:
+            pos = self._normalize_position(action["position"])
+        except ValueError as e:
+            logging.error(
+                f"Invalid position for monkey '{action['target']}': {e}"
+            )
+            raise
+        key_binding = action.get(
+            "key_binding", self.global_config.get("default_monkey_key", "q")
+        )
         logging.info(f"Placing {action['target']} at {pos}")
-        place_monkey(pos, key_binding)
+        try:
+            result = place_monkey(pos, key_binding)
+            if result is False:
+                logging.error(
+                    f"Failed to place monkey {action['target']} at {pos}"
+                )
+                raise RuntimeError(
+                    f"Failed to place monkey {action['target']} at {pos}"
+                )
+        except Exception as exc:
+            logging.error(f"Exception during monkey placement: {exc}")
+            raise
         time.sleep(self.timing.get("placement_delay", 0.5))
 
     def run_upgrade_action(self, action: Dict[str, Any]) -> None:
         """
         Dummy function for upgrade actions. To be implemented.
         """
-        logging.info(f"[DUMMY] Would upgrade {action['target']} to {action.get('upgrade_path', '')}")
+        logging.info(
+            f"[DUMMY] Would upgrade {action['target']} to {action.get('upgrade_path', '')}"
+        )
         time.sleep(self.timing.get("upgrade_delay", 0.5))
+
 
 # --- Stateless helpers ---
 def can_afford(current_money: int, action: Dict[str, Any]) -> bool:
@@ -118,5 +209,6 @@ def can_afford(current_money: int, action: Dict[str, Any]) -> bool:
     """
     at_money = action.get("at_money", 0)
     return current_money >= at_money
+
 
 # Add more stateless helpers as needed.

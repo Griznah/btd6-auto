@@ -1,8 +1,8 @@
-import os  # noqa: F401
 import pytest
 from btd6_auto import config_loader
 
 TEST_MAP = "Monkey Meadow"
+
 
 class TestConfigLoader:
     def test_load_global_config(self):

@@ -1,5 +1,0 @@
-{
-  "typeCheckingMode": "off",
-  "failOnWarnings": "false",
-  "ignore": ["**/__pycache__"]
-}

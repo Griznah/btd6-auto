@@ -13,7 +13,6 @@ import pygetwindow as gw
 
 # Local imports
 from .input import click
-from .overlay import show_overlay_text  # pyright: ignore[reportUnusedImport]  # noqa: F401
 from .vision import capture_screen, find_element_on_screen, is_mostly_black
 
 DATA_IMAGE_PATH = os.path.join(
@@ -131,8 +130,6 @@ def load_map(map_config: dict, global_config: dict) -> bool:
     elapsed = 0
     while elapsed < max_wait:
         img_bgr, _ = capture_screen()
-        # Use vision.py logic: check if screen is "mostly black"
-        # For example, vision.py could have: is_mostly_black(image, threshold=0.9)
         if img_bgr is None:
             logging.error("Failed to capture screen during loading check.")
             return False
@@ -140,7 +137,6 @@ def load_map(map_config: dict, global_config: dict) -> bool:
             break
         time.sleep(poll_interval)
         elapsed += poll_interval
-        # show_overlay_text(f"Loading: {elapsed:.1f}s", 0.5) # showing how long we have waited
     else:
         logging.error("Loading screen did not disappear in time.")
         return False
