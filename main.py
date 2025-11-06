@@ -9,6 +9,7 @@ import pyautogui
 from btd6_auto.config_loader import ConfigLoader
 from btd6_auto.game_launcher import load_map
 from btd6_auto.input import esc_listener
+from btd6_auto.state import SharedState
 from btd6_auto.vision import set_round_state
 from btd6_auto.currency_reader import CurrencyReader
 from btd6_auto.overlay import show_overlay_text
@@ -17,7 +18,7 @@ from btd6_auto.actions import ActionManager, can_afford
 # Options
 pyautogui.PAUSE = 0.1  # Pause after each PyAutoGUI call
 pyautogui.FAILSAFE = True  # Move mouse to top-left to abort
-KILL_SWITCH = False  # Global kill switch
+# KILL_SWITCH is now managed via SharedState
 
 
 def main() -> None:
@@ -73,7 +74,7 @@ def main() -> None:
         # Show overlay message "Loading the CurrencyReader" for 3 seconds
         show_overlay_text("Loading the CurrencyReader", 3)
 
-        # Wait for first nonzero currency value or timeout (5 seconds)
+        # Wait for first nonzero currency value or timeout (8 seconds)
         ocr_timeout = 8.0
         ocr_start = time.time()
         while True:
@@ -82,8 +83,8 @@ def main() -> None:
             if currency > 0:
                 break
             if (time.time() - ocr_start) > ocr_timeout:
-                logging.exception(
-                    "Timeout: OCR did not return a nonzero currency value within 5 seconds."
+                logging.error(
+                    "Timeout: OCR did not return a nonzero currency value within 8 seconds."
                 )
                 break
             time.sleep(0.1)
@@ -109,7 +110,7 @@ def main() -> None:
             logging.exception("Unable to set round state(start map)")
 
         curr_check_count = 0
-        while not KILL_SWITCH:
+        while not SharedState.KILL_SWITCH:
             if curr_check_count >= 5:
                 break
             currency = currency_reader.get_currency()
@@ -117,14 +118,17 @@ def main() -> None:
             curr_check_count += 1
             time.sleep(0.3)
 
-        #        currency_reader.stop()
-
-        if KILL_SWITCH:
+        if SharedState.KILL_SWITCH:
             logging.info("Kill switch activated. Exiting before actions.")
             return
 
         # --- Main action loop (buy/upgrade) ---
         while True:
+            if SharedState.KILL_SWITCH:
+                logging.info(
+                    "Kill switch activated. Exiting main action loop."
+                )
+                break
             next_action = action_manager.get_next_action()
             if not next_action:
                 logging.info("All actions completed.")
@@ -146,9 +150,11 @@ def main() -> None:
             logging.info(
                 f"Steps remaining: {action_manager.steps_remaining()}"
             )
+        currency_reader.stop()
 
-    except Exception as e:
-        logging.exception(f"Automation error: {e}")
+    except Exception:
+        currency_reader.stop()
+        logging.exception("Automation error")
 
 
 if __name__ == "__main__":

@@ -10,8 +10,6 @@ import os
 import sys
 import time
 import keyboard
-# from datetime import datetime
-
 
 # Use ConfigLoader for config loading
 from .config_loader import ConfigLoader
@@ -45,15 +43,13 @@ def _find_in_region(template_path: str, region: tuple) -> bool:
     if template is None:
         logging.error(f"Template image not found: {template_path}")
         return False
-    from .vision import capture_screen
-
     left, top, right, bottom = region
     width, height = right - left, bottom - top
     _, screen_gray = capture_screen(region=(left, top, width, height))
     if screen_gray is None:
         return False
     res = cv2.matchTemplate(screen_gray, template, cv2.TM_CCOEFF_NORMED)
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+    _, max_val, _, _ = cv2.minMaxLoc(res)
     threshold = 0.75
     return max_val >= threshold
 
@@ -92,8 +88,6 @@ def set_round_state(
             if template is None:
                 logging.error(f"Template image not found: {template_path}")
                 return False, None
-            from .vision import capture_screen
-
             left, top, right, bottom = region
             width, height = right - left, bottom - top
             _, screen_gray = capture_screen(region=(left, top, width, height))
@@ -102,7 +96,7 @@ def set_round_state(
             res = cv2.matchTemplate(
                 screen_gray, template, cv2.TM_CCOEFF_NORMED
             )
-            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+            _, max_val, _, _ = cv2.minMaxLoc(res)
             return max_val >= threshold, max_val
         else:
             import inspect
@@ -414,8 +408,8 @@ def capture_screen(region=None) -> np.ndarray:
         img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
         return img_bgr, img_gray
-    except Exception as e:
-        logging.error(f"Failed to capture screen region {region}: {e}")
+    except Exception:
+        logging.exception(f"Failed to capture screen region {region}")
         return None, None
 
 
@@ -484,4 +478,6 @@ def find_element_on_screen(element_image):
             return None
     except Exception as e:
         logging.error(f"Error in find_element_on_screen: {e}")
+    except Exception:
+        logging.exception("Error in find_element_on_screen")
         return None

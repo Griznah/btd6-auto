@@ -55,8 +55,8 @@ This project is a Python3 automation bot for Bloons Tower Defense 6 (BTD6), a to
 
 ## Adding Dependencies
 
-- Add new packages to `requirements.txt`.
-- Install with: `uv pip install -r requirements.txt`
+- Add new packages under `[project.dependencies]` in `pyproject.toml`.
+- Install with: `uv sync` (or `uv pip install <package>` for ad-hoc testing).
 
 
 

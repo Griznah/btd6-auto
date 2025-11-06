@@ -62,8 +62,8 @@ class ConfigLoader:
         """
         try:
             filename = ConfigLoader.get_map_filename(map_display_name)
-        except KeyError:
-            raise FileNotFoundError(f"Map config not found for display name: {map_display_name}")
+        except KeyError as e:
+            raise FileNotFoundError(f"Map config not found for display name: {map_display_name}") from e
         path = os.path.join(MAPS_DIR, filename)
         if not os.path.exists(path):
             raise FileNotFoundError(f"Map config not found: {path}")
