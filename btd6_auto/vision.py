@@ -99,17 +99,13 @@ def set_round_state(
             _, max_val, _, _ = cv2.minMaxLoc(res)
             return max_val >= threshold, max_val
         else:
-            import inspect
-
-            sig = inspect.signature(find_in_region)
-            params = sig.parameters
             try:
-                if len(params) == 2:
-                    result = find_in_region(template_path, threshold)
-                else:
-                    result = find_in_region(template_path)
+                result = find_in_region(template_path, region, threshold)
             except TypeError:
-                result = find_in_region(template_path)
+                try:
+                    result = find_in_region(template_path, region)
+                except TypeError:
+                    result = find_in_region(template_path, threshold)
             # If result is a tuple, return as is; if bool, convert to (bool, None)
             if isinstance(result, tuple):
                 return result
@@ -138,6 +134,7 @@ def set_round_state(
             f"[set_round_state] Attempt {attempt} for state '{state}'"
         )
         if state == "fast":
+            # we need higher threshold for fast due to high similarity for images
             found, max_val = _find_in_region_adapter(img_fast, threshold=0.93)
             logging.info(f"[set_round_state] FAST: max_val={max_val}")
             if found:
