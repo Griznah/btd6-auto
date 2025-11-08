@@ -6,7 +6,7 @@ Ensures compatibility with Windows file conventions.
 
 import os
 import json
-from typing import Any, Dict
+from typing import Dict, Any, Optional, ClassVar
 
 CONFIGS_DIR = os.path.join(os.path.dirname(__file__), "configs")
 MAPS_DIR = os.path.join(CONFIGS_DIR, "maps")
@@ -18,8 +18,8 @@ class ConfigLoader:
     Configuration loader with caching for global config and map filename resolution.
     """
 
-    _global_config_cache: Dict[str, Any] = None
-    _display_to_filename_cache: Dict[str, str] = None
+    _global_config_cache: ClassVar[Optional[Dict[str, Any]]] = None
+    _display_to_filename_cache: ClassVar[Optional[Dict[str, str]]] = None
 
     @staticmethod
     def load_global_config() -> Dict[str, Any]:

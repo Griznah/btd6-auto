@@ -1,6 +1,13 @@
 import pytest
 from btd6_auto.config_loader import ConfigLoader
 
+
+# Ensure cache is invalidated before each test for isolation
+@pytest.fixture(autouse=True)
+def invalidate_config_loader_cache():
+    ConfigLoader.invalidate_cache()
+
+
 # Test data
 EXISTING_MAPS = [
     ("Pat's Pond", "pats_pond.json"),
@@ -8,6 +15,7 @@ EXISTING_MAPS = [
 ]
 
 NON_EXISTENT_MAP = "Nonexistent Map"
+
 
 def test_get_map_filename_success():
     for display_name, expected_filename in EXISTING_MAPS:

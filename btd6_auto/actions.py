@@ -21,9 +21,9 @@ class ActionManager:
             pos: The position attempted.
             placement_type: 'hero' or 'monkey' (for log clarity).
         """
-        if result is None:
+        if result is False:
             logging.warning(
-                f"{placement_type} placement returned None for {target} at {pos}, but continuing."
+                f"{placement_type} placement returned False for {target} at {pos}."
             )
 
     """
