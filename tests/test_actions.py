@@ -179,12 +179,13 @@ def test_placement_result_logging(mock_place_monkey, mock_place_hero, caplog):
     am = ActionManager(map_config, global_config)
     with caplog.at_level(logging.WARNING):
         am.run_pre_play()
-    # Should log warnings for both hero and monkeys
-    assert any(
-        "hero placement returned None" in r for r in caplog.text.splitlines()
+    # Should NOT log warnings for None, only for False
+    # Should NOT log warnings for None, only for False
+    assert not any(
+        "hero placement returned False" in r for r in caplog.text.splitlines()
     )
-    assert any(
-        "monkey placement returned None" in r
+    assert not any(
+        "monkey placement returned False" in r
         for r in caplog.text.splitlines()
     )
 

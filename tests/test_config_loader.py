@@ -42,10 +42,16 @@ class TestConfigLoader:
     def test_cache_invalidation_and_reload(self):
         # Load config to populate cache
         config1 = config_loader.ConfigLoader.load_global_config()
+        # Verify cache is populated
+        assert config_loader.ConfigLoader._global_config_cache is not None
         # Invalidate cache
         config_loader.ConfigLoader.invalidate_cache()
+        # Verify cache is cleared
+        assert config_loader.ConfigLoader._global_config_cache is None
         # Load again, should reload from disk
         config2 = config_loader.ConfigLoader.load_global_config()
+        # Verify cache is repopulated
+        assert config_loader.ConfigLoader._global_config_cache is not None
         assert config1 == config2
 
     @pytest.mark.parametrize(
