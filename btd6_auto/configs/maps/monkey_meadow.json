@@ -12,15 +12,13 @@
       "step": 0,
       "action": "buy",
       "target": "Dart Monkey 01",
-      "position": { "x": 490, "y": 500 },
-      "hotkey": "q"
+      "position": { "x": 490, "y": 500 }
     },
     {
       "step": 1,
       "action": "buy",
       "target": "Dart Monkey 02",
-      "position": { "x": 650, "y": 520 },
-      "hotkey": "q"
+      "position": { "x": 650, "y": 520 }
     }
   ],
   "hero": {
@@ -41,8 +39,7 @@
       "at_money": 210,
       "action": "buy",
       "target": "Wizard Monkey 01",
-      "position": { "x": 400, "y": 395 },
-      "hotkey": "a"
+      "position": { "x": 400, "y": 395 }
     },
     {
       "step": 3,
@@ -56,8 +53,7 @@
       "at_money": 700,
       "action": "buy",
       "target": "Spike Factory 01",
-      "position": { "x": 680, "y": 765 },
-      "hotkey": "j"
+      "position": { "x": 680, "y": 765 }
     },
     {
       "step": 5,

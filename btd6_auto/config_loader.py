@@ -1,12 +1,21 @@
 """
 Configuration loader for BTD6 automation bot.
+
 Loads and validates map-specific and global configuration files.
 Ensures compatibility with Windows file conventions.
+
+Classes:
+    ConfigLoader: Loads, caches, and validates configuration files for BTD6 automation.
+
+Constants:
+    CONFIGS_DIR: Path to the configs directory.
+    MAPS_DIR: Path to the map configs directory.
+    GLOBAL_CONFIG_PATH: Path to the global config file.
 """
 
 import os
 import json
-from typing import Dict, Any, Optional, ClassVar
+from typing import Dict, Any, Optional, ClassVar, Sequence
 
 CONFIGS_DIR = os.path.join(os.path.dirname(__file__), "configs")
 MAPS_DIR = os.path.join(CONFIGS_DIR, "maps")
@@ -16,6 +25,10 @@ GLOBAL_CONFIG_PATH = os.path.join(CONFIGS_DIR, "global.json")
 class ConfigLoader:
     """
     Configuration loader with caching for global config and map filename resolution.
+
+    Class Attributes:
+        _global_config_cache (Optional[Dict[str, Any]]): Cached global config.
+        _display_to_filename_cache (Optional[Dict[str, str]]): Cached map display-to-filename mapping.
     """
 
     _global_config_cache: ClassVar[Optional[Dict[str, Any]]] = None
@@ -25,6 +38,7 @@ class ConfigLoader:
     def load_global_config() -> Dict[str, Any]:
         """
         Load the global configuration from the module's GLOBAL_CONFIG_PATH, using cache if available.
+
         Returns:
             Dict[str, Any]: Parsed JSON content of the global configuration.
         Raises:
@@ -42,6 +56,11 @@ class ConfigLoader:
     def _normalize(name: str) -> str:
         """
         Normalize map display names for Windows compatibility (case/space insensitive).
+
+        Args:
+            name (str): Map display name.
+        Returns:
+            str: Normalized name (lowercase, no spaces or apostrophes).
         """
         return name.replace(" ", "").replace("'", "").lower()
 
@@ -49,7 +68,8 @@ class ConfigLoader:
     def get_map_filename(map_display_name: str) -> str:
         """
         Resolve the config filename for a given map display name using cached mapping.
-        Parameters:
+
+        Args:
             map_display_name (str): The display name of the map (e.g., 'Monkey Meadow').
         Returns:
             str: The config filename (e.g., 'monkey_meadow.json').
@@ -74,7 +94,8 @@ class ConfigLoader:
     def load_map_config(map_display_name: str) -> Dict[str, Any]:
         """
         Load a map-specific configuration by display name using the cached mapping.
-        Parameters:
+
+        Args:
             map_display_name (str): The display name of the map (e.g., 'Monkey Meadow').
         Returns:
             Dict[str, Any]: Parsed JSON configuration for the specified map.
@@ -96,11 +117,12 @@ class ConfigLoader:
 
     @staticmethod
     def validate_config(
-        config: Dict[str, Any], required_fields: list
+        config: Dict[str, Any], required_fields: Sequence[str]
     ) -> bool:
         """
         Validate that all required fields exist in the given configuration.
-        Parameters:
+
+        Args:
             config (Dict[str, Any]): Configuration dictionary to check.
             required_fields (list): Sequence of field names that must be present in `config`.
         Returns:
