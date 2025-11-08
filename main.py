@@ -41,7 +41,7 @@ def main() -> None:
     try:
         map_config = ConfigLoader.load_map_config(map_name)
     except Exception:
-        logging.warning(
+        logging.exception(
             f"Could not load map config for '{map_name}', falling back to 'Monkey Meadow'."
         )
         map_config = ConfigLoader.load_map_config("Monkey Meadow")
@@ -120,6 +120,7 @@ def main() -> None:
 
         if SharedState.KILL_SWITCH:
             logging.info("Kill switch activated. Exiting before actions.")
+            currency_reader.stop()
             return
 
         # --- Main action loop (buy/upgrade) ---

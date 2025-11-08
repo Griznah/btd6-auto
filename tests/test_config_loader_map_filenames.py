@@ -22,18 +22,20 @@ def test_get_map_filename_failure():
 
 
 def test_load_map_config_success():
-    for display_name, expected_filename in EXISTING_MAPS:
+    for display_name, _ in EXISTING_MAPS:
         config = ConfigLoader.load_map_config(display_name)
         assert isinstance(config, dict)
         # The placeholder files have a 'placeholder' key
-        assert 'placeholder' in config
+        assert "placeholder" in config
 
 
 def test_load_map_config_file_not_found(monkeypatch):
     # Patch get_map_filename to return a file that doesn't exist
-    monkeypatch.setattr(ConfigLoader, 'get_map_filename', lambda name: 'does_not_exist.json')
+    monkeypatch.setattr(
+        ConfigLoader, "get_map_filename", lambda _name: "does_not_exist.json"
+    )
     with pytest.raises(FileNotFoundError):
-        ConfigLoader.load_map_config('Pat\'s Pond')
+        ConfigLoader.load_map_config("Pat's Pond")
 
 
 def test_load_map_config_key_error():

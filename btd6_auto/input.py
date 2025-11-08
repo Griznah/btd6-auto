@@ -8,6 +8,7 @@ import time
 import logging
 import os  # For hard termination
 from pynput import keyboard as pynput_keyboard
+
 # Import shared state for kill switch
 from .state import SharedState
 
@@ -26,7 +27,7 @@ def esc_listener():
         """
         Handle a keyboard key press and trigger an immediate hard shutdown when ESC is pressed.
 
-        If the pressed key is the ESC key, logs an informational message, sets KILL_SWITCH to True (using globals()), and immediately terminates the process using os._exit(0).
+        If the pressed key is the ESC key, logs an informational message, sets KILL_SWITCH to True (using SharedState), and immediately terminates the process using os._exit(0).
 
         Parameters:
             key: The key event object received from the keyboard listener.

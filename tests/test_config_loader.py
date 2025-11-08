@@ -38,3 +38,37 @@ class TestConfigLoader:
         # Should not raise, even with case/space differences
         config = config_loader.ConfigLoader.load_map_config("monkey meadow")
         assert config["map_name"].lower() == TEST_MAP.lower()
+
+    def test_cache_invalidation_and_reload(self):
+        # Load config to populate cache
+        config1 = config_loader.ConfigLoader.load_global_config()
+        # Invalidate cache
+        config_loader.ConfigLoader.invalidate_cache()
+        # Load again, should reload from disk
+        config2 = config_loader.ConfigLoader.load_global_config()
+        assert config1 == config2
+
+    @pytest.mark.parametrize(
+        "variant",
+        [
+            "Monkey Meadow",
+            "monkey meadow",
+            "MonkeyMeadow",
+            "Monkey'Meadow",
+            "MONKEY MEADOW",
+        ],
+    )
+    def test_get_map_filename_variations(self, variant):
+        filename = config_loader.ConfigLoader.get_map_filename(variant)
+        assert filename.lower() == "monkey_meadow.json"
+
+    def test_get_map_filename_missing_map_filenames(self, monkeypatch):
+        # Patch load_global_config to return a config without map_filenames
+        monkeypatch.setattr(
+            config_loader.ConfigLoader,
+            "_global_config_cache",
+            {"automation": {}, "image_recognition": {}, "error_handling": {}},
+        )
+        config_loader.ConfigLoader._display_to_filename_cache = None
+        with pytest.raises(KeyError):
+            config_loader.ConfigLoader.get_map_filename("Monkey Meadow")

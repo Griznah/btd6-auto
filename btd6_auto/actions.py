@@ -117,21 +117,21 @@ class ActionManager:
         if hero and "position" in hero and "key_binding" in hero:
             try:
                 pos = self._normalize_position(hero["position"])
-            except ValueError as e:
-                logging.error(f"Invalid hero position: {e}")
+            except ValueError:
+                logging.exception("Invalid hero position")
                 raise
             logging.info(f"Placing hero {hero.get('name', '')} at {pos}")
             try:
                 result = place_hero(pos, hero["key_binding"])
-                if result is False:
-                    logging.error(
+                if result is None:
+                    logging.exception(
                         f"Failed to place hero {hero.get('name', '')} at {pos}"
                     )
                     raise RuntimeError(
                         f"Failed to place hero {hero.get('name', '')} at {pos}"
                     )
-            except Exception as exc:
-                logging.error(f"Exception during hero placement: {exc}")
+            except Exception:
+                logging.exception("Exception during hero placement")
                 raise
             time.sleep(self.timing.get("placement_delay", 0.5))
         # Place pre-play monkeys
@@ -139,9 +139,9 @@ class ActionManager:
             if action.get("action") == "buy":
                 try:
                     pos = self._normalize_position(action["position"])
-                except ValueError as e:
-                    logging.error(
-                        f"Invalid position for monkey '{action['target']}': {e}"
+                except ValueError:
+                    logging.exception(
+                        f"Invalid position for monkey '{action['target']}'"
                     )
                     raise
                 key_binding = action.get(
@@ -151,15 +151,17 @@ class ActionManager:
                 logging.info(f"Placing {action['target']} at {pos}")
                 try:
                     result = place_monkey(pos, key_binding)
-                    if result is False:
-                        logging.error(
+                    if result is None:
+                        logging.exception(
                             f"Failed to place monkey {action['target']} at {pos}"
                         )
                         raise RuntimeError(
                             f"Failed to place monkey {action['target']} at {pos}"
                         )
-                except Exception as exc:
-                    logging.error(f"Exception during monkey placement: {exc}")
+                except Exception:
+                    logging.exception(
+                        "Exception during monkey placement"
+                    )
                     raise
                 time.sleep(self.timing.get("placement_delay", 0.5))
 
@@ -169,9 +171,9 @@ class ActionManager:
         """
         try:
             pos = self._normalize_position(action["position"])
-        except ValueError as e:
-            logging.error(
-                f"Invalid position for monkey '{action['target']}': {e}"
+        except ValueError:
+            logging.exception(
+                f"Invalid position for monkey '{action['target']}'"
             )
             raise
         key_binding = action.get(
@@ -180,15 +182,15 @@ class ActionManager:
         logging.info(f"Placing {action['target']} at {pos}")
         try:
             result = place_monkey(pos, key_binding)
-            if result is False:
-                logging.error(
+            if result is None:
+                logging.exception(
                     f"Failed to place monkey {action['target']} at {pos}"
                 )
                 raise RuntimeError(
                     f"Failed to place monkey {action['target']} at {pos}"
                 )
-        except Exception as exc:
-            logging.error(f"Exception during monkey placement: {exc}")
+        except Exception:
+            logging.exception("Exception during monkey placement")
             raise
         time.sleep(self.timing.get("placement_delay", 0.5))
 
