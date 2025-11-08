@@ -129,6 +129,9 @@ def test_run_upgrade_action(mock_sleep):
 
 # --- Additional coverage improvements ---
 def test_invalid_position_raises_value_error():
+    """
+    Test that invalid hero or monkey positions raise ValueError.
+    """
     bad_map_config = {
         "hero": {
             "name": "Quincy",
@@ -176,6 +179,9 @@ def test_invalid_position_raises_value_error():
 @patch("btd6_auto.actions.place_hero", return_value=None)
 @patch("btd6_auto.actions.place_monkey", return_value=None)
 def test_placement_result_logging(mock_place_monkey, mock_place_hero, caplog):
+    """
+    Test that placement result logging does not warn for None return values.
+    """
     am = ActionManager(map_config, global_config)
     with caplog.at_level(logging.WARNING):
         am.run_pre_play()
@@ -191,6 +197,9 @@ def test_placement_result_logging(mock_place_monkey, mock_place_hero, caplog):
 
 
 def test_action_manager_empty_and_duplicate_steps():
+    """
+    Test ActionManager behavior with empty and duplicate step configs.
+    """
     empty_config = {"pre_play_actions": [], "actions": []}
     am = ActionManager(empty_config, global_config)
     assert am.get_next_action() is None
@@ -222,6 +231,9 @@ def test_action_manager_empty_and_duplicate_steps():
 @patch("btd6_auto.actions.place_monkey")
 @patch("btd6_auto.actions.place_hero")
 def test_action_manager_integration(mock_place_hero, mock_place_monkey):
+    """
+    Integration test for ActionManager orchestration and currency logic.
+    """
     # Simulate currency values for pre-play and main actions
     currency_values = [0, 100, 100, 250, 250, 250]
     currency_iter = iter(currency_values)
