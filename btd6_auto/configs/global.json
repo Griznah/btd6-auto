@@ -101,8 +101,9 @@
     "screenshot_on_error": true
   },
   "hotkey": {
-    "Upgrade Path 1": "Comma",
-    "Upgrade Path 2": "Period",
-    "Upgrade Path 3": "Slash"
-  }
+    "upgrade_path_1": "Comma",
+    "upgrade_path_2": "Period",
+    "upgrade_path_3": "Slash"
+  },
+  "hero_key": "u"
 }
