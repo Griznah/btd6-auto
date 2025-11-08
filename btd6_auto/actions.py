@@ -41,10 +41,10 @@ _MODE_ALIASES = {
 def _normalize_difficulty_mode(difficulty: str, mode: str) -> tuple[str, str]:
     """
     Normalize difficulty and mode input strings to canonical labels using module aliases.
-    
+
     Strips whitespace and lowercases inputs, then maps them through internal alias dictionaries
     to produce standardized labels.
-    
+
     Returns:
         tuple[str, str]: (normalized_difficulty, normalized_mode) where each element is the
         canonical label for the provided input.
@@ -60,9 +60,9 @@ def _normalize_difficulty_mode(difficulty: str, mode: str) -> tuple[str, str]:
 def _load_towers_json() -> Dict[str, Any]:
     """
     Load and return the BTD6 towers JSON data from the package data directory.
-    
+
     Attempts to read and parse data/btd6_towers.json located two levels above this module; logs any IO or decode errors and returns an empty dict on failure.
-    
+
     Returns:
         Dict[str, Any]: Parsed towers JSON mapping or an empty dict if the file cannot be read or parsed.
     """
@@ -79,9 +79,9 @@ def _load_towers_json() -> Dict[str, Any]:
 def _get_tower_data(tower_name: str) -> Optional[Dict[str, Any]]:
     """
     Retrieve the tower data entry for a given tower name from the loaded towers JSON.
-    
+
     Searches the cached towers data and returns the matching tower's data dictionary when present.
-    
+
     Returns:
         dict | None: The tower's data dictionary if found, `None` otherwise.
     """
@@ -95,10 +95,10 @@ def _get_tower_data(tower_name: str) -> Optional[Dict[str, Any]]:
 def normalize_monkey_name_for_hotkey(monkey_name: str) -> str:
     """
     Normalize a monkey name by removing a trailing space and numeric suffix used for disambiguation.
-    
+
     Parameters:
         monkey_name (str): Monkey name from configuration (e.g., "Dart Monkey 01").
-    
+
     Returns:
         str: Monkey name with trailing numeric suffix removed and surrounding whitespace trimmed (e.g., "Dart Monkey").
     """
@@ -125,7 +125,7 @@ class ActionManager:
     def get_next_action(self) -> Optional[Dict[str, Any]]:
         """
         Selects the first action whose step is not marked as completed.
-        
+
         Returns:
             dict: The next action dictionary, or `None` if no uncompleted actions remain.
         """
@@ -136,48 +136,24 @@ class ActionManager:
 
     def _build_monkey_position_lookup(self) -> Dict[str, Tuple[int, int]]:
         """
-        Construct a mapping from monkey target names to their normalized (x, y) positions.
-        
-        Processes pre-play buy actions first and then main buy actions; only actions with a "target" and a "position" are considered. Positions are converted using _normalize_position; actions with invalid positions are skipped. If multiple actions specify the same target, the last processed action wins (main actions override pre-play).
+        Construct a mapping from monkey/hero names to their (x, y) positions using config_loader's get_tower_positions_for_map.
         Returns:
-            Dict[str, Tuple[int, int]]: Mapping from monkey target name to its (x, y) position.
+            Dict[str, Tuple[int, int]]: Mapping from monkey/hero name to its (x, y) position.
         """
-        positions = {}
-        # Pre-play actions
-        for action in self.pre_play_actions:
-            if (
-                action.get("action") == "buy"
-                and "target" in action
-                and "position" in action
-            ):
-                try:
-                    positions[action["target"]] = self._normalize_position(
-                        action["position"]
-                    )
-                except Exception:
-                    continue
-        # Main actions
-        for action in self.actions:
-            if (
-                action.get("action") == "buy"
-                and "target" in action
-                and "position" in action
-            ):
-                try:
-                    positions[action["target"]] = self._normalize_position(
-                        action["position"]
-                    )
-                except Exception:
-                    continue
-        return positions
+        from btd6_auto.config_loader import get_tower_positions_for_map
+
+        map_name = self.map_config.get("map_name")
+        if not map_name:
+            return {}
+        return get_tower_positions_for_map(map_name)
 
     def _check_placement_result(self, result, target, pos, placement_type):
         """
         Check the result of a hero or monkey placement and warn if it failed.
-        
+
         If the placement result is `False`, logs a warning that includes the target name,
         the attempted position, and the placement type.
-        
+
         Parameters:
             result: The value returned by the placement call.
             target: The name of the hero or monkey being placed.
@@ -397,15 +373,15 @@ def _parse_tower_costs(
 ) -> Optional[int]:
     """
     Determine a tower's in-game cost by parsing its cost string and applying difficulty/mode normalization.
-    
+
     Parameters:
         tower_data (Dict[str, Any]): Tower entry from btd6_towers.json containing a "cost" string.
         difficulty (str): Difficulty label (e.g., "Easy", "Medium", "Hard"); will be normalized.
         mode (str): Game mode label (e.g., "Standard", "Impoppable"); will be normalized.
-    
+
     Returns:
         Optional[int]: The resolved cost for the tower for the given difficulty and mode, or `None` if no applicable cost is found.
-    
+
     Notes:
         - Parses numeric cost blocks from the tower's "cost" text and maps them to their labels.
         - If the normalized mode is "Impoppable" and normalized difficulty is "Hard", returns the "Impoppable" cost when present.
@@ -437,14 +413,14 @@ def can_afford(
 ) -> bool:
     """
     Determine whether available money covers the required cost for a buy or upgrade action.
-    
+
     If map_config is provided, buy actions use tower pricing resolved from tower data for the configured difficulty and mode; upgrade actions use the action's `at_money` value. If map_config is omitted, the function falls back to the action's `at_money` value for cost. Missing tower data or unresolved costs cause the function to return `False` (and are logged).
-    
+
     Parameters:
         current_money (int): Available money to compare against the required cost.
         action (Dict[str, Any]): Action dictionary; expected keys include `"action"` (e.g., `"buy"` or `"upgrade"`), `"target"` for buy actions, and `"at_money"` for fallback costs.
         map_config (Optional[Dict[str, Any]]): Optional map configuration containing `"difficulty"` and `"mode"` used to resolve tower costs.
-    
+
     Returns:
         bool: `True` if `current_money` is greater than or equal to the action's required cost, `False` otherwise.
     """

@@ -56,10 +56,14 @@ map_config = {
 
 
 def test_monkey_position_lookup():
-    am = ActionManager(map_config, global_config)
-    assert am.get_monkey_position("Dart Monkey 01") == (10, 20)
-    assert am.get_monkey_position("Dart Monkey 02") == (30, 40)
-    assert am.get_monkey_position("Wizard Monkey 01") == (50, 60)
+    from btd6_auto.config_loader import ConfigLoader
+
+    real_map_config = ConfigLoader.load_map_config("Monkey Meadow")
+    am = ActionManager(real_map_config, global_config)
+    # Dart Monkey 01 and Dart Monkey 02 positions from Monkey Meadow config
+    assert am.get_monkey_position("Dart Monkey 01") == (490, 500)
+    assert am.get_monkey_position("Dart Monkey 02") == (650, 520)
+    assert am.get_monkey_position("Wizard Monkey 01") == (400, 395)
     assert am.get_monkey_position("Nonexistent") is None
 
 
