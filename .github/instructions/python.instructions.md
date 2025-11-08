@@ -9,7 +9,7 @@ applyTo: '**/*.py'
 
 - Write clear and concise comments for each function.
 - Ensure functions have descriptive names and include type hints.
-- Provide docstrings following PEP 257 conventions.
+- Always provide docstrings following PEP 257 conventions, for all functions and classes.
 - Use the `typing` module for type annotations (e.g., `List[str]`, `Dict[str, int]`).
 - Break down complex functions into smaller, more manageable functions.
 - Make sure you do not add import statements that are not used in the code or already exist in the code.
@@ -30,7 +30,6 @@ applyTo: '**/*.py'
 - Follow the **PEP 8** style guide for Python.
 - All imports stay at top of the file, grouped into standard library imports, third-party imports, and local application imports.
 - Maintain proper indentation (use 4 spaces for each level of indentation).
-- Ensure lines do not exceed 79 characters.
 - Place function and class docstrings immediately after the `def` or `class` keyword.
 - Use blank lines to separate functions, classes, and code blocks where appropriate.
 
@@ -47,14 +46,11 @@ applyTo: '**/*.py'
 def calculate_area(radius: float) -> float:
     """
     Calculate the area of a circle given the radius.
-    
     Parameters:
     radius (float): The radius of the circle.
-    
     Returns:
     float: The area of the circle, calculated as π * radius^2.
     """
-    import math
     return math.pi * radius ** 2
 ```
 
