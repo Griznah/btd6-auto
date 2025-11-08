@@ -11,6 +11,11 @@ from btd6_auto.monkey_manager import place_monkey, place_hero
 
 
 class ActionManager:
+    """
+    Manages the list of actions for a BTD6 map run, including pre-play and main actions.
+    Provides lookup for monkey positions and orchestrates action execution.
+    """
+
     def _check_placement_result(self, result, target, pos, placement_type):
         """
         Unified checker for hero/monkey placement results.
@@ -25,11 +30,6 @@ class ActionManager:
             logging.warning(
                 f"{placement_type} placement returned False for {target} at {pos}."
             )
-
-    """
-    Manages the list of actions for a BTD6 map run, including pre-play and main actions.
-    Provides lookup for monkey positions and orchestrates action execution.
-    """
 
     def __init__(
         self, map_config: Dict[str, Any], global_config: Dict[str, Any]
