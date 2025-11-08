@@ -15,7 +15,7 @@ Constants:
 
 import os
 import json
-from typing import Dict, Any, Optional, ClassVar
+from typing import Dict, Any, Optional, ClassVar, Sequence
 
 CONFIGS_DIR = os.path.join(os.path.dirname(__file__), "configs")
 MAPS_DIR = os.path.join(CONFIGS_DIR, "maps")
@@ -117,7 +117,7 @@ class ConfigLoader:
 
     @staticmethod
     def validate_config(
-        config: Dict[str, Any], required_fields: list
+        config: Dict[str, Any], required_fields: Sequence[str]
     ) -> bool:
         """
         Validate that all required fields exist in the given configuration.

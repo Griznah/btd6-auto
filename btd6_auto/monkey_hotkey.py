@@ -16,12 +16,12 @@ Notes:
 """
 
 import os
+from importlib import resources
 import json
 from typing import Dict, Optional
 
-_TOWER_DATA_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "data", "btd6_towers.json"
-)
+_TOWER_DATA_PACKAGE = "btd6_auto.data"
+_TOWER_DATA_NAME = "btd6_towers.json"
 _hotkey_cache: Optional[Dict[str, str]] = None
 
 
@@ -34,15 +34,28 @@ def _load_hotkey_cache() -> Dict[str, str]:
     global _hotkey_cache
     if _hotkey_cache is not None:
         return _hotkey_cache
-    with open(_TOWER_DATA_PATH, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    try:
+        with (
+            resources.files(_TOWER_DATA_PACKAGE)
+            .joinpath(_TOWER_DATA_NAME)
+            .open("r", encoding="utf-8") as f
+        ):
+            data = json.load(f)
+    except Exception:
+        # Fallback for non-packaged runs
+        legacy = os.path.join(
+            os.path.dirname(__file__), "..", "data", _TOWER_DATA_NAME
+        )
+        with open(legacy, "r", encoding="utf-8") as f:
+            data = json.load(f)
     cache = {}
     for category in data.values():
         for monkey, info in category.items():
             name = info.get("name", monkey)
             hotkey = info.get("hotkey")
-            if hotkey:
-                cache[name] = hotkey
+            # Defensive normalization: ensure single lowercase char
+            if isinstance(hotkey, str) and hotkey:
+                cache[name] = hotkey.strip()[0].lower()
     _hotkey_cache = cache
     return cache
 
