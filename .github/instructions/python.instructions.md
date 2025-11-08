@@ -8,12 +8,12 @@ applyTo: '**/*.py'
 ## Python Instructions
 
 - Write clear and concise comments for each function.
-- Ensure functions have descriptive names and include type hints.
-- Always provide docstrings following PEP 257 conventions, for all functions and classes.
+- Ensure functions have descriptive names and include type hints for both function signatures and class attributes.
+- Always provide docstrings following PEP 257 conventions, for all functions, classes, and test cases. Test docstrings should describe the scenario and expected outcome.
 - Use the `typing` module for type annotations (e.g., `List[str]`, `Dict[str, int]`).
 - Break down complex functions into smaller, more manageable functions.
 - Make sure you do not add import statements that are not used in the code or already exist in the code.
-- Prefer logging.exception() over logging.error() when logging exceptions to capture stack traces.
+- Prefer logging.exception() over logging.error() when logging exceptions to capture stack traces. See example below.
 
 ## General Instructions
 
@@ -28,7 +28,16 @@ applyTo: '**/*.py'
 ## Code Style and Formatting
 
 - Follow the **PEP 8** style guide for Python.
-- All imports stay at top of the file, grouped into standard library imports, third-party imports, and local application imports.
+- All imports stay at top of the file, grouped into standard library imports, third-party imports, and local application imports. Example:
+
+```python
+import os
+import sys  # Standard library imports
+
+import cv2  # Third-party imports
+
+from btd6_auto.actions import perform_action  # Local application imports
+```
 - Maintain proper indentation (use 4 spaces for each level of indentation).
 - Place function and class docstrings immediately after the `def` or `class` keyword.
 - Use blank lines to separate functions, classes, and code blocks where appropriate.
@@ -38,7 +47,7 @@ applyTo: '**/*.py'
 - Always include test cases for critical paths of the application.
 - Account for common edge cases like empty inputs, invalid data types, and large datasets.
 - Include comments for edge cases and the expected behavior in those cases.
-- Write unit tests for functions and document them with docstrings explaining the test cases.
+- Write unit tests for functions and document them with docstrings explaining the test cases, including the scenario and expected outcome.
 
 ## Example of Proper Documentation
 
@@ -52,6 +61,15 @@ def calculate_area(radius: float) -> float:
     float: The area of the circle, calculated as π * radius^2.
     """
     return math.pi * radius ** 2
+```
+
+## Example of Exception Handling
+
+```python
+try:
+    # ...code...
+except Exception:
+    logging.exception("An error occurred while processing the data.")
 ```
 
 ## Windows Platform Note

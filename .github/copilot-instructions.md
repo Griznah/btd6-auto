@@ -19,15 +19,15 @@ This project is a Python3 automation bot for Bloons Tower Defense 6 (BTD6), a to
 - Use OpenCV for image recognition and game state detection (preferred over Pillow for advanced vision tasks).
 - Use pyautogui for mouse/keyboard automation.
 - But use keyboard package for hero and monkey selection to avoid focus issues.
-- Use pytest for unit testing.
+- Use pytest for unit testing. All new features should include corresponding unit tests.
 - Organize code modularly for easy extension.
 - Use configuration files for user preferences.
 
 ## Configuration Files and facts
 
 - Global config is stored in ./btd6_auto/configs/global.json
-- Map specific config is stored in btd6_auto/configs/maps/map_name.json
-- We have some game facts stored in ./data/btd6_facts.json
+- Map specific config is stored in btd6_auto/configs/maps/{map_name}.json
+- We have all tower facts stored in ./data/btd6_towers.json
 
 ## File Naming Convention
 
@@ -36,7 +36,12 @@ This project is a Python3 automation bot for Bloons Tower Defense 6 (BTD6), a to
 
 ## Windows Platform Note
 
-- Use backslashes (`\\`) for paths in code, or use `os.path.join` for cross-version compatibility.
+- Use backslashes (`\`) for paths in code, or use `os.path.join` for cross-version compatibility. Example:
+
+```python
+import os
+config_path = os.path.join("btd6_auto", "configs", "global.json")
+```
 - Avoid reserved Windows filenames (e.g., `CON`, `PRN`, `AUX`, `NUL`, etc.).
 - Be aware that Windows file systems are case-insensitive by default.
 - Spaces in filenames are allowed, but consider using underscores or CamelCase for consistency.
@@ -56,6 +61,7 @@ This project is a Python3 automation bot for Bloons Tower Defense 6 (BTD6), a to
 ## Adding Dependencies
 
 - Add new packages under `[project.dependencies]` in `pyproject.toml`.
+- After updating dependencies, run tests to ensure compatibility.
 - Install with: `uv sync` (or `uv pip install <package>` for ad-hoc testing).
 
 
