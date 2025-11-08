@@ -32,7 +32,7 @@
       "at_money": 75,
       "action": "upgrade",
       "target": "Dart Monkey 01",
-      "upgrade_path": "0-0-1"
+      "upgrade_path": { "path_1": 0, "path_2": 0, "path_3": 1 }
     },
     {
       "step": 2,
@@ -46,7 +46,7 @@
       "at_money": 170,
       "action": "upgrade",
       "target": "Dart Monkey 01",
-      "upgrade_path": "0-0-2"
+      "upgrade_path": { "path_1": 0, "path_2": 0, "path_3": 2 }
     },
     {
       "step": 4,
@@ -60,7 +60,7 @@
       "at_money": 500,
       "action": "upgrade",
       "target": "Dart Monkey 02",
-      "upgrade_path": "0-1-0"
+      "upgrade_path": { "path_1": 0, "path_2": 1, "path_3": 0 }
     }
   ],
   "timing": {
