@@ -27,7 +27,8 @@ def normalize_monkey_name_for_hotkey(monkey_name: str) -> str:
     Returns:
         str: Normalized monkey name (e.g., 'Dart Monkey').
     """
-    return re.sub(r"\s\d+$", "", monkey_name)
+    normalized = re.sub(r"\s+\d+$", "", monkey_name)
+    return normalized.strip()
 
 
 class ActionManager:
