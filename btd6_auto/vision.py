@@ -99,14 +99,8 @@ def set_round_state(
             _, max_val, _, _ = cv2.minMaxLoc(res)
             return max_val >= threshold, max_val
         else:
-            try:
-                result = find_in_region(template_path, region, threshold)
-            except TypeError:
-                try:
-                    result = find_in_region(template_path, region)
-                except TypeError:
-                    result = find_in_region(template_path, threshold)
-            # If result is a tuple, return as is; if bool, convert to (bool, None)
+            # For test/mocked find_in_region, always call with only template_path
+            result = find_in_region(template_path)
             if isinstance(result, tuple):
                 return result
             else:

@@ -100,7 +100,7 @@
     "recovery_delay": 1.0,
     "screenshot_on_error": true
   },
-  "hotkeys": {
+  "hotkey": {
     "Upgrade Path 1": "Comma",
     "Upgrade Path 2": "Period",
     "Upgrade Path 3": "Slash"

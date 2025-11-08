@@ -12,6 +12,8 @@ applyTo: '**/*.py'
 - Provide docstrings following PEP 257 conventions.
 - Use the `typing` module for type annotations (e.g., `List[str]`, `Dict[str, int]`).
 - Break down complex functions into smaller, more manageable functions.
+- Make sure you do not add import statements that are not used in the code or already exist in the code.
+- Prefer logging.exception() over logging.error() when logging exceptions to capture stack traces.
 
 ## General Instructions
 
@@ -26,6 +28,7 @@ applyTo: '**/*.py'
 ## Code Style and Formatting
 
 - Follow the **PEP 8** style guide for Python.
+- All imports stay at top of the file, grouped into standard library imports, third-party imports, and local application imports.
 - Maintain proper indentation (use 4 spaces for each level of indentation).
 - Ensure lines do not exceed 79 characters.
 - Place function and class docstrings immediately after the `def` or `class` keyword.

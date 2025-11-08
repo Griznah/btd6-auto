@@ -13,27 +13,20 @@
       "action": "buy",
       "target": "Dart Monkey 01",
       "position": { "x": 490, "y": 500 },
-      "key_binding": "q"
+      "hotkey": "q"
     },
     {
       "step": 1,
       "action": "buy",
       "target": "Dart Monkey 02",
       "position": { "x": 650, "y": 520 },
-      "key_binding": "q"
+      "hotkey": "q"
     }
   ],
   "hero": {
-    "name": "Quincy",
-    "key_binding": "u",
-    "position": { "x": 485, "y": 395 },
-    "abilities": [
-      {
-        "round": 1,
-        "ability_type": "storm",
-        "cooldown_rounds": 60
-      }
-    ]
+    "name": "Any",
+    "hotkey": "u",
+    "position": { "x": 485, "y": 395 }
   },
   "actions": [
     {
@@ -49,7 +42,7 @@
       "action": "buy",
       "target": "Wizard Monkey 01",
       "position": { "x": 400, "y": 395 },
-      "key_binding": "a"
+      "hotkey": "a"
     },
     {
       "step": 3,
@@ -64,7 +57,7 @@
       "action": "buy",
       "target": "Spike Factory 01",
       "position": { "x": 680, "y": 765 },
-      "key_binding": "j"
+      "hotkey": "j"
     },
     {
       "step": 5,

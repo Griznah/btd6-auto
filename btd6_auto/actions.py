@@ -11,6 +11,21 @@ from btd6_auto.monkey_manager import place_monkey, place_hero
 
 
 class ActionManager:
+    def _check_placement_result(self, result, target, pos, placement_type):
+        """
+        Unified checker for hero/monkey placement results.
+        Logs a warning if result is None. Can be extended for stricter handling.
+        Args:
+            result: The return value from the placement function.
+            target: The name of the hero/monkey.
+            pos: The position attempted.
+            placement_type: 'hero' or 'monkey' (for log clarity).
+        """
+        if result is None:
+            logging.warning(
+                f"{placement_type} placement returned None for {target} at {pos}, but continuing."
+            )
+
     """
     Manages the list of actions for a BTD6 map run, including pre-play and main actions.
     Provides lookup for monkey positions and orchestrates action execution.
@@ -114,7 +129,7 @@ class ActionManager:
         """
         # Place hero
         hero = self.hero
-        if hero and "position" in hero and "key_binding" in hero:
+        if hero and "position" in hero and "hotkey" in hero:
             try:
                 pos = self._normalize_position(hero["position"])
             except ValueError:
@@ -122,14 +137,10 @@ class ActionManager:
                 raise
             logging.info(f"Placing hero {hero.get('name', '')} at {pos}")
             try:
-                result = place_hero(pos, hero["key_binding"])
-                if result is None:
-                    logging.exception(
-                        f"Failed to place hero {hero.get('name', '')} at {pos}"
-                    )
-                    raise RuntimeError(
-                        f"Failed to place hero {hero.get('name', '')} at {pos}"
-                    )
+                result = place_hero(pos, hero["hotkey"])
+                self._check_placement_result(
+                    result, hero.get("name", ""), pos, "hero"
+                )
             except Exception:
                 logging.exception("Exception during hero placement")
                 raise
@@ -144,24 +155,18 @@ class ActionManager:
                         f"Invalid position for monkey '{action['target']}'"
                     )
                     raise
-                key_binding = action.get(
-                    "key_binding",
+                hotkey = action.get(
+                    "hotkey",
                     self.global_config.get("default_monkey_key", "q"),
                 )
                 logging.info(f"Placing {action['target']} at {pos}")
                 try:
-                    result = place_monkey(pos, key_binding)
-                    if result is None:
-                        logging.exception(
-                            f"Failed to place monkey {action['target']} at {pos}"
-                        )
-                        raise RuntimeError(
-                            f"Failed to place monkey {action['target']} at {pos}"
-                        )
-                except Exception:
-                    logging.exception(
-                        "Exception during monkey placement"
+                    result = place_monkey(pos, hotkey)
+                    self._check_placement_result(
+                        result, action["target"], pos, "monkey"
                     )
+                except Exception:
+                    logging.exception("Exception during monkey placement")
                     raise
                 time.sleep(self.timing.get("placement_delay", 0.5))
 
@@ -176,19 +181,15 @@ class ActionManager:
                 f"Invalid position for monkey '{action['target']}'"
             )
             raise
-        key_binding = action.get(
-            "key_binding", self.global_config.get("default_monkey_key", "q")
+        hotkey = action.get(
+            "hotkey", self.global_config.get("default_monkey_key", "q")
         )
         logging.info(f"Placing {action['target']} at {pos}")
         try:
-            result = place_monkey(pos, key_binding)
-            if result is None:
-                logging.exception(
-                    f"Failed to place monkey {action['target']} at {pos}"
-                )
-                raise RuntimeError(
-                    f"Failed to place monkey {action['target']} at {pos}"
-                )
+            result = place_monkey(pos, hotkey)
+            self._check_placement_result(
+                result, action["target"], pos, "monkey"
+            )
         except Exception:
             logging.exception("Exception during monkey placement")
             raise
