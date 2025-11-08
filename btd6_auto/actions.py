@@ -27,7 +27,7 @@ def normalize_monkey_name_for_hotkey(monkey_name: str) -> str:
     Returns:
         str: Normalized monkey name (e.g., 'Dart Monkey').
     """
-    return re.sub(r"\s\d{2}$", "", monkey_name)
+    return re.sub(r"\s\d+$", "", monkey_name)
 
 
 class ActionManager:
@@ -195,14 +195,17 @@ class ActionManager:
                 logging.exception("Invalid hero position")
                 raise
             hotkey = hero.get("hotkey")
-            if not hotkey and "name" in hero:
-                normalized_name = normalize_monkey_name_for_hotkey(
-                    hero["name"]
-                )
-                hotkey = get_monkey_hotkey(
-                    normalized_name,
-                    self.global_config.get("default_monkey_key", "q"),
-                )
+            if not hotkey:
+                # Defensive: require explicit hotkey or use dedicated hero_key from global config
+                hero_key = self.global_config.get("hero_key", "u")
+                if not hero_key:
+                    logging.error(
+                        "No hero hotkey defined in config and none provided in hero config."
+                    )
+                    raise ValueError(
+                        "Hero hotkey must be defined in hero config or global config as 'hero_key'."
+                    )
+                hotkey = hero_key
             logging.info(f"Placing hero {hero.get('name', '')} at {pos}")
             try:
                 result = place_hero(pos, hotkey)
