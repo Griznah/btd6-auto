@@ -1,14 +1,7 @@
 import os
 import sys
-from btd6_auto.actions import ActionManager
-
-sys.path.insert(
-    0,
-    os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "btd6_auto")
-    ),
-)
 from actions import (
+    ActionManager,
     can_afford,
     _get_tower_data,
     _parse_tower_costs,
@@ -16,6 +9,14 @@ from actions import (
     normalize_monkey_name_for_hotkey,
     _COST_REGEX,
     _MONKEY_SUFFIX_REGEX,
+)
+
+
+sys.path.insert(
+    0,
+    os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "btd6_auto")
+    ),
 )
 
 

@@ -14,7 +14,6 @@ from typing import Any, Dict, Optional, Tuple
 import json
 from functools import lru_cache
 from pathlib import Path
-import os
 import logging
 import time
 from btd6_auto.monkey_manager import place_monkey, place_hero
@@ -389,30 +388,6 @@ def _parse_tower_costs(
     elif norm_difficulty in costs:
         return costs.get(norm_difficulty)
     return costs.get("Medium")
-
-
-def _get_tower_data(tower_name: str) -> Optional[Dict[str, Any]]:
-    """
-    Load tower data from btd6_towers.json and return the entry for the given tower name.
-    Args:
-        tower_name (str): Name of the tower (e.g., 'Dart Monkey').
-    Returns:
-        Optional[Dict[str, Any]]: Tower data dict or None if not found.
-    """
-    towers_path = os.path.join(
-        os.path.dirname(__file__), "..", "data", "btd6_towers.json"
-    )
-    try:
-        with open(towers_path, "r", encoding="utf-8") as f:
-            towers_json = json.load(f)
-    except Exception as e:
-        logging.exception(f"Failed to load tower data: {e}")
-        return None
-    # Search all categories
-    for category in towers_json.values():
-        if tower_name in category:
-            return category[tower_name]
-    return None
 
 
 def can_afford(
