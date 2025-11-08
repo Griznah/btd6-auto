@@ -41,7 +41,7 @@ def _load_hotkey_cache() -> Dict[str, str]:
             .open("r", encoding="utf-8") as f
         ):
             data = json.load(f)
-    except Exception:
+    except (FileNotFoundError, ModuleNotFoundError):
         # Fallback for non-packaged runs
         legacy = os.path.join(
             os.path.dirname(__file__), "..", "data", _TOWER_DATA_NAME
