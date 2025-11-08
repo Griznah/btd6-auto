@@ -37,7 +37,7 @@ This phase is the most critical. We will build the new system's backbone and ens
    },
    "hero": {
       "name": "Quincy",
-      "key_binding": "u",
+      "hotkey": "u",
       "position": {
          "x": 485,
          "y": 395
@@ -53,7 +53,7 @@ This phase is the most critical. We will build the new system's backbone and ens
       "monkeys": [
       {
          "name": "Dart Monkey",
-         "key_binding": "q",
+         "hotkey": "q",
          "position": {
          "x": 625,
          "y": 500
@@ -80,7 +80,7 @@ This phase is the most critical. We will build the new system's backbone and ens
       },
       {
          "name": "Bomb Shooter",
-         "key_binding": "e",
+         "hotkey": "e",
          "position": {
          "x": 700,
          "y": 450

@@ -1,31 +1,59 @@
 """
 Unit tests for btd6_auto.actions module and its integration in main automation flow.
 """
+
 from unittest.mock import patch
 from btd6_auto.actions import ActionManager, can_afford
+import pytest
+import logging
 
 # Sample configs for testing
 global_config = {
     "default_monkey_key": "q",
-    "automation": {"logging_level": "INFO"}
+    "automation": {"logging_level": "INFO"},
 }
 
 map_config = {
     "hero": {
         "name": "Quincy",
-        "key_binding": "u",
-        "position": {"x": 100, "y": 200}
+        "hotkey": "u",
+        "position": {"x": 100, "y": 200},
     },
     "pre_play_actions": [
-        {"step": 0, "action": "buy", "target": "Dart Monkey 01", "position": {"x": 10, "y": 20}, "key_binding": "q"},
-        {"step": 1, "action": "buy", "target": "Dart Monkey 02", "position": {"x": 30, "y": 40}, "key_binding": "q"}
+        {
+            "step": 0,
+            "action": "buy",
+            "target": "Dart Monkey 01",
+            "position": {"x": 10, "y": 20},
+            "hotkey": "q",
+        },
+        {
+            "step": 1,
+            "action": "buy",
+            "target": "Dart Monkey 02",
+            "position": {"x": 30, "y": 40},
+            "hotkey": "q",
+        },
     ],
     "actions": [
-        {"step": 2, "at_money": 75, "action": "upgrade", "target": "Dart Monkey 01", "upgrade_path": "0-0-1"},
-        {"step": 3, "at_money": 210, "action": "buy", "target": "Wizard Monkey 01", "position": {"x": 50, "y": 60}},
+        {
+            "step": 2,
+            "at_money": 75,
+            "action": "upgrade",
+            "target": "Dart Monkey 01",
+            "upgrade_path": "0-0-1",
+        },
+        {
+            "step": 3,
+            "at_money": 210,
+            "action": "buy",
+            "target": "Wizard Monkey 01",
+            "position": {"x": 50, "y": 60},
+        },
     ],
-    "timing": {"placement_delay": 0.01, "upgrade_delay": 0.01}
+    "timing": {"placement_delay": 0.01, "upgrade_delay": 0.01},
 }
+
 
 def test_monkey_position_lookup():
     am = ActionManager(map_config, global_config)
@@ -33,6 +61,7 @@ def test_monkey_position_lookup():
     assert am.get_monkey_position("Dart Monkey 02") == (30, 40)
     assert am.get_monkey_position("Wizard Monkey 01") == (50, 60)
     assert am.get_monkey_position("Nonexistent") is None
+
 
 def test_get_next_action_and_mark_completed():
     am = ActionManager(map_config, global_config)
@@ -42,6 +71,7 @@ def test_get_next_action_and_mark_completed():
     am.mark_completed(3)
     assert am.get_next_action() is None
 
+
 def test_steps_remaining():
     am = ActionManager(map_config, global_config)
     assert am.steps_remaining() == 2
@@ -50,6 +80,7 @@ def test_steps_remaining():
     am.mark_completed(3)
     assert am.steps_remaining() == 0
 
+
 def test_can_afford():
     action = {"at_money": 100}
     assert can_afford(150, action)
@@ -57,6 +88,7 @@ def test_can_afford():
     assert can_afford(100, action)
     # No at_money key
     assert can_afford(0, {"action": "buy"})
+
 
 @patch("btd6_auto.actions.place_hero")
 @patch("btd6_auto.actions.place_monkey")
@@ -68,19 +100,121 @@ def test_run_pre_play(mock_place_monkey, mock_place_hero):
     mock_place_monkey.assert_any_call((10, 20), "q")
     mock_place_monkey.assert_any_call((30, 40), "q")
 
+
 @patch("btd6_auto.actions.place_monkey")
 def test_run_buy_action(mock_place_monkey):
     am = ActionManager(map_config, global_config)
-    buy_action = {"step": 3, "action": "buy", "target": "Wizard Monkey 01", "position": {"x": 50, "y": 60}}
+    buy_action = {
+        "step": 3,
+        "action": "buy",
+        "target": "Wizard Monkey 01",
+        "position": {"x": 50, "y": 60},
+    }
     am.run_buy_action(buy_action)
     mock_place_monkey.assert_called_once_with((50, 60), "q")
+
 
 @patch("time.sleep", return_value=None)
 def test_run_upgrade_action(mock_sleep):
     am = ActionManager(map_config, global_config)
-    upgrade_action = {"step": 2, "action": "upgrade", "target": "Dart Monkey 01", "upgrade_path": "0-0-1"}
+    upgrade_action = {
+        "step": 2,
+        "action": "upgrade",
+        "target": "Dart Monkey 01",
+        "upgrade_path": "0-0-1",
+    }
     # Just check it logs and sleeps, no error
     am.run_upgrade_action(upgrade_action)
+
+
+# --- Additional coverage improvements ---
+def test_invalid_position_raises_value_error():
+    bad_map_config = {
+        "hero": {
+            "name": "Quincy",
+            "hotkey": "u",
+            "position": {"x": 100},
+        },  # missing 'y'
+        "pre_play_actions": [
+            {
+                "step": 0,
+                "action": "buy",
+                "target": "Dart Monkey 01",
+                "position": [10],
+            },  # invalid tuple
+        ],
+        "actions": [],
+        "timing": {"placement_delay": 0.01},
+    }
+    am = ActionManager(bad_map_config, global_config)
+    # Hero position error
+    with pytest.raises(ValueError):
+        am.run_pre_play()
+    # Monkey position error
+    bad_map_config2 = {
+        "hero": {
+            "name": "Quincy",
+            "hotkey": "u",
+            "position": {"x": 100, "y": 200},
+        },
+        "pre_play_actions": [
+            {
+                "step": 0,
+                "action": "buy",
+                "target": "Dart Monkey 01",
+                "position": [10],
+            },  # invalid tuple
+        ],
+        "actions": [],
+        "timing": {"placement_delay": 0.01},
+    }
+    am2 = ActionManager(bad_map_config2, global_config)
+    with pytest.raises(ValueError):
+        am2.run_pre_play()
+
+
+@patch("btd6_auto.actions.place_hero", return_value=None)
+@patch("btd6_auto.actions.place_monkey", return_value=None)
+def test_placement_result_logging(mock_place_monkey, mock_place_hero, caplog):
+    am = ActionManager(map_config, global_config)
+    with caplog.at_level(logging.WARNING):
+        am.run_pre_play()
+    # Should log warnings for both hero and monkeys
+    assert any(
+        "hero placement returned None" in r for r in caplog.text.splitlines()
+    )
+    assert any(
+        "monkey placement returned None" in r
+        for r in caplog.text.splitlines()
+    )
+
+
+def test_action_manager_empty_and_duplicate_steps():
+    empty_config = {"pre_play_actions": [], "actions": []}
+    am = ActionManager(empty_config, global_config)
+    assert am.get_next_action() is None
+    assert am.steps_remaining() == 0
+    # Duplicate steps
+    dup_config = {
+        "pre_play_actions": [],
+        "actions": [
+            {
+                "step": 1,
+                "action": "buy",
+                "target": "A",
+                "position": {"x": 1, "y": 2},
+            },
+            {
+                "step": 1,
+                "action": "buy",
+                "target": "B",
+                "position": {"x": 3, "y": 4},
+            },
+        ],
+    }
+    am2 = ActionManager(dup_config, global_config)
+    # Should return the first not completed (lowest step)
+    assert am2.get_next_action()["target"] in ["A", "B"]
 
 
 # --- Integration test for action manager orchestration logic ---
@@ -90,6 +224,7 @@ def test_action_manager_integration(mock_place_hero, mock_place_monkey):
     # Simulate currency values for pre-play and main actions
     currency_values = [0, 100, 100, 250, 250, 250]
     currency_iter = iter(currency_values)
+
     def fake_get_currency():
         return next(currency_iter, 250)
 
