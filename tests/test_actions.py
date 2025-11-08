@@ -111,7 +111,8 @@ def test_run_buy_action(mock_place_monkey):
         "position": {"x": 50, "y": 60},
     }
     am.run_buy_action(buy_action)
-    mock_place_monkey.assert_called_once_with((50, 60), "q")
+    # After refactor, Wizard Monkey 01 should resolve to 'Wizard Monkey' hotkey, which is 'a'
+    mock_place_monkey.assert_called_once_with((50, 60), "a")
 
 
 @patch("time.sleep", return_value=None)
