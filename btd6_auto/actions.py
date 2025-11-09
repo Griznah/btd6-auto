@@ -12,13 +12,14 @@ Functions:
 
 from typing import Any, Dict, Optional, Tuple
 import json
+import re
 from functools import lru_cache
 from pathlib import Path
 import logging
 import time
 from btd6_auto.monkey_manager import place_monkey, place_hero
 from btd6_auto.monkey_hotkey import get_monkey_hotkey
-import re
+from btd6_auto.config_loader import get_tower_positions_for_map
 
 # Compile regexes at module level
 _COST_REGEX = re.compile(r"\$(\d+) \( ([^)]+) \)")
@@ -140,11 +141,10 @@ class ActionManager:
         Returns:
             Dict[str, Tuple[int, int]]: Mapping from monkey/hero name to its (x, y) position.
         """
-        from btd6_auto.config_loader import get_tower_positions_for_map
 
         map_name = self.map_config.get("map_name")
         if not map_name:
-            return {}
+            raise ValueError("Map name not found in config; position lookup will be empty")
         return get_tower_positions_for_map(map_name)
 
     def _check_placement_result(self, result, target, pos, placement_type):

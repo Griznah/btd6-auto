@@ -8,6 +8,7 @@
   },
   "map_filenames": {
     "midnight_mansion.json": "Midnight Mansion",
+    "test_map.json": "Test Map",
     "sunken_columns.json": "Sunken Columns",
     "erosion.json": "Erosion",
     "x_factor.json": "X Factor",

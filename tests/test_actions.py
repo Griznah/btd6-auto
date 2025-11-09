@@ -14,6 +14,7 @@ global_config = {
 }
 
 map_config = {
+    "map_name": "Monkey Meadow",
     "hero": {
         "name": "Quincy",
         "hotkey": "u",
@@ -138,6 +139,7 @@ def test_invalid_position_raises_value_error():
     Test that invalid hero or monkey positions raise ValueError.
     """
     bad_map_config = {
+        "map_name": "Monkey Meadow",
         "hero": {
             "name": "Quincy",
             "hotkey": "u",
@@ -160,6 +162,7 @@ def test_invalid_position_raises_value_error():
         am.run_pre_play()
     # Monkey position error
     bad_map_config2 = {
+        "map_name": "Monkey Meadow",
         "hero": {
             "name": "Quincy",
             "hotkey": "u",
@@ -205,12 +208,17 @@ def test_action_manager_empty_and_duplicate_steps():
     """
     Test ActionManager behavior with empty and duplicate step configs.
     """
-    empty_config = {"pre_play_actions": [], "actions": []}
+    empty_config = {
+        "map_name": "Monkey Meadow",
+        "pre_play_actions": [],
+        "actions": [],
+    }
     am = ActionManager(empty_config, global_config)
     assert am.get_next_action() is None
     assert am.steps_remaining() == 0
     # Duplicate steps
     dup_config = {
+        "map_name": "Monkey Meadow",
         "pre_play_actions": [],
         "actions": [
             {

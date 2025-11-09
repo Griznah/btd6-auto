@@ -9,10 +9,7 @@ def invalidate_config_loader_cache():
 
 
 # Use a real map config that exists in the repo for this test
-EXISTING_MAP = "Monkey Meadow"
-
-# Example expected structure for Pat's Pond (update if needed)
-EXPECTED_KEYS = {"hero", "dart_monkey", "boomerang_monkey"}  # Example keys
+EXISTING_MAP = "Test Map"
 
 
 def test_get_tower_positions_for_map_success():

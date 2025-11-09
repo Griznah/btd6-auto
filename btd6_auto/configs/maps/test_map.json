@@ -1,0 +1,76 @@
+{
+  "map_name": "Test Map",
+  "difficulty": "Easy",
+  "mode": "Standard",
+  "game_settings": {
+    "window_title": "BloonsTD6",
+    "resolution": "1920x1080",
+    "fullscreen": true
+  },
+  "pre_play_actions": [
+    {
+      "step": 0,
+      "action": "buy",
+      "target": "Dart Monkey 01",
+      "position": { "x": 490, "y": 500 }
+    },
+    {
+      "step": 1,
+      "action": "buy",
+      "target": "Dart Monkey 02",
+      "position": { "x": 650, "y": 520 }
+    }
+  ],
+  "hero": {
+    "name": "Any",
+    "hotkey": "u",
+    "position": { "x": 485, "y": 395 }
+  },
+  "actions": [
+    {
+      "step": 1,
+      "at_money": 75,
+      "action": "upgrade",
+      "target": "Dart Monkey 01",
+      "upgrade_path": { "path_1": 0, "path_2": 0, "path_3": 1 }
+    },
+    {
+      "step": 2,
+      "at_money": 210,
+      "action": "buy",
+      "target": "Wizard Monkey 01",
+      "position": { "x": 400, "y": 395 }
+    },
+    {
+      "step": 3,
+      "at_money": 170,
+      "action": "upgrade",
+      "target": "Dart Monkey 01",
+      "upgrade_path": { "path_1": 0, "path_2": 0, "path_3": 2 }
+    },
+    {
+      "step": 4,
+      "at_money": 700,
+      "action": "buy",
+      "target": "Spike Factory 01",
+      "position": { "x": 680, "y": 765 }
+    },
+    {
+      "step": 5,
+      "at_money": 500,
+      "action": "upgrade",
+      "target": "Dart Monkey 02",
+      "upgrade_path": { "path_1": 0, "path_2": 1, "path_3": 0 }
+    }
+  ],
+  "timing": {
+    "placement_delay": 0.5,
+    "upgrade_delay": 0.5,
+    "ability_delay": 0.3
+  },
+  "retries": {
+    "max_retries": 3,
+    "retry_delay": 1.0,
+    "image_recognition_timeout": 5.0
+  }
+}
