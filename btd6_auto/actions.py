@@ -20,6 +20,8 @@ import time
 from btd6_auto.monkey_manager import place_monkey, place_hero
 from btd6_auto.monkey_hotkey import get_monkey_hotkey
 from btd6_auto.config_loader import get_tower_positions_for_map
+from btd6_auto.input import click
+
 
 # Compile regexes at module level
 _COST_REGEX = re.compile(r"\$(\d+) \( ([^)]+) \)")
@@ -144,7 +146,9 @@ class ActionManager:
 
         map_name = self.map_config.get("map_name")
         if not map_name:
-            raise ValueError("Map name not found in config; position lookup will be empty")
+            raise ValueError(
+                "Map name not found in config; position lookup will be empty"
+            )
         return get_tower_positions_for_map(map_name)
 
     def _check_placement_result(self, result, target, pos, placement_type):
@@ -356,14 +360,67 @@ class ActionManager:
 
     def run_upgrade_action(self, action: Dict[str, Any]) -> None:
         """
-        Dummy function for upgrade actions. To be implemented.
+        Execute an upgrade action for a tower.
+        Clicks the tower at its position, checks cost, and presses the hotkey for the desired upgrade path.
+        Only one upgrade is performed per action.
 
         Args:
-            action (Dict[str, Any]): Action dictionary containing target and upgrade path.
+            action (Dict[str, Any]): Action dictionary containing target and upgrade_path.
         """
-        logging.info(
-            f"[DUMMY] Would upgrade {action['target']} to {action.get('upgrade_path', '')}"
-        )
+        target = action.get("target")
+        upgrade_path = action.get("upgrade_path", {})
+        if not target or not upgrade_path:
+            logging.warning("Upgrade action missing target or upgrade_path.")
+            return
+
+        # Get tower position
+        pos = self.get_monkey_position(target)
+        if not pos:
+            logging.warning(
+                f"No position found for tower '{target}' during upgrade."
+            )
+            return
+
+        # Check if we can afford the upgrade
+        # Use can_afford helper, which currently uses at_money for upgrades
+        current_money = action.get("at_money", 0)
+        if not can_afford(current_money, action, self.map_config):
+            logging.info(
+                f"Cannot afford upgrade for {target} at ${current_money}."
+            )
+            return
+
+        # Click the tower to select it
+        click(pos[0], pos[1], delay=0.2)
+
+        # Determine which path to upgrade (only one per action)
+        # upgrade_path is a dict like {"path_1": 0, "path_2": 0, "path_3": 1}
+        # Find which path has changed (value incremented by 1)
+        path_hotkeys = self.global_config.get("hotkey", {})
+        path_map = {
+            "path_1": "upgrade_path_1",
+            "path_2": "upgrade_path_2",
+            "path_3": "upgrade_path_3",
+        }
+        # Find which path index is being upgraded
+        for path_key, hotkey_name in path_map.items():
+            if upgrade_path.get(path_key, 0) > 0:
+                # Press the hotkey for this path
+                hotkey = path_hotkeys.get(hotkey_name)
+                if not hotkey:
+                    logging.warning(
+                        f"No hotkey defined for {hotkey_name} in global config."
+                    )
+                    continue
+                # Use keyboard package for hotkey press
+                import keyboard
+
+                logging.info(
+                    f"Upgrading {target} at {pos} via {hotkey_name} ({hotkey})"
+                )
+                keyboard.send(hotkey.lower())
+                break  # Only one upgrade per action
+
         time.sleep(self.timing.get("upgrade_delay", 0.5))
 
 
@@ -452,6 +509,3 @@ def can_afford(
     else:
         logging.warning(f"Unknown action type: {act_type}")
         return False
-
-
-# Add more stateless helpers as needed.

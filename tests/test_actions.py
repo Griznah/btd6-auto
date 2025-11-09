@@ -42,7 +42,7 @@ map_config = {
             "at_money": 75,
             "action": "upgrade",
             "target": "Dart Monkey 01",
-            "upgrade_path": "0-0-1",
+            "upgrade_path": {"path_1": 0, "path_2": 0, "path_3": 1},
         },
         {
             "step": 3,
@@ -127,7 +127,7 @@ def test_run_upgrade_action(mock_sleep):
         "step": 2,
         "action": "upgrade",
         "target": "Dart Monkey 01",
-        "upgrade_path": "0-0-1",
+        "upgrade_path": {"path_1": 0, "path_2": 0, "path_3": 1},
     }
     # Just check it logs and sleeps, no error
     am.run_upgrade_action(upgrade_action)
