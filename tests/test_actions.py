@@ -10,7 +10,10 @@ import logging
 # Sample configs for testing
 global_config = {
     "default_monkey_key": "q",
-    "automation": {"logging_level": "INFO"},
+    "automation": {
+        "logging_level": "INFO",
+        "timing": {"placement_delay": 0.01, "upgrade_delay": 0.01},
+    },
 }
 
 map_config = {
@@ -52,7 +55,7 @@ map_config = {
             "position": {"x": 50, "y": 60},
         },
     ],
-    "timing": {"placement_delay": 0.01, "upgrade_delay": 0.01},
+    # timing removed; now in global_config
 }
 
 
@@ -87,12 +90,21 @@ def test_steps_remaining():
 
 
 def test_can_afford():
-    action = {"at_money": 100}
-    assert can_afford(150, action)
-    assert not can_afford(50, action)
-    assert can_afford(100, action)
-    # No at_money key
-    assert can_afford(0, {"action": "buy"})
+    buy_action = {"action": "buy", "target": "Dart Monkey 01"}
+    upgrade_action = {
+        "action": "upgrade",
+        "target": "Dart Monkey 01",
+        "upgrade_path": {"path_1": 0, "path_2": 0, "path_3": 1},
+    }
+    # Use map_config for cost logic
+    assert can_afford(250, buy_action, map_config)
+    assert not can_afford(50, buy_action, map_config)
+    assert can_afford(
+        215, buy_action, map_config
+    )  # Hard difficulty cost for Dart Monkey is 215
+    assert (
+        can_afford(0, upgrade_action, map_config) is False
+    )  # Should not afford upgrade with 0 currency
 
 
 @patch("btd6_auto.actions.place_hero")
@@ -154,7 +166,7 @@ def test_invalid_position_raises_value_error():
             },  # invalid tuple
         ],
         "actions": [],
-        "timing": {"placement_delay": 0.01},
+        # timing removed; now in global_config
     }
     am = ActionManager(bad_map_config, global_config)
     # Hero position error
@@ -177,7 +189,7 @@ def test_invalid_position_raises_value_error():
             },  # invalid tuple
         ],
         "actions": [],
-        "timing": {"placement_delay": 0.01},
+        # timing removed; now in global_config
     }
     am2 = ActionManager(bad_map_config2, global_config)
     with pytest.raises(ValueError):
@@ -266,7 +278,7 @@ def test_action_manager_integration(mock_place_hero, mock_place_monkey):
         if not next_action:
             break
         currency = fake_get_currency()
-        if not can_afford(currency, next_action):
+        if not can_afford(currency, next_action, map_config):
             continue
         if next_action["action"] == "buy":
             am.run_buy_action(next_action)

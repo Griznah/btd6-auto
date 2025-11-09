@@ -1,13 +1,16 @@
 """
-Action management and execution for BTD6 automation routines.
+BTD6 Automation Action Management
 
-This module defines the ActionManager class, which tracks and manages the current action list for a map run, provides lookup for monkey positions, and orchestrates execution of pre-play and buy actions. Low-level stateless helpers are kept as standalone functions for testability and clarity.
+This module provides core routines for managing and executing gameplay actions in Bloons Tower Defense 6 automation.
+It defines the ActionManager class, which orchestrates map-specific and global actions, including tower placement, upgrades, and hero management.
+Stateless helper functions are included for cost calculation, action affordability checks, and normalization utilities.
 
-Classes:
-    ActionManager: Manages actions and monkey positions for a BTD6 map run.
+Key Components:
+    - ActionManager: Tracks and executes actions for a BTD6 map run, manages monkey positions, and handles pre-play routines.
+    - can_afford: Determines if a buy or upgrade action can be afforded based on current currency and game configuration.
+    - Helper functions: Parse tower costs, normalize names, and retrieve tower data from JSON resources.
 
-Functions:
-    can_afford: Dummy check for action affordability.
+This module is designed for extensibility and testability, following project conventions and PEP 257 docstring standards.
 """
 
 from typing import Any, Dict, Optional, Tuple
@@ -123,7 +126,7 @@ class ActionManager:
         hero (Dict[str, Any]): Hero configuration.
         monkey_positions (Dict[str, Tuple[int, int]]): Lookup for monkey positions.
         completed_steps (set): Steps that have been completed.
-        timing (Dict[str, Any]): Timing configuration for delays.
+    timing (Dict[str, Any]): Timing configuration for delays, loaded from global_config['automation']['timing'].
     """
 
     def get_next_action(self) -> Optional[Dict[str, Any]]:
@@ -191,7 +194,7 @@ class ActionManager:
         self.hero = map_config.get("hero", {})
         self.monkey_positions = self._build_monkey_position_lookup()
         self.completed_steps = set()
-        self.timing = map_config.get("timing", {})
+        self.timing = global_config.get("automation", {}).get("timing", {})
 
     def _normalize_position(self, pos: Any) -> Tuple[int, int]:
         """
@@ -358,8 +361,7 @@ class ActionManager:
     def run_upgrade_action(self, action: Dict[str, Any]) -> None:
         """
         Execute an upgrade action for a tower.
-        Clicks the tower at its position, checks cost, and presses the hotkey for the desired upgrade path.
-        Only one upgrade is performed per action.
+        Presses the hotkey for the desired upgrade path. Only one upgrade is performed per action.
 
         Args:
             action (Dict[str, Any]): Action dictionary containing target and upgrade_path.
@@ -378,31 +380,18 @@ class ActionManager:
             )
             return
 
-        # Check if we can afford the upgrade
-        # Use can_afford helper, which currently uses at_money for upgrades
-        current_money = action.get("at_money", 0)
-        if not can_afford(current_money, action, self.map_config):
-            logging.info(
-                f"Cannot afford upgrade for {target} at ${current_money}."
-            )
-            return
-
         # Click the tower to select it
         click(pos[0], pos[1], delay=0.2)
 
         # Determine which path to upgrade (only one per action)
-        # upgrade_path is a dict like {"path_1": 0, "path_2": 0, "path_3": 1}
-        # Find which path has changed (value incremented by 1)
         path_hotkeys = self.global_config.get("hotkey", {})
         path_map = {
             "path_1": "upgrade_path_1",
             "path_2": "upgrade_path_2",
             "path_3": "upgrade_path_3",
         }
-        # Find which path index is being upgraded
         for path_key, hotkey_name in path_map.items():
             if upgrade_path.get(path_key, 0) > 0:
-                # Press the hotkey for this path
                 hotkey = path_hotkeys.get(hotkey_name)
                 if not hotkey:
                     logging.warning(
@@ -413,6 +402,8 @@ class ActionManager:
                     f"Upgrading {target} at {pos} via {hotkey_name} ({hotkey})"
                 )
                 keyboard.send(hotkey.lower())
+                time.sleep(self.timing.get("upgrade_delay", 0.3))
+                click(pos[0], pos[1])
                 break  # Only one upgrade per action
 
         time.sleep(self.timing.get("upgrade_delay", 0.5))
@@ -457,28 +448,63 @@ def _parse_tower_costs(
     return costs.get("Medium")
 
 
+def _get_upgrade_cost(
+    tower_data: Dict[str, Any],
+    path_index: int,
+    tier: int,
+    difficulty: str,
+    mode: str,
+) -> Optional[int]:
+    """
+    Extract the upgrade cost for a given tower, path, and tier.
+    Args:
+        tower_data (dict): Tower entry from btd6_towers.json.
+        path_index (int): Path number (1, 2, or 3).
+        tier (int): Upgrade tier (0-4).
+        difficulty (str): Difficulty label.
+        mode (str): Mode label.
+    Returns:
+        Optional[int]: The cost for the upgrade, or None if not found.
+    """
+    path_key = f"Path {path_index}"
+    upgrade_paths = tower_data.get("upgrade_paths", {})
+    upgrades = upgrade_paths.get(path_key)
+    if not upgrades or tier < 0 or tier >= len(upgrades):
+        return None
+    costs = upgrades[tier].get("costs", [])
+    # costs: [Easy, Medium, Hard, Impoppable]
+    norm_difficulty, norm_mode = _normalize_difficulty_mode(difficulty, mode)
+    # Map difficulty/mode to index
+    cost_idx = {"Easy": 0, "Medium": 1, "Hard": 2, "Impoppable": 3}
+    if norm_mode == "Impoppable" and norm_difficulty == "Hard":
+        idx = cost_idx["Impoppable"]
+    else:
+        idx = cost_idx.get(norm_difficulty, 1)
+    if idx >= len(costs):
+        return None
+    return costs[idx]
+
+
 def can_afford(
     current_money: int,
     action: Dict[str, Any],
-    map_config: Optional[Dict[str, Any]] = None,
+    map_config: [Dict[str, Any]],
 ) -> bool:
     """
     Determine whether available money covers the required cost for a buy or upgrade action.
 
-    If map_config is provided, buy actions use tower pricing resolved from tower data for the configured difficulty and mode; upgrade actions use the action's `at_money` value. If map_config is omitted, the function falls back to the action's `at_money` value for cost. Missing tower data or unresolved costs cause the function to return `False` (and are logged).
+    For buy actions, uses tower pricing from tower data for the configured difficulty and mode.
+    For upgrade actions, looks up the upgrade cost from tower data using path/tier/difficulty/mode.
+    Missing tower data or unresolved costs cause the function to return `False` (and are logged).
 
     Parameters:
         current_money (int): Available money to compare against the required cost.
-        action (Dict[str, Any]): Action dictionary; expected keys include `"action"` (e.g., `"buy"` or `"upgrade"`), `"target"` for buy actions, and `"at_money"` for fallback costs.
-        map_config (Optional[Dict[str, Any]]): Optional map configuration containing `"difficulty"` and `"mode"` used to resolve tower costs.
+        action (Dict[str, Any]): Action dictionary; expected keys include "action", "target", "upgrade_path".
+        map_config ([Dict[str, Any]]): Required map configuration containing "difficulty" and "mode".
 
     Returns:
         bool: `True` if `current_money` is greater than or equal to the action's required cost, `False` otherwise.
     """
-    if map_config is None:
-        # Fallback to hardcoded at_money if no config provided
-        at_money = action.get("at_money", 0)
-        return current_money >= at_money
     difficulty = map_config.get("difficulty", "Medium")
     mode = map_config.get("mode", "Standard")
     act_type = action.get("action", "").lower()
@@ -498,8 +524,37 @@ def can_afford(
             return False
         return current_money >= cost
     elif act_type == "upgrade":
-        # TODO: Implement upgrade cost lookup
-        return current_money >= action.get("at_money", 0)
+        target = action.get("target", "")
+        tower_name = _MONKEY_SUFFIX_REGEX.sub("", target).strip()
+        tower_data = _get_tower_data(tower_name)
+        if not tower_data:
+            logging.warning(f"Tower data not found for {tower_name}")
+            return False
+        upgrade_path = action.get("upgrade_path", {})
+        # Find which path is being upgraded (value > 0)
+        path_idx = None
+        tier = None
+        for i in range(1, 4):
+            key = f"path_{i}"
+            val = upgrade_path.get(key, 0)
+            if val > 0:
+                path_idx = i
+                tier = (
+                    val - 1
+                )  # val is the new tier (1-based), index is 0-based
+                break
+        if path_idx is None or tier is None:
+            logging.warning(
+                f"Upgrade action missing valid path/tier: {upgrade_path}"
+            )
+            return False
+        cost = _get_upgrade_cost(tower_data, path_idx, tier, difficulty, mode)
+        if cost is None:
+            logging.warning(
+                f"Upgrade cost not found for {tower_name} path {path_idx} tier {tier} ({difficulty}, {mode})"
+            )
+            return False
+        return current_money >= cost
     else:
         logging.warning(f"Unknown action type: {act_type}")
         return False

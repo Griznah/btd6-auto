@@ -57,8 +57,8 @@ def _find_in_region(template_path: str, region: tuple) -> bool:
 def set_round_state(
     state: str,
     region: tuple = (1768, 947, 1900, 1069),
-    max_retries: int = 3,
-    delay: float = 0.2,
+    max_retries: int = None,
+    delay: float = None,
     find_in_region=None,
 ) -> bool:
     """
@@ -67,18 +67,33 @@ def set_round_state(
     This function uses image recognition to detect the current round state ("fast", "slow", or "start")
     and simulates pressing the Spacebar to toggle speed as needed. For the "start" state, it ensures
     the start button is visible and the speed is set to fast. The function retries up to max_retries
-    times, waiting delay seconds between attempts.
+    times, waiting delay seconds between attempts. Defaults are loaded from global config.
 
     Parameters:
         state (str): One of "fast", "slow", or "start".
         region (tuple): (left, top, right, bottom) coordinates to search for the state image.
-        max_retries (int): Maximum number of attempts to set the state.
-        delay (float): Delay in seconds between attempts.
+        max_retries (int, optional): Maximum number of attempts to set the state. Defaults to global config.
+        delay (float, optional): Delay in seconds between attempts. Defaults to global config.
         find_in_region (callable, optional): Function to check for template in region (for testing/mocking).
 
     Returns:
         bool: True if the requested state was set successfully, False otherwise.
     """
+    # Load retry config from global config if not provided
+    try:
+        from .config_loader import ConfigLoader
+
+        global_config = ConfigLoader.load_global_config()
+        retries_cfg = global_config.get("automation", {}).get("retries", {})
+        default_max_retries = retries_cfg.get("max_retries", 3)
+        default_delay = retries_cfg.get("retry_delay", 0.2)
+    except Exception:
+        default_max_retries = 3
+        default_delay = 0.2
+    if max_retries is None:
+        max_retries = default_max_retries
+    if delay is None:
+        delay = default_delay
 
     def _find_in_region_adapter(template_path, threshold=0.75):
         # Adapts test/mocked find_in_region to always accept threshold and return (found, max_val)

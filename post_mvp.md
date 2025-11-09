@@ -27,114 +27,70 @@ This phase is the most critical. We will build the new system's backbone and ens
 
    ```json
    {
-   "map_name": "Monkey Meadow",
-   "difficulty": "Easy",
-   "mode": "Standard",
-   "game_settings": {
-      "window_title": "BloonsTD6",
-      "resolution": "1920x1080",
-      "fullscreen": true
-   },
-   "hero": {
-      "name": "Quincy",
-      "hotkey": "u",
-      "position": {
-         "x": 485,
-         "y": 395
-         },
-         "abilities": [
-         {
-            "round": 1,
-            "ability_type": "storm",
-            "cooldown_rounds": 60
-         }
-         ]
+      "map_name": "Monkey Meadow",
+      "difficulty": "Easy",
+      "mode": "Standard",
+      "game_settings": {
+         "window_title": "BloonsTD6",
+         "resolution": "1920x1080",
+         "fullscreen": true
       },
-      "monkeys": [
-      {
-         "name": "Dart Monkey",
-         "hotkey": "q",
-         "position": {
-         "x": 625,
-         "y": 500
-         },
-         "upgrade_path": "0-0-2",
-         "purchase_round": 1,
-         "upgrades": [
+      "pre_play_actions": [
          {
-            "round": 3,
-            "path": 0,
-            "tier": 1
+            "step": 0,
+            "action": "buy",
+            "target": "Dart Monkey 01",
+            "position": { "x": 490, "y": 500 }
          },
          {
-            "round": 6,
-            "path": 0,
-            "tier": 2
-         },
-         {
-            "round": 10,
-            "path": 2,
-            "tier": 1
+            "step": 1,
+            "action": "buy",
+            "target": "Dart Monkey 02",
+            "position": { "x": 650, "y": 520 }
          }
-         ]
-      },
-      {
-         "name": "Bomb Shooter",
-         "hotkey": "e",
-         "position": {
-         "x": 700,
-         "y": 450
-         },
-         "upgrade_path": "2-0-3",
-         "purchase_round": 4,
-         "upgrades": [
-         {
-            "round": 7,
-            "path": 2,
-            "tier": 1
-         },
-         {
-            "round": 12,
-            "path": 0,
-            "tier": 1
-         }
-         ]
-      }
       ],
-   "timing": {
-      "map_load_delay": 7,
-      "placement_delay": 0.5,
-      "upgrade_delay": 1.0,
-      "ability_delay": 0.3
-   },
-   "retries": {
-      "max_retries": 3,
-      "retry_delay": 1.0,
-      "image_recognition_timeout": 5.0
-   }
-   }
-   ```
-
-   **Global Configuration** (`configs/global.json`)
-
-   ```json
-   {
-   "automation": {
-      "pause_between_actions": 0.1,
-      "failsafe_enabled": true,
-      "killswitch_key": "esc",
-      "logging_level": "INFO"
-   },
-   "image_recognition": {
-      "confidence_threshold": 0.8,
-      "template_matching_method": "cv2.TM_CCOEFF_NORMED",
-      "screenshot_delay": 0.2
-   },
-   "error_handling": {
-      "max_consecutive_failures": 5,
-      "recovery_delay": 2.0,
-      "screenshot_on_error": true
-   }
+      "hero": {
+         "name": "Any",
+         "hotkey": "u",
+         "position": { "x": 485, "y": 395 }
+      },
+      "actions": [
+         {
+            "step": 1,
+            "at_money": 75,
+            "action": "upgrade",
+            "target": "Dart Monkey 01",
+            "upgrade_path": { "path_1": 0, "path_2": 0, "path_3": 1 }
+         },
+         {
+            "step": 2,
+            "at_money": 210,
+            "action": "buy",
+            "target": "Wizard Monkey 01",
+            "position": { "x": 400, "y": 395 }
+         },
+         {
+            "step": 3,
+            "at_money": 170,
+            "action": "upgrade",
+            "target": "Dart Monkey 01",
+            "upgrade_path": { "path_1": 0, "path_2": 0, "path_3": 2 }
+         },
+         {
+            "step": 4,
+            "at_money": 700,
+            "action": "buy",
+            "target": "Spike Factory 01",
+            "position": { "x": 680, "y": 765 }
+         },
+         {
+            "step": 5,
+            "at_money": 500,
+            "action": "upgrade",
+            "target": "Dart Monkey 02",
+            "upgrade_path": { "path_1": 0, "path_2": 1, "path_3": 0 }
+         }
+      ]
    }
    ```
 
@@ -144,11 +100,9 @@ This phase is the most critical. We will build the new system's backbone and ens
 
    Example of a decorated, retry-able action
 
-   ```python
-   @retry(attempts_from_config, delay_from_config)
-   def find_image_on_screen(self, image_template: str) -> Point:
-       # ... OpenCV logic ...
-   ```
+    @retry(attempts_from_config, delay_from_config)
+    def find_image_on_screen(self, image_template: str) -> Point:
+        # ... OpenCV logic ...
 
    * Outcome: A clean, reliable, and testable interface for performing game actions, with error handling and retries built-in.
 
