@@ -17,6 +17,8 @@ from functools import lru_cache
 from pathlib import Path
 import logging
 import time
+import keyboard
+
 from btd6_auto.monkey_manager import place_monkey, place_hero
 from btd6_auto.monkey_hotkey import get_monkey_hotkey
 from btd6_auto.config_loader import get_tower_positions_for_map
@@ -412,9 +414,6 @@ class ActionManager:
                         f"No hotkey defined for {hotkey_name} in global config."
                     )
                     continue
-                # Use keyboard package for hotkey press
-                import keyboard
-
                 logging.info(
                     f"Upgrading {target} at {pos} via {hotkey_name} ({hotkey})"
                 )
