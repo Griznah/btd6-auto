@@ -151,6 +151,7 @@ class ConfigLoader:
 # map_config = ConfigLoader.load_map_config('Monkey Meadow')
 # ConfigLoader.validate_config(map_config, ["map_name", "hero", "actions"])
 
+
 # --- Tower and Hero Position Extraction ---
 @lru_cache(maxsize=16)
 def get_tower_positions_for_map(map_display_name: str):
@@ -169,6 +170,13 @@ def get_tower_positions_for_map(map_display_name: str):
 
     # Helper to extract buys from a list
     def extract_buys(actions):
+        """
+        Helper function to extract buy actions and their positions from a list of actions.
+        Args:
+            actions (list): List of action dictionaries to process.
+        Side Effects:
+            Updates the positions dictionary with tower names and their (x, y) positions.
+        """
         for entry in actions:
             if (
                 entry.get("action") == "buy"

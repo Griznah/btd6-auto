@@ -99,13 +99,12 @@ def _get_tower_data(tower_name: str) -> Optional[Dict[str, Any]]:
 
 def normalize_monkey_name_for_hotkey(monkey_name: str) -> str:
     """
-    Normalize a monkey name by removing a trailing space and numeric suffix used for disambiguation.
-
-    Parameters:
-        monkey_name (str): Monkey name from configuration (e.g., "Dart Monkey 01").
-
+    Normalize a monkey name for hotkey lookup by removing trailing numeric suffixes.
+    Used to map config monkey names to their hotkey mapping.
+    Args:
+        monkey_name (str): Monkey name from config (e.g., "Dart Monkey 01").
     Returns:
-        str: Monkey name with trailing numeric suffix removed and surrounding whitespace trimmed (e.g., "Dart Monkey").
+        str: Normalized monkey name (e.g., "Dart Monkey").
     """
     normalized = re.sub(r"\s+\d+$", "", monkey_name)
     return normalized.strip()
@@ -129,10 +128,9 @@ class ActionManager:
 
     def get_next_action(self) -> Optional[Dict[str, Any]]:
         """
-        Selects the first action whose step is not marked as completed.
-
+        Get the next uncompleted action from the main action list.
         Returns:
-            dict: The next action dictionary, or `None` if no uncompleted actions remain.
+            Optional[Dict[str, Any]]: The next action dict, or None if all are completed.
         """
         for action in self.actions:
             if action.get("step") not in self.completed_steps:
@@ -225,8 +223,7 @@ class ActionManager:
 
     def mark_completed(self, step: int) -> None:
         """
-        Mark an action step as completed.
-
+        Mark a given action step as completed.
         Args:
             step (int): The step number to mark as completed.
         """
@@ -234,8 +231,7 @@ class ActionManager:
 
     def steps_remaining(self) -> int:
         """
-        Return the number of steps left in the routine.
-
+        Count the number of remaining (uncompleted) steps in the main action list.
         Returns:
             int: Number of remaining steps.
         """
@@ -251,8 +247,7 @@ class ActionManager:
         self, monkey_name: str
     ) -> Optional[Tuple[int, int]]:
         """
-        Lookup the position of a monkey by name.
-
+        Get the (x, y) position of a monkey by name from the position lookup.
         Args:
             monkey_name (str): Name of the monkey.
         Returns:
