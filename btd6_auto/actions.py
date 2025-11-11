@@ -1,24 +1,32 @@
 """
-Action management and execution for BTD6 automation routines.
+BTD6 Automation Action Management
 
-This module defines the ActionManager class, which tracks and manages the current action list for a map run, provides lookup for monkey positions, and orchestrates execution of pre-play and buy actions. Low-level stateless helpers are kept as standalone functions for testability and clarity.
+This module provides core routines for managing and executing gameplay actions in Bloons Tower Defense 6 automation.
+It defines the ActionManager class, which orchestrates map-specific and global actions, including tower placement, upgrades, and hero management.
+Stateless helper functions are included for cost calculation, action affordability checks, and normalization utilities.
 
-Classes:
-    ActionManager: Manages actions and monkey positions for a BTD6 map run.
+Key Components:
+    - ActionManager: Tracks and executes actions for a BTD6 map run, manages monkey positions, and handles pre-play routines.
+    - can_afford: Determines if a buy or upgrade action can be afforded based on current currency and game configuration.
+    - Helper functions: Parse tower costs, normalize names, and retrieve tower data from JSON resources.
 
-Functions:
-    can_afford: Dummy check for action affordability.
+This module is designed for extensibility and testability, following project conventions and PEP 257 docstring standards.
 """
 
 from typing import Any, Dict, Optional, Tuple
 import json
+import re
 from functools import lru_cache
 from pathlib import Path
 import logging
 import time
+import keyboard
+
 from btd6_auto.monkey_manager import place_monkey, place_hero
 from btd6_auto.monkey_hotkey import get_monkey_hotkey
-import re
+from btd6_auto.config_loader import get_tower_positions_for_map
+from btd6_auto.input import click
+
 
 # Compile regexes at module level
 _COST_REGEX = re.compile(r"\$(\d+) \( ([^)]+) \)")
@@ -41,10 +49,10 @@ _MODE_ALIASES = {
 def _normalize_difficulty_mode(difficulty: str, mode: str) -> tuple[str, str]:
     """
     Normalize difficulty and mode input strings to canonical labels using module aliases.
-    
+
     Strips whitespace and lowercases inputs, then maps them through internal alias dictionaries
     to produce standardized labels.
-    
+
     Returns:
         tuple[str, str]: (normalized_difficulty, normalized_mode) where each element is the
         canonical label for the provided input.
@@ -60,9 +68,9 @@ def _normalize_difficulty_mode(difficulty: str, mode: str) -> tuple[str, str]:
 def _load_towers_json() -> Dict[str, Any]:
     """
     Load and return the BTD6 towers JSON data from the package data directory.
-    
+
     Attempts to read and parse data/btd6_towers.json located two levels above this module; logs any IO or decode errors and returns an empty dict on failure.
-    
+
     Returns:
         Dict[str, Any]: Parsed towers JSON mapping or an empty dict if the file cannot be read or parsed.
     """
@@ -79,9 +87,9 @@ def _load_towers_json() -> Dict[str, Any]:
 def _get_tower_data(tower_name: str) -> Optional[Dict[str, Any]]:
     """
     Retrieve the tower data entry for a given tower name from the loaded towers JSON.
-    
+
     Searches the cached towers data and returns the matching tower's data dictionary when present.
-    
+
     Returns:
         dict | None: The tower's data dictionary if found, `None` otherwise.
     """
@@ -94,13 +102,12 @@ def _get_tower_data(tower_name: str) -> Optional[Dict[str, Any]]:
 
 def normalize_monkey_name_for_hotkey(monkey_name: str) -> str:
     """
-    Normalize a monkey name by removing a trailing space and numeric suffix used for disambiguation.
-    
-    Parameters:
-        monkey_name (str): Monkey name from configuration (e.g., "Dart Monkey 01").
-    
+    Normalize a monkey name for hotkey lookup by removing trailing numeric suffixes.
+    Used to map config monkey names to their hotkey mapping.
+    Args:
+        monkey_name (str): Monkey name from config (e.g., "Dart Monkey 01").
     Returns:
-        str: Monkey name with trailing numeric suffix removed and surrounding whitespace trimmed (e.g., "Dart Monkey").
+        str: Normalized monkey name (e.g., "Dart Monkey").
     """
     normalized = re.sub(r"\s+\d+$", "", monkey_name)
     return normalized.strip()
@@ -119,15 +126,14 @@ class ActionManager:
         hero (Dict[str, Any]): Hero configuration.
         monkey_positions (Dict[str, Tuple[int, int]]): Lookup for monkey positions.
         completed_steps (set): Steps that have been completed.
-        timing (Dict[str, Any]): Timing configuration for delays.
+    timing (Dict[str, Any]): Timing configuration for delays, loaded from global_config['automation']['timing'].
     """
 
     def get_next_action(self) -> Optional[Dict[str, Any]]:
         """
-        Selects the first action whose step is not marked as completed.
-        
+        Get the next uncompleted action from the main action list.
         Returns:
-            dict: The next action dictionary, or `None` if no uncompleted actions remain.
+            Optional[Dict[str, Any]]: The next action dict, or None if all are completed.
         """
         for action in self.actions:
             if action.get("step") not in self.completed_steps:
@@ -136,48 +142,25 @@ class ActionManager:
 
     def _build_monkey_position_lookup(self) -> Dict[str, Tuple[int, int]]:
         """
-        Construct a mapping from monkey target names to their normalized (x, y) positions.
-        
-        Processes pre-play buy actions first and then main buy actions; only actions with a "target" and a "position" are considered. Positions are converted using _normalize_position; actions with invalid positions are skipped. If multiple actions specify the same target, the last processed action wins (main actions override pre-play).
+        Construct a mapping from monkey/hero names to their (x, y) positions using config_loader's get_tower_positions_for_map.
         Returns:
-            Dict[str, Tuple[int, int]]: Mapping from monkey target name to its (x, y) position.
+            Dict[str, Tuple[int, int]]: Mapping from monkey/hero name to its (x, y) position.
         """
-        positions = {}
-        # Pre-play actions
-        for action in self.pre_play_actions:
-            if (
-                action.get("action") == "buy"
-                and "target" in action
-                and "position" in action
-            ):
-                try:
-                    positions[action["target"]] = self._normalize_position(
-                        action["position"]
-                    )
-                except Exception:
-                    continue
-        # Main actions
-        for action in self.actions:
-            if (
-                action.get("action") == "buy"
-                and "target" in action
-                and "position" in action
-            ):
-                try:
-                    positions[action["target"]] = self._normalize_position(
-                        action["position"]
-                    )
-                except Exception:
-                    continue
-        return positions
+
+        map_name = self.map_config.get("map_name")
+        if not map_name:
+            raise ValueError(
+                "Map name not found in config; position lookup will be empty"
+            )
+        return get_tower_positions_for_map(map_name)
 
     def _check_placement_result(self, result, target, pos, placement_type):
         """
         Check the result of a hero or monkey placement and warn if it failed.
-        
+
         If the placement result is `False`, logs a warning that includes the target name,
         the attempted position, and the placement type.
-        
+
         Parameters:
             result: The value returned by the placement call.
             target: The name of the hero or monkey being placed.
@@ -211,7 +194,7 @@ class ActionManager:
         self.hero = map_config.get("hero", {})
         self.monkey_positions = self._build_monkey_position_lookup()
         self.completed_steps = set()
-        self.timing = map_config.get("timing", {})
+        self.timing = global_config.get("automation", {}).get("timing", {})
 
     def _normalize_position(self, pos: Any) -> Tuple[int, int]:
         """
@@ -243,8 +226,7 @@ class ActionManager:
 
     def mark_completed(self, step: int) -> None:
         """
-        Mark an action step as completed.
-
+        Mark a given action step as completed.
         Args:
             step (int): The step number to mark as completed.
         """
@@ -252,8 +234,7 @@ class ActionManager:
 
     def steps_remaining(self) -> int:
         """
-        Return the number of steps left in the routine.
-
+        Count the number of remaining (uncompleted) steps in the main action list.
         Returns:
             int: Number of remaining steps.
         """
@@ -269,8 +250,7 @@ class ActionManager:
         self, monkey_name: str
     ) -> Optional[Tuple[int, int]]:
         """
-        Lookup the position of a monkey by name.
-
+        Get the (x, y) position of a monkey by name from the position lookup.
         Args:
             monkey_name (str): Name of the monkey.
         Returns:
@@ -380,14 +360,52 @@ class ActionManager:
 
     def run_upgrade_action(self, action: Dict[str, Any]) -> None:
         """
-        Dummy function for upgrade actions. To be implemented.
+        Execute an upgrade action for a tower.
+        Presses the hotkey for the desired upgrade path. Only one upgrade is performed per action.
 
         Args:
-            action (Dict[str, Any]): Action dictionary containing target and upgrade path.
+            action (Dict[str, Any]): Action dictionary containing target and upgrade_path.
         """
-        logging.info(
-            f"[DUMMY] Would upgrade {action['target']} to {action.get('upgrade_path', '')}"
-        )
+        target = action.get("target")
+        upgrade_path = action.get("upgrade_path", {})
+        if not target or not upgrade_path:
+            logging.warning("Upgrade action missing target or upgrade_path.")
+            return
+
+        # Get tower position
+        pos = self.get_monkey_position(target)
+        if not pos:
+            logging.warning(
+                f"No position found for tower '{target}' during upgrade."
+            )
+            return
+
+        # Click the tower to select it
+        click(pos[0], pos[1], delay=0.2)
+
+        # Determine which path to upgrade (only one per action)
+        path_hotkeys = self.global_config.get("hotkey", {})
+        path_map = {
+            "path_1": "upgrade_path_1",
+            "path_2": "upgrade_path_2",
+            "path_3": "upgrade_path_3",
+        }
+        for path_key, hotkey_name in path_map.items():
+            if upgrade_path.get(path_key, 0) > 0:
+                hotkey = path_hotkeys.get(hotkey_name)
+                if not hotkey:
+                    logging.warning(
+                        f"No hotkey defined for {hotkey_name} in global config."
+                    )
+                    continue
+                logging.info(
+                    f"Upgrading {target} at {pos} via {hotkey_name} ({hotkey})"
+                )
+                keyboard.send(hotkey.lower())
+                time.sleep(self.timing.get("upgrade_delay", 0.3))
+                click(pos[0], pos[1])
+                break  # Only one upgrade per action
+
         time.sleep(self.timing.get("upgrade_delay", 0.5))
 
 
@@ -397,15 +415,15 @@ def _parse_tower_costs(
 ) -> Optional[int]:
     """
     Determine a tower's in-game cost by parsing its cost string and applying difficulty/mode normalization.
-    
+
     Parameters:
         tower_data (Dict[str, Any]): Tower entry from btd6_towers.json containing a "cost" string.
         difficulty (str): Difficulty label (e.g., "Easy", "Medium", "Hard"); will be normalized.
         mode (str): Game mode label (e.g., "Standard", "Impoppable"); will be normalized.
-    
+
     Returns:
         Optional[int]: The resolved cost for the tower for the given difficulty and mode, or `None` if no applicable cost is found.
-    
+
     Notes:
         - Parses numeric cost blocks from the tower's "cost" text and maps them to their labels.
         - If the normalized mode is "Impoppable" and normalized difficulty is "Hard", returns the "Impoppable" cost when present.
@@ -430,28 +448,63 @@ def _parse_tower_costs(
     return costs.get("Medium")
 
 
+def _get_upgrade_cost(
+    tower_data: Dict[str, Any],
+    path_index: int,
+    tier: int,
+    difficulty: str,
+    mode: str,
+) -> Optional[int]:
+    """
+    Extract the upgrade cost for a given tower, path, and tier.
+    Args:
+        tower_data (dict): Tower entry from btd6_towers.json.
+        path_index (int): Path number (1, 2, or 3).
+        tier (int): Upgrade tier (0-4).
+        difficulty (str): Difficulty label.
+        mode (str): Mode label.
+    Returns:
+        Optional[int]: The cost for the upgrade, or None if not found.
+    """
+    path_key = f"Path {path_index}"
+    upgrade_paths = tower_data.get("upgrade_paths", {})
+    upgrades = upgrade_paths.get(path_key)
+    if not upgrades or tier < 0 or tier >= len(upgrades):
+        return None
+    costs = upgrades[tier].get("costs", [])
+    # costs: [Easy, Medium, Hard, Impoppable]
+    norm_difficulty, norm_mode = _normalize_difficulty_mode(difficulty, mode)
+    # Map difficulty/mode to index
+    cost_idx = {"Easy": 0, "Medium": 1, "Hard": 2, "Impoppable": 3}
+    if norm_mode == "Impoppable" and norm_difficulty == "Hard":
+        idx = cost_idx["Impoppable"]
+    else:
+        idx = cost_idx.get(norm_difficulty, 1)
+    if idx >= len(costs):
+        return None
+    return costs[idx]
+
+
 def can_afford(
     current_money: int,
     action: Dict[str, Any],
-    map_config: Optional[Dict[str, Any]] = None,
+    map_config: [Dict[str, Any]],
 ) -> bool:
     """
     Determine whether available money covers the required cost for a buy or upgrade action.
-    
-    If map_config is provided, buy actions use tower pricing resolved from tower data for the configured difficulty and mode; upgrade actions use the action's `at_money` value. If map_config is omitted, the function falls back to the action's `at_money` value for cost. Missing tower data or unresolved costs cause the function to return `False` (and are logged).
-    
+
+    For buy actions, uses tower pricing from tower data for the configured difficulty and mode.
+    For upgrade actions, looks up the upgrade cost from tower data using path/tier/difficulty/mode.
+    Missing tower data or unresolved costs cause the function to return `False` (and are logged).
+
     Parameters:
         current_money (int): Available money to compare against the required cost.
-        action (Dict[str, Any]): Action dictionary; expected keys include `"action"` (e.g., `"buy"` or `"upgrade"`), `"target"` for buy actions, and `"at_money"` for fallback costs.
-        map_config (Optional[Dict[str, Any]]): Optional map configuration containing `"difficulty"` and `"mode"` used to resolve tower costs.
-    
+        action (Dict[str, Any]): Action dictionary; expected keys include "action", "target", "upgrade_path".
+        map_config ([Dict[str, Any]]): Required map configuration containing "difficulty" and "mode".
+
     Returns:
         bool: `True` if `current_money` is greater than or equal to the action's required cost, `False` otherwise.
     """
-    if map_config is None:
-        # Fallback to hardcoded at_money if no config provided
-        at_money = action.get("at_money", 0)
-        return current_money >= at_money
     difficulty = map_config.get("difficulty", "Medium")
     mode = map_config.get("mode", "Standard")
     act_type = action.get("action", "").lower()
@@ -471,11 +524,37 @@ def can_afford(
             return False
         return current_money >= cost
     elif act_type == "upgrade":
-        # TODO: Implement upgrade cost lookup
-        return current_money >= action.get("at_money", 0)
+        target = action.get("target", "")
+        tower_name = _MONKEY_SUFFIX_REGEX.sub("", target).strip()
+        tower_data = _get_tower_data(tower_name)
+        if not tower_data:
+            logging.warning(f"Tower data not found for {tower_name}")
+            return False
+        upgrade_path = action.get("upgrade_path", {})
+        # Find which path is being upgraded (value > 0)
+        path_idx = None
+        tier = None
+        for i in range(1, 4):
+            key = f"path_{i}"
+            val = upgrade_path.get(key, 0)
+            if val > 0:
+                path_idx = i
+                tier = (
+                    val - 1
+                )  # val is the new tier (1-based), index is 0-based
+                break
+        if path_idx is None or tier is None:
+            logging.warning(
+                f"Upgrade action missing valid path/tier: {upgrade_path}"
+            )
+            return False
+        cost = _get_upgrade_cost(tower_data, path_idx, tier, difficulty, mode)
+        if cost is None:
+            logging.warning(
+                f"Upgrade cost not found for {tower_name} path {path_idx} tier {tier} ({difficulty}, {mode})"
+            )
+            return False
+        return current_money >= cost
     else:
         logging.warning(f"Unknown action type: {act_type}")
         return False
-
-
-# Add more stateless helpers as needed.

@@ -16,6 +16,8 @@ Constants:
 import os
 import json
 from typing import Dict, Any, Optional, ClassVar, Sequence
+from functools import lru_cache
+
 
 CONFIGS_DIR = os.path.join(os.path.dirname(__file__), "configs")
 MAPS_DIR = os.path.join(CONFIGS_DIR, "maps")
@@ -148,3 +150,44 @@ class ConfigLoader:
 # global_config = ConfigLoader.load_global_config()
 # map_config = ConfigLoader.load_map_config('Monkey Meadow')
 # ConfigLoader.validate_config(map_config, ["map_name", "hero", "actions"])
+
+
+# --- Tower and Hero Position Extraction ---
+@lru_cache(maxsize=16)
+def get_tower_positions_for_map(map_display_name: str):
+    """
+    Returns a dict mapping tower/hero names to their positions for the given map.
+    Supports configs where tower buys are in 'pre_play_actions' and 'actions' with 'action': 'buy'.
+    Hero position is extracted from the 'hero' section.
+    Example return: {'hero': (x, y), 'Dart Monkey 01': (x, y), ...}
+    """
+    map_config = ConfigLoader.load_map_config(map_display_name)
+    positions = {}
+    # Extract hero position
+    hero = map_config.get("hero")
+    if hero and "position" in hero:
+        positions["hero"] = (hero["position"]["x"], hero["position"]["y"])
+
+    # Helper to extract buys from a list
+    def extract_buys(actions):
+        """
+        Helper function to extract buy actions and their positions from a list of actions.
+        Args:
+            actions (list): List of action dictionaries to process.
+        Side Effects:
+            Updates the positions dictionary with tower names and their (x, y) positions.
+        """
+        for entry in actions:
+            if (
+                entry.get("action") == "buy"
+                and "target" in entry
+                and "position" in entry
+            ):
+                target = entry["target"]
+                pos = entry["position"]
+                if isinstance(pos, dict) and "x" in pos and "y" in pos:
+                    positions[target] = (pos["x"], pos["y"])
+
+    extract_buys(map_config.get("pre_play_actions", []))
+    extract_buys(map_config.get("actions", []))
+    return positions

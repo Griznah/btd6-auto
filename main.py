@@ -134,9 +134,9 @@ def main() -> None:
             if not next_action:
                 logging.info("All actions completed.")
                 break
-            # Wait for enough money (dummy check)
+            # Wait for enough money
             currency = currency_reader.get_currency()
-            if not can_afford(currency, next_action):
+            if not can_afford(currency, next_action, map_config):
                 time.sleep(0.2)
                 continue
             if next_action["action"] == "buy":

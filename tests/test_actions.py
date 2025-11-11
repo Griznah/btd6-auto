@@ -10,10 +10,14 @@ import logging
 # Sample configs for testing
 global_config = {
     "default_monkey_key": "q",
-    "automation": {"logging_level": "INFO"},
+    "automation": {
+        "logging_level": "INFO",
+        "timing": {"placement_delay": 0.01, "upgrade_delay": 0.01},
+    },
 }
 
 map_config = {
+    "map_name": "Monkey Meadow",
     "hero": {
         "name": "Quincy",
         "hotkey": "u",
@@ -41,7 +45,7 @@ map_config = {
             "at_money": 75,
             "action": "upgrade",
             "target": "Dart Monkey 01",
-            "upgrade_path": "0-0-1",
+            "upgrade_path": {"path_1": 0, "path_2": 0, "path_3": 1},
         },
         {
             "step": 3,
@@ -51,15 +55,19 @@ map_config = {
             "position": {"x": 50, "y": 60},
         },
     ],
-    "timing": {"placement_delay": 0.01, "upgrade_delay": 0.01},
+    # timing removed; now in global_config
 }
 
 
 def test_monkey_position_lookup():
-    am = ActionManager(map_config, global_config)
-    assert am.get_monkey_position("Dart Monkey 01") == (10, 20)
-    assert am.get_monkey_position("Dart Monkey 02") == (30, 40)
-    assert am.get_monkey_position("Wizard Monkey 01") == (50, 60)
+    from btd6_auto.config_loader import ConfigLoader
+
+    real_map_config = ConfigLoader.load_map_config("Monkey Meadow")
+    am = ActionManager(real_map_config, global_config)
+    # Dart Monkey 01 and Dart Monkey 02 positions from Monkey Meadow config
+    assert am.get_monkey_position("Dart Monkey 01") == (490, 500)
+    assert am.get_monkey_position("Dart Monkey 02") == (650, 520)
+    assert am.get_monkey_position("Wizard Monkey 01") == (400, 395)
     assert am.get_monkey_position("Nonexistent") is None
 
 
@@ -82,12 +90,21 @@ def test_steps_remaining():
 
 
 def test_can_afford():
-    action = {"at_money": 100}
-    assert can_afford(150, action)
-    assert not can_afford(50, action)
-    assert can_afford(100, action)
-    # No at_money key
-    assert can_afford(0, {"action": "buy"})
+    buy_action = {"action": "buy", "target": "Dart Monkey 01"}
+    upgrade_action = {
+        "action": "upgrade",
+        "target": "Dart Monkey 01",
+        "upgrade_path": {"path_1": 0, "path_2": 0, "path_3": 1},
+    }
+    # Use map_config for cost logic
+    assert can_afford(250, buy_action, map_config)
+    assert not can_afford(50, buy_action, map_config)
+    assert can_afford(
+        215, buy_action, map_config
+    )  # Hard difficulty cost for Dart Monkey is 215
+    assert (
+        can_afford(0, upgrade_action, map_config) is False
+    )  # Should not afford upgrade with 0 currency
 
 
 @patch("btd6_auto.actions.place_hero")
@@ -122,7 +139,7 @@ def test_run_upgrade_action(mock_sleep):
         "step": 2,
         "action": "upgrade",
         "target": "Dart Monkey 01",
-        "upgrade_path": "0-0-1",
+        "upgrade_path": {"path_1": 0, "path_2": 0, "path_3": 1},
     }
     # Just check it logs and sleeps, no error
     am.run_upgrade_action(upgrade_action)
@@ -134,6 +151,7 @@ def test_invalid_position_raises_value_error():
     Test that invalid hero or monkey positions raise ValueError.
     """
     bad_map_config = {
+        "map_name": "Monkey Meadow",
         "hero": {
             "name": "Quincy",
             "hotkey": "u",
@@ -148,7 +166,7 @@ def test_invalid_position_raises_value_error():
             },  # invalid tuple
         ],
         "actions": [],
-        "timing": {"placement_delay": 0.01},
+        # timing removed; now in global_config
     }
     am = ActionManager(bad_map_config, global_config)
     # Hero position error
@@ -156,6 +174,7 @@ def test_invalid_position_raises_value_error():
         am.run_pre_play()
     # Monkey position error
     bad_map_config2 = {
+        "map_name": "Monkey Meadow",
         "hero": {
             "name": "Quincy",
             "hotkey": "u",
@@ -170,7 +189,7 @@ def test_invalid_position_raises_value_error():
             },  # invalid tuple
         ],
         "actions": [],
-        "timing": {"placement_delay": 0.01},
+        # timing removed; now in global_config
     }
     am2 = ActionManager(bad_map_config2, global_config)
     with pytest.raises(ValueError):
@@ -201,12 +220,17 @@ def test_action_manager_empty_and_duplicate_steps():
     """
     Test ActionManager behavior with empty and duplicate step configs.
     """
-    empty_config = {"pre_play_actions": [], "actions": []}
+    empty_config = {
+        "map_name": "Monkey Meadow",
+        "pre_play_actions": [],
+        "actions": [],
+    }
     am = ActionManager(empty_config, global_config)
     assert am.get_next_action() is None
     assert am.steps_remaining() == 0
     # Duplicate steps
     dup_config = {
+        "map_name": "Monkey Meadow",
         "pre_play_actions": [],
         "actions": [
             {
@@ -254,7 +278,7 @@ def test_action_manager_integration(mock_place_hero, mock_place_monkey):
         if not next_action:
             break
         currency = fake_get_currency()
-        if not can_afford(currency, next_action):
+        if not can_afford(currency, next_action, map_config):
             continue
         if next_action["action"] == "buy":
             am.run_buy_action(next_action)

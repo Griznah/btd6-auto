@@ -4,10 +4,21 @@
     "failsafe_enabled": true,
     "killswitch_key": "esc",
     "monitor_duration": 1,
-    "logging_level": "INFO"
+    "logging_level": "INFO",
+    "timing": {
+      "placement_delay": 0.5,
+      "upgrade_delay": 0.3,
+      "ability_delay": 0.3
+    },
+    "retries": {
+      "max_retries": 3,
+      "retry_delay": 1.0,
+      "image_recognition_timeout": 5.0
+    }
   },
   "map_filenames": {
     "midnight_mansion.json": "Midnight Mansion",
+    "test_map.json": "Test Map",
     "sunken_columns.json": "Sunken Columns",
     "erosion.json": "Erosion",
     "x_factor.json": "X Factor",
@@ -103,7 +114,7 @@
   "hotkey": {
     "upgrade_path_1": "Comma",
     "upgrade_path_2": "Period",
-    "upgrade_path_3": "Slash"
-  },
-  "hero_key": "u"
+    "upgrade_path_3": "Slash",
+    "hero_key": "u"
+  }
 }
