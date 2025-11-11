@@ -61,19 +61,19 @@
       "step": 6,
       "action": "upgrade",
       "target": "Wizard Monkey 01",
-      "upgrade_path": { "path_1": 1, "path_2": 0, "path_3": 0 }
+      "upgrade_path": { "path_1": 0, "path_2": 0, "path_3": 1 }
     },
     {
       "step": 7,
       "action": "upgrade",
       "target": "Wizard Monkey 01",
-      "upgrade_path": { "path_1": 2, "path_2": 0, "path_3": 0 }
+      "upgrade_path": { "path_1": 0, "path_2": 0, "path_3": 2 }
     },
     {
       "step": 8,
       "action": "upgrade",
       "target": "Wizard Monkey 01",
-      "upgrade_path": { "path_1": 3, "path_2": 0, "path_3": 0 }
+      "upgrade_path": { "path_1": 1, "path_2": 0, "path_3": 2 }
     },
     {
       "step": 9,
@@ -103,7 +103,7 @@
       "step": 13,
       "action": "upgrade",
       "target": "Wizard Monkey 01",
-      "upgrade_path": { "path_1": 3, "path_2": 0, "path_3": 1 }
+      "upgrade_path": { "path_1": 2, "path_2": 0, "path_3": 1 }
     },
     {
       "step": 14,
