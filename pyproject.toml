@@ -12,10 +12,11 @@ dependencies = [
   "pynput",
   "pygetwindow",
   "keyboard",
-  "dxcam>=0.0.5",
   "pywin32>=311",
   "easyocr>=1.7.2",
   "pytest>=8.4.2",
+  "bettercam>=1.0.0",
+  "pytesseract>=0.3.13",
 ]
 
 [tool.uv.sources]

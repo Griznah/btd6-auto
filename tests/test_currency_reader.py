@@ -12,7 +12,7 @@ from btd6_auto.currency_reader import CurrencyReader
 
 class DummyCamera:
     """
-    Dummy camera class for simulating dxcam camera behavior in tests.
+    Dummy camera class for simulating BetterCam camera behavior in tests.
     Returns a dummy image with digits '12345' drawn for currency reading.
     """
 
@@ -36,9 +36,9 @@ class DummyCamera:
         )
         return img
 
-    def stop(self):
+    def release(self):
         """
-        Dummy stop method for camera.
+        Dummy release method for camera.
         """
         pass
 
@@ -61,7 +61,7 @@ class DummyOCR:
 
 def patch_vision(monkeypatch):
     """
-    Patch btd6_auto.vision and dxcam/easyocr dependencies for currency reader tests.
+    Patch btd6_auto.vision and BetterCam/easyocr dependencies for currency reader tests.
     Sets up dummy camera and OCR for consistent test results.
     """
     import btd6_auto.vision as vision
@@ -74,25 +74,20 @@ def patch_vision(monkeypatch):
             return DummyOCR()
 
     monkeypatch.setattr(vision, "easyocr", DummyEasyOCR)
-    monkeypatch.setattr(
-        __import__("dxcam"), "create", lambda output_idx=0: DummyCamera()
-    )
+    import bettercam
 
-    def dummy_read_currency_amount(region=(370, 26, 515, 60), debug=False):
-        """
-        Dummy currency amount reader for tests. Always returns 12345.
-        """
-        return 12345
-
+    monkeypatch.setattr(bettercam, "create", lambda: DummyCamera())
     monkeypatch.setattr(
-        vision, "read_currency_amount", dummy_read_currency_amount
+        vision,
+        "read_currency_amount",
+        lambda region=(370, 26, 515, 60), debug=False: 12345,
     )
 
 
 def test_currency_reader_thread(monkeypatch):
     """
     Test that CurrencyReader thread starts, reads currency, and stops correctly.
-    Ensures the thread updates currency value and can be stopped.
+    Ensures the thread updates currency value and can be stopped using BetterCam mocks.
     """
     patch_vision(monkeypatch)
     reader = CurrencyReader(poll_interval=0.1)
@@ -107,7 +102,7 @@ def test_currency_reader_thread(monkeypatch):
 def test_currency_reader_multiple_reads(monkeypatch):
     """
     Test that CurrencyReader returns consistent values across multiple reads.
-    Ensures repeated polling returns the expected currency value.
+    Ensures repeated polling returns the expected currency value using BetterCam mocks.
     """
     patch_vision(monkeypatch)
     reader = CurrencyReader(poll_interval=0.05)
@@ -123,7 +118,7 @@ def test_currency_reader_multiple_reads(monkeypatch):
 def test_currency_reader_stop_idempotent(monkeypatch):
     """
     Test that stopping CurrencyReader multiple times is idempotent and safe.
-    Ensures no error is raised when stop() is called repeatedly.
+    Ensures no error is raised when stop() is called repeatedly using BetterCam mocks.
     """
     patch_vision(monkeypatch)
     reader = CurrencyReader(poll_interval=0.05)

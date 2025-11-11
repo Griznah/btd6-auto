@@ -1,15 +1,17 @@
 """
-Screen capture and image recognition (OpenCV).
-And some dxcam
+Screen capture with BetterCam and image recognition with OpenCV.
+Functions for setting round state, reading currency via OCR, and finding elements on screen.
+Will include error handling, logging and retry logic.
 """
 
 import cv2
 import numpy as np
 import logging
 import os
-import sys
 import time
 import keyboard
+import bettercam
+
 
 # Use ConfigLoader for config loading
 from .config_loader import ConfigLoader
@@ -22,10 +24,18 @@ try:
     _CAPTURE_DELAY = _GLOBAL_CONFIG.get("image_recognition", {}).get(
         "capture_screen_delay", 1.0
     )
+
 except Exception as e:
     logging.warning(f"Failed to load global config via ConfigLoader: {e}")
-    _CAPTURE_RETRIES = 2
-    _CAPTURE_DELAY = 1.0
+    raise
+
+# Module-level BetterCam instance
+try:
+    _CAMERA = bettercam.create()
+except Exception:
+    logging.exception("Failed to initialize BetterCam")
+    _CAMERA = None
+    raise
 
 
 def _find_in_region(template_path: str, region: tuple) -> bool:
@@ -225,16 +235,8 @@ def read_currency_amount(
         logging.error("EasyOCR not installed. Cannot perform OCR.")
         return 0
 
-    # Static initialization for camera and OCR
-    if not hasattr(read_currency_amount, "_ocr") or not hasattr(
-        read_currency_amount, "_camera"
-    ):
-        # Import dxcam with targeted ImportError handling
-        try:
-            import dxcam
-        except ImportError:
-            logging.exception("Failed to import dxcam. OCR will not work.")
-            return 0
+    # Static initialization for OCR
+    if not hasattr(read_currency_amount, "_ocr"):
         # Try to initialize EasyOCR Reader with GPU, fallback to CPU if needed
         try:
             try:
@@ -252,26 +254,26 @@ def read_currency_amount(
                         "Failed to initialize easyocr.Reader with CPU fallback."
                     )
                     return 0
-            # Try to create dxcam camera
-            try:
-                read_currency_amount._camera = dxcam.create(output_idx=0)
-            except Exception:
-                logging.exception("Failed to create dxcam camera.")
-                return 0
         except ImportError:
             logging.exception("Failed to import easyocr. OCR will not work.")
             return 0
     ocr = read_currency_amount._ocr
-    camera = read_currency_amount._camera
+    camera = _CAMERA
+    if camera is None:
+        logging.error(
+            "No BetterCam instance available for read_currency_amount."
+        )
+        return 0
 
     try:
         frame = None
         for attempt in range(3):
             try:
-                frame = camera.grab(region=region)
+                left, top, right, bottom = region
+                frame = camera.grab(region=(left, top, right, bottom))
             except Exception as e:
                 logging.info(
-                    f"camera.grab exception on attempt {attempt + 1}: {e}"
+                    f"BetterCam grab exception on attempt {attempt + 1}: {e}"
                 )
                 frame = None
             if frame is not None:
@@ -334,10 +336,6 @@ def read_currency_amount(
         value = 0
     finally:
         try:
-            camera.stop()
-        except Exception:
-            pass
-        try:
             cv2.destroyAllWindows()
         except Exception:
             pass
@@ -378,35 +376,34 @@ def is_mostly_black(
     return proportion_black >= threshold
 
 
-def capture_screen(region=None) -> np.ndarray:
+def capture_screen(region=None, camera=None) -> np.ndarray:
     """
-    Capture a screenshot of the specified region using dxcam (Windows-only).
+    Capture a screenshot of the specified region using BetterCam.
     Retries if no new frame is available, up to _CAPTURE_RETRIES times, waiting _CAPTURE_DELAY seconds between attempts.
-    On non-Windows platforms, always returns (None, None) and logs a warning.
     Args:
         region (tuple or None): (left, top, width, height) or None for full screen.
     Returns:
         tuple: (img_bgr, img_gray) OpenCV images (numpy arrays)
     """
-    if not sys.platform.startswith("win"):
-        logging.warning(
-            "capture_screen: dxcam is only supported on Windows. Returning (None, None)."
-        )
+    cam = camera if camera is not None else _CAMERA
+    if cam is None:
+        logging.error("No BetterCam instance available for capture_screen.")
         return None, None
     try:
-        import dxcam
-
-        cam = dxcam.create()
         if region is not None:
             left, top, width, height = region
             right = left + width
             bottom = top + height
-            dxcam_region = (left, top, right, bottom)
+            bettercam_region = (left, top, right, bottom)
         else:
-            dxcam_region = None
+            bettercam_region = None
         img = None
         for attempt in range(_CAPTURE_RETRIES):
-            img = cam.grab(region=dxcam_region)
+            try:
+                img = cam.grab(region=bettercam_region)
+            except Exception as e:
+                logging.error(f"BetterCam grab error: {e}")
+                img = None
             if img is not None:
                 break
             logging.info(
@@ -418,8 +415,15 @@ def capture_screen(region=None) -> np.ndarray:
                 f"capture_screen: No frame captured after {_CAPTURE_RETRIES} attempts."
             )
             return None, None
-        # dxcam returns RGB, convert to BGR
-        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        # Handle BGRA/RGBA images and convert to BGR
+        if img.ndim == 3 and img.shape[2] == 4:
+            # BGRA or RGBA to BGR
+            img_bgr = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+        elif img.ndim == 3 and img.shape[2] == 3:
+            # Already BGR or RGB, assume RGB from BetterCam
+            img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        else:
+            img_bgr = img
         img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
         return img_bgr, img_gray
     except Exception:
@@ -437,8 +441,6 @@ def find_element_on_screen(element_image):
     Returns:
         (x, y) tuple: Center coordinates of the matched region if a sufficiently strong match is found, `None` otherwise.
     """
-    import time
-
     start_time = time.time()
     screen_bgr, screen_gray = capture_screen()
     if screen_gray is None:
