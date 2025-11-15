@@ -22,9 +22,8 @@ BTD6 Auto is a Python automation bot for Bloons Tower Defense 6 (BTD6), designed
 1. **Windows Only**: This bot is intended for Windows. Linux/Mac are not supported for automation.
 
 2. **Install Requirements**:
-   - [Ensure Python 3.12 or 3.13 is installed](https://www.python.org/downloads/release/python-3139/)
    - Ensure uv is installed: `powershell -c "irm https://astral.sh/uv/install.ps1 | more"`
-   - [Install Tesseract OCR 5.5.0](https://github.com/UB-Mannheim/tesseract/wiki)
+   - [Install Tesseract OCR 5.5.0](https://github.com/UB-Mannheim/tesseract/wiki) and make sure it's in PATH
    - Game must be ran in 1920x1080 fullscreen!
 
 3. **Configure Preferences**:
