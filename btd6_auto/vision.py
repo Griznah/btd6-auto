@@ -4,6 +4,9 @@ Functions for setting round state, reading currency via OCR, and finding element
 Will include error handling, logging and retry logic.
 """
 
+import pytesseract
+from PIL import Image
+
 import cv2
 import numpy as np
 import logging
@@ -204,15 +207,6 @@ def set_round_state(
     return False
 
 
-# EasyOCR import
-try:
-    import easyocr
-except ImportError:
-    easyocr = None
-
-easyocr_available = easyocr is not None
-
-
 def read_currency_amount(
     region: tuple = (370, 26, 515, 60), debug: bool = False
 ) -> int:
@@ -231,33 +225,7 @@ def read_currency_amount(
         - Handles KeyboardInterrupt gracefully.
         - If OCR result is malformed, returns 0 and logs a warning.
     """
-    if not easyocr_available:
-        logging.error("EasyOCR not installed. Cannot perform OCR.")
-        return 0
 
-    # Static initialization for OCR
-    if not hasattr(read_currency_amount, "_ocr"):
-        # Try to initialize EasyOCR Reader with GPU, fallback to CPU if needed
-        try:
-            try:
-                read_currency_amount._ocr = easyocr.Reader(["en"], gpu=True)
-            except (RuntimeError, ValueError, Exception):
-                logging.exception(
-                    "Failed to initialize easyocr.Reader with GPU. Falling back to CPU."
-                )
-                try:
-                    read_currency_amount._ocr = easyocr.Reader(
-                        ["en"], gpu=False
-                    )
-                except Exception:
-                    logging.exception(
-                        "Failed to initialize easyocr.Reader with CPU fallback."
-                    )
-                    return 0
-        except ImportError:
-            logging.exception("Failed to import easyocr. OCR will not work.")
-            return 0
-    ocr = read_currency_amount._ocr
     camera = _CAMERA
     if camera is None:
         logging.error(
@@ -272,10 +240,7 @@ def read_currency_amount(
                 left, top, right, bottom = region
                 frame = camera.grab(region=(left, top, right, bottom))
             except Exception as e:
-                logging.info(
-                    f"BetterCam grab exception on attempt {attempt + 1}: {e}"
-                )
-                frame = None
+                logging.exception(f"Camera grab error: {e}")
             if frame is not None:
                 break
             logging.info(
@@ -288,38 +253,30 @@ def read_currency_amount(
             )
             return 0
 
-        # Preprocess
+        # Preprocess for OCR
         try:
             cv2.setUseOptimized(True)
             cv2.setNumThreads(1)
             gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
-            norm = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
-            _, thresh = cv2.threshold(norm, 180, 255, cv2.THRESH_BINARY)
-        except Exception as e:
-            logging.exception(f"Preprocessing error: {e}")
-            return 0
-
-        try:
-            results = ocr.readtext(thresh, allowlist="0123456789,", detail=1)
-            # Concatenate all recognized text, remove commas, and extract digits
-            raw_text = "".join(
-                [text for _, text, conf in results if isinstance(text, str)]
+            # Use Otsu's thresholding for robust binarization
+            _, thresh = cv2.threshold(
+                gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
             )
-            # Remove commas and non-digit characters
-            digits = "".join([c for c in raw_text if c.isdigit()])
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
-            norm = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
-            _, thresh = cv2.threshold(norm, 180, 255, cv2.THRESH_BINARY)
+            # Invert so white text becomes black (Tesseract prefers black text on white)
+            inverted = cv2.bitwise_not(thresh)
+            # Convert to RGB for pytesseract
+            rgb = cv2.cvtColor(inverted, cv2.COLOR_GRAY2RGB)
+            pil_img = Image.fromarray(rgb)
         except Exception as e:
             logging.exception(f"Preprocessing error: {e}")
             return 0
 
-        # OCR
+        # OCR with pytesseract
         try:
-            # EasyOCR returns a list of (bbox, text, confidence)
-            results = ocr.readtext(thresh, allowlist="0123456789,", detail=1)
-            raw_text = "".join(
-                [text for _, text, conf in results if isinstance(text, str)]
+            # Only allow digits and commas, use --psm 7 for single line
+            custom_config = r"--psm 7 -c tessedit_char_whitelist=0123456789,"
+            raw_text = pytesseract.image_to_string(
+                pil_img, config=custom_config
             )
             # Remove commas and non-digit characters
             digits = "".join([c for c in raw_text if c.isdigit()])

@@ -1,6 +1,10 @@
 import sys
 import os
 import time
+import glob
+import pytest
+import pytesseract
+from PIL import Image
 
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -65,20 +69,19 @@ def patch_vision(monkeypatch):
     Sets up dummy camera and OCR for consistent test results.
     """
     import btd6_auto.vision as vision
+    import btd6_auto.currency_reader as currency_reader
 
-    monkeypatch.setattr(vision, "easyocr_available", True)
-
-    class DummyEasyOCR:
-        @staticmethod
-        def Reader(langs, gpu):
-            return DummyOCR()
-
-    monkeypatch.setattr(vision, "easyocr", DummyEasyOCR)
+    # No EasyOCR patching needed for pytesseract version
     import bettercam
 
     monkeypatch.setattr(bettercam, "create", lambda: DummyCamera())
     monkeypatch.setattr(
         vision,
+        "read_currency_amount",
+        lambda region=(370, 26, 515, 60), debug=False: 12345,
+    )
+    monkeypatch.setattr(
+        currency_reader,
         "read_currency_amount",
         lambda region=(370, 26, 515, 60), debug=False: 12345,
     )
@@ -127,3 +130,58 @@ def test_currency_reader_stop_idempotent(monkeypatch):
     reader.stop()
     reader.stop()  # Should not error
     assert not reader.is_running()
+
+
+def read_currency_amount_from_image(img, debug=False):
+    """
+    Reads currency amount from a provided image using the same OCR pipeline as read_currency_amount.
+    Args:
+        img (np.ndarray): Image array (BGRA or RGBA or RGB or grayscale)
+        debug (bool): If True, logs the detected value.
+    Returns:
+        int: Parsed currency value, or 0 if not found or error.
+    """
+    try:
+        cv2.setUseOptimized(True)
+        cv2.setNumThreads(1)
+        if img.shape[-1] == 4:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
+        else:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        _, thresh = cv2.threshold(
+            gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        )
+        inverted = cv2.bitwise_not(thresh)
+        rgb = cv2.cvtColor(inverted, cv2.COLOR_GRAY2RGB)
+        pil_img = Image.fromarray(rgb)
+        custom_config = r"--psm 7 -c tessedit_char_whitelist=0123456789,"
+        raw_text = pytesseract.image_to_string(pil_img, config=custom_config)
+        digits = "".join([c for c in raw_text if c.isdigit()])
+        value = int(digits) if digits else 0
+        if debug:
+            print(f"[OCR] Currency: {value} (raw: {raw_text})")
+        return value
+    except Exception as e:
+        print(f"Preprocessing/OCR error: {e}")
+        return 0
+
+
+@pytest.mark.parametrize(
+    "img_path,expected",
+    [
+        (path, int(os.path.splitext(os.path.basename(path))[0]))
+        for path in glob.glob(
+            os.path.join(os.path.dirname(__file__), "images", "*.png")
+        )
+    ],
+)
+def test_currency_reader_on_images(img_path, expected):
+    """
+    Test OCR currency reading on actual PNG images in tests/images.
+    Each image is named after the currency value it shows (e.g., 12345.png).
+    """
+    img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
+    result = read_currency_amount_from_image(img)
+    assert result == expected, (
+        f"OCR result {result} != expected {expected} for {img_path}"
+    )
