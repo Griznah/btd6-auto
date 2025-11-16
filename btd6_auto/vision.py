@@ -33,12 +33,8 @@ except Exception as e:
     raise
 
 # Module-level BetterCam instance
-try:
-    _CAMERA = bettercam.create()
-except Exception:
-    logging.exception("Failed to initialize BetterCam")
-    _CAMERA = None
-    raise
+# This is a hard requirement for baseline functionality, we cannot function without it
+_CAMERA = bettercam.create()
 
 
 def _find_in_region(template_path: str, region: tuple) -> bool:
@@ -207,6 +203,24 @@ def set_round_state(
     return False
 
 
+def _to_grayscale(image: np.ndarray) -> np.ndarray:
+    """
+    Convert an image to grayscale robustly, handling 3-channel (BGR/RGB), 4-channel (BGRA/RGBA), or already grayscale images.
+    Parameters:
+        image (np.ndarray): Input image.
+    Returns:
+        np.ndarray: Grayscale image.
+    """
+    if image is None:
+        return None
+    if image.ndim == 3:
+        if image.shape[2] == 4:
+            return cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
+        elif image.shape[2] == 3:
+            return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    return image
+
+
 def read_currency_amount(
     region: tuple = (370, 26, 515, 60), debug: bool = False
 ) -> int:
@@ -227,11 +241,6 @@ def read_currency_amount(
     """
 
     camera = _CAMERA
-    if camera is None:
-        logging.error(
-            "No BetterCam instance available for read_currency_amount."
-        )
-        return 0
 
     try:
         frame = None
@@ -239,8 +248,8 @@ def read_currency_amount(
             try:
                 left, top, right, bottom = region
                 frame = camera.grab(region=(left, top, right, bottom))
-            except Exception as e:
-                logging.exception(f"Camera grab error: {e}")
+            except Exception:
+                logging.exception("Camera grab error")
             if frame is not None:
                 break
             logging.info(
@@ -257,7 +266,10 @@ def read_currency_amount(
         try:
             cv2.setUseOptimized(True)
             cv2.setNumThreads(1)
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
+            gray = _to_grayscale(frame)
+            if gray is None:
+                logging.warning("Frame conversion to grayscale failed.")
+                return 0
             # Use Otsu's thresholding for robust binarization
             _, thresh = cv2.threshold(
                 gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
@@ -267,8 +279,8 @@ def read_currency_amount(
             # Convert to RGB for pytesseract
             rgb = cv2.cvtColor(inverted, cv2.COLOR_GRAY2RGB)
             pil_img = Image.fromarray(rgb)
-        except Exception as e:
-            logging.exception(f"Preprocessing error: {e}")
+        except Exception:
+            logging.exception("Preprocessing error")
             return 0
 
         # OCR with pytesseract
@@ -281,8 +293,8 @@ def read_currency_amount(
             # Remove commas and non-digit characters
             digits = "".join([c for c in raw_text if c.isdigit()])
             value = int(digits) if digits else 0
-        except Exception as e:
-            logging.exception(f"OCR error: {e}")
+        except Exception:
+            logging.exception("OCR error")
             value = 0
 
         if debug:
@@ -320,10 +332,7 @@ def is_mostly_black(
         logging.warning("is_mostly_black: Received None or empty image.")
         return False
     # Convert to grayscale if needed
-    if len(image.shape) == 3 and image.shape[2] == 3:
-        image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    else:
-        image_gray = image
+    image_gray = _to_grayscale(image)
     total_pixels = image_gray.size
     black_pixels = np.sum(image_gray < black_level)
     proportion_black = black_pixels / total_pixels
@@ -343,9 +352,6 @@ def capture_screen(region=None, camera=None) -> np.ndarray:
         tuple: (img_bgr, img_gray) OpenCV images (numpy arrays)
     """
     cam = camera if camera is not None else _CAMERA
-    if cam is None:
-        logging.error("No BetterCam instance available for capture_screen.")
-        return None, None
     try:
         if region is not None:
             left, top, width, height = region
@@ -381,7 +387,7 @@ def capture_screen(region=None, camera=None) -> np.ndarray:
             img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         else:
             img_bgr = img
-        img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+        img_gray = _to_grayscale(img_bgr)
         return img_bgr, img_gray
     except Exception:
         logging.exception(f"Failed to capture screen region {region}")

@@ -4,7 +4,7 @@ SET ENV_NAME=.venv
 REM Create the virtual environment if it doesn't exist
 IF NOT EXIST "%ENV_NAME%\Scripts\activate.bat" (
     echo Creating virtual environment: %ENV_NAME%
-    uv venv "%ENV_NAME%" --python 3.13
+    uv venv "%ENV_NAME%" --python 3.12
 )
 
 REM Activate the virtual environment
@@ -12,7 +12,6 @@ call "%ENV_NAME%\Scripts\activate.bat"
 
 REM Install dependencies from pyproject.toml after ensuring torch is installed first
 echo Installing dependencies...
-uv pip install torch torchvision --torch-backend=auto
 uv sync
 
 REM Run the BTD6 automation bot

@@ -78,12 +78,12 @@ def patch_vision(monkeypatch):
     monkeypatch.setattr(
         vision,
         "read_currency_amount",
-        lambda region=(370, 26, 515, 60), debug=False: 12345,
+        lambda region=(370, 26, 515, 60), _debug=False: 12345,
     )
     monkeypatch.setattr(
         currency_reader,
         "read_currency_amount",
-        lambda region=(370, 26, 515, 60), debug=False: 12345,
+        lambda region=(370, 26, 515, 60), _debug=False: 12345,
     )
 
 
@@ -144,10 +144,23 @@ def read_currency_amount_from_image(img, debug=False):
     try:
         cv2.setUseOptimized(True)
         cv2.setNumThreads(1)
-        if img.shape[-1] == 4:
-            gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
+        # Handle grayscale, 3-channel, and 4-channel images explicitly
+        if img.ndim == 2:
+            # Already grayscale
+            gray = img
+        elif img.ndim == 3:
+            if img.shape[2] == 4:
+                # BGRA/RGBA to BGR/RGB first, then to grayscale
+                bgr_img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+                gray = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2GRAY)
+            elif img.shape[2] == 3:
+                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            else:
+                # Unexpected channel count, fallback
+                gray = img
         else:
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            # Unexpected shape, fallback
+            gray = img
         _, thresh = cv2.threshold(
             gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
         )
@@ -161,7 +174,7 @@ def read_currency_amount_from_image(img, debug=False):
         if debug:
             print(f"[OCR] Currency: {value} (raw: {raw_text})")
         return value
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001  # intentional fallback for test semantics
         print(f"Preprocessing/OCR error: {e}")
         return 0
 
@@ -181,6 +194,7 @@ def test_currency_reader_on_images(img_path, expected):
     Each image is named after the currency value it shows (e.g., 12345.png).
     """
     img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
+    assert img is not None, f"Failed to read test image: {img_path}"
     result = read_currency_amount_from_image(img)
     assert result == expected, (
         f"OCR result {result} != expected {expected} for {img_path}"
