@@ -1,6 +1,6 @@
 [project]
 name = "btd6-auto"
-version = "0.1.0"
+version = "0.3.0"
 description = "Automation bot for Bloons Tower Defense 6 (BTD6) on Windows"
 requires-python = ">=3.12"
 dependencies = [
@@ -12,21 +12,8 @@ dependencies = [
   "pynput",
   "pygetwindow",
   "keyboard",
-  "dxcam>=0.0.5",
   "pywin32>=311",
-  "easyocr>=1.7.2",
   "pytest>=8.4.2",
+  "bettercam>=1.0.0",
+  "pytesseract>=0.3.13",
 ]
-
-[tool.uv.sources]
-torch = [
-  { index = "pytorch-cu130", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
-]
-torchvision = [
-  { index = "pytorch-cu130", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
-]
-
-[[tool.uv.index]]
-name = "pytorch-cu130"
-url = "https://download.pytorch.org/whl/cu130"
-explicit = true

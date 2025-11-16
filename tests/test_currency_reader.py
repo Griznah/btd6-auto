@@ -1,6 +1,10 @@
 import sys
 import os
 import time
+import glob
+import pytest
+import pytesseract
+from PIL import Image
 
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -12,7 +16,7 @@ from btd6_auto.currency_reader import CurrencyReader
 
 class DummyCamera:
     """
-    Dummy camera class for simulating dxcam camera behavior in tests.
+    Dummy camera class for simulating BetterCam camera behavior in tests.
     Returns a dummy image with digits '12345' drawn for currency reading.
     """
 
@@ -36,9 +40,9 @@ class DummyCamera:
         )
         return img
 
-    def stop(self):
+    def release(self):
         """
-        Dummy stop method for camera.
+        Dummy release method for camera.
         """
         pass
 
@@ -61,38 +65,32 @@ class DummyOCR:
 
 def patch_vision(monkeypatch):
     """
-    Patch btd6_auto.vision and dxcam/easyocr dependencies for currency reader tests.
+    Patch btd6_auto.vision and BetterCam/easyocr dependencies for currency reader tests.
     Sets up dummy camera and OCR for consistent test results.
     """
     import btd6_auto.vision as vision
+    import btd6_auto.currency_reader as currency_reader
 
-    monkeypatch.setattr(vision, "easyocr_available", True)
+    # No EasyOCR patching needed for pytesseract version
+    import bettercam
 
-    class DummyEasyOCR:
-        @staticmethod
-        def Reader(langs, gpu):
-            return DummyOCR()
-
-    monkeypatch.setattr(vision, "easyocr", DummyEasyOCR)
+    monkeypatch.setattr(bettercam, "create", lambda: DummyCamera())
     monkeypatch.setattr(
-        __import__("dxcam"), "create", lambda output_idx=0: DummyCamera()
+        vision,
+        "read_currency_amount",
+        lambda region=(370, 26, 515, 60), _debug=False: 12345,
     )
-
-    def dummy_read_currency_amount(region=(370, 26, 515, 60), debug=False):
-        """
-        Dummy currency amount reader for tests. Always returns 12345.
-        """
-        return 12345
-
     monkeypatch.setattr(
-        vision, "read_currency_amount", dummy_read_currency_amount
+        currency_reader,
+        "read_currency_amount",
+        lambda region=(370, 26, 515, 60), _debug=False: 12345,
     )
 
 
 def test_currency_reader_thread(monkeypatch):
     """
     Test that CurrencyReader thread starts, reads currency, and stops correctly.
-    Ensures the thread updates currency value and can be stopped.
+    Ensures the thread updates currency value and can be stopped using BetterCam mocks.
     """
     patch_vision(monkeypatch)
     reader = CurrencyReader(poll_interval=0.1)
@@ -107,7 +105,7 @@ def test_currency_reader_thread(monkeypatch):
 def test_currency_reader_multiple_reads(monkeypatch):
     """
     Test that CurrencyReader returns consistent values across multiple reads.
-    Ensures repeated polling returns the expected currency value.
+    Ensures repeated polling returns the expected currency value using BetterCam mocks.
     """
     patch_vision(monkeypatch)
     reader = CurrencyReader(poll_interval=0.05)
@@ -123,7 +121,7 @@ def test_currency_reader_multiple_reads(monkeypatch):
 def test_currency_reader_stop_idempotent(monkeypatch):
     """
     Test that stopping CurrencyReader multiple times is idempotent and safe.
-    Ensures no error is raised when stop() is called repeatedly.
+    Ensures no error is raised when stop() is called repeatedly using BetterCam mocks.
     """
     patch_vision(monkeypatch)
     reader = CurrencyReader(poll_interval=0.05)
@@ -132,3 +130,72 @@ def test_currency_reader_stop_idempotent(monkeypatch):
     reader.stop()
     reader.stop()  # Should not error
     assert not reader.is_running()
+
+
+def read_currency_amount_from_image(img, debug=False):
+    """
+    Reads currency amount from a provided image using the same OCR pipeline as read_currency_amount.
+    Args:
+        img (np.ndarray): Image array (BGRA or RGBA or RGB or grayscale)
+        debug (bool): If True, logs the detected value.
+    Returns:
+        int: Parsed currency value, or 0 if not found or error.
+    """
+    try:
+        cv2.setUseOptimized(True)
+        cv2.setNumThreads(1)
+        # Handle grayscale, 3-channel, and 4-channel images explicitly
+        if img.ndim == 2:
+            # Already grayscale
+            gray = img
+        elif img.ndim == 3:
+            if img.shape[2] == 4:
+                # BGRA/RGBA to BGR/RGB first, then to grayscale
+                bgr_img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+                gray = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2GRAY)
+            elif img.shape[2] == 3:
+                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            else:
+                # Unexpected channel count, fallback
+                gray = img
+        else:
+            # Unexpected shape, fallback
+            gray = img
+        _, thresh = cv2.threshold(
+            gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        )
+        inverted = cv2.bitwise_not(thresh)
+        rgb = cv2.cvtColor(inverted, cv2.COLOR_GRAY2RGB)
+        pil_img = Image.fromarray(rgb)
+        custom_config = r"--psm 7 -c tessedit_char_whitelist=0123456789,"
+        raw_text = pytesseract.image_to_string(pil_img, config=custom_config)
+        digits = "".join([c for c in raw_text if c.isdigit()])
+        value = int(digits) if digits else 0
+        if debug:
+            print(f"[OCR] Currency: {value} (raw: {raw_text})")
+        return value
+    except Exception as e:  # noqa: BLE001  # intentional fallback for test semantics
+        print(f"Preprocessing/OCR error: {e}")
+        return 0
+
+
+@pytest.mark.parametrize(
+    "img_path,expected",
+    [
+        (path, int(os.path.splitext(os.path.basename(path))[0]))
+        for path in glob.glob(
+            os.path.join(os.path.dirname(__file__), "images", "*.png")
+        )
+    ],
+)
+def test_currency_reader_on_images(img_path, expected):
+    """
+    Test OCR currency reading on actual PNG images in tests/images.
+    Each image is named after the currency value it shows (e.g., 12345.png).
+    """
+    img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
+    assert img is not None, f"Failed to read test image: {img_path}"
+    result = read_currency_amount_from_image(img)
+    assert result == expected, (
+        f"OCR result {result} != expected {expected} for {img_path}"
+    )

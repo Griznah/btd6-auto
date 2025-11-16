@@ -1,15 +1,20 @@
 """
-Screen capture and image recognition (OpenCV).
-And some dxcam
+Screen capture with BetterCam and image recognition with OpenCV.
+Functions for setting round state, reading currency via OCR, and finding elements on screen.
+Will include error handling, logging and retry logic.
 """
+
+import pytesseract
+from PIL import Image
 
 import cv2
 import numpy as np
 import logging
 import os
-import sys
 import time
 import keyboard
+import bettercam
+
 
 # Use ConfigLoader for config loading
 from .config_loader import ConfigLoader
@@ -22,10 +27,14 @@ try:
     _CAPTURE_DELAY = _GLOBAL_CONFIG.get("image_recognition", {}).get(
         "capture_screen_delay", 1.0
     )
+
 except Exception as e:
     logging.warning(f"Failed to load global config via ConfigLoader: {e}")
-    _CAPTURE_RETRIES = 2
-    _CAPTURE_DELAY = 1.0
+    raise
+
+# Module-level BetterCam instance
+# This is a hard requirement for baseline functionality, we cannot function without it
+_CAMERA = bettercam.create()
 
 
 def _find_in_region(template_path: str, region: tuple) -> bool:
@@ -194,13 +203,22 @@ def set_round_state(
     return False
 
 
-# EasyOCR import
-try:
-    import easyocr
-except ImportError:
-    easyocr = None
-
-easyocr_available = easyocr is not None
+def _to_grayscale(image: np.ndarray) -> np.ndarray:
+    """
+    Convert an image to grayscale robustly, handling 3-channel (BGR/RGB), 4-channel (BGRA/RGBA), or already grayscale images.
+    Parameters:
+        image (np.ndarray): Input image.
+    Returns:
+        np.ndarray: Grayscale image.
+    """
+    if image is None:
+        return None
+    if image.ndim == 3:
+        if image.shape[2] == 4:
+            return cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
+        elif image.shape[2] == 3:
+            return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    return image
 
 
 def read_currency_amount(
@@ -221,59 +239,17 @@ def read_currency_amount(
         - Handles KeyboardInterrupt gracefully.
         - If OCR result is malformed, returns 0 and logs a warning.
     """
-    if not easyocr_available:
-        logging.error("EasyOCR not installed. Cannot perform OCR.")
-        return 0
 
-    # Static initialization for camera and OCR
-    if not hasattr(read_currency_amount, "_ocr") or not hasattr(
-        read_currency_amount, "_camera"
-    ):
-        # Import dxcam with targeted ImportError handling
-        try:
-            import dxcam
-        except ImportError:
-            logging.exception("Failed to import dxcam. OCR will not work.")
-            return 0
-        # Try to initialize EasyOCR Reader with GPU, fallback to CPU if needed
-        try:
-            try:
-                read_currency_amount._ocr = easyocr.Reader(["en"], gpu=True)
-            except (RuntimeError, ValueError, Exception):
-                logging.exception(
-                    "Failed to initialize easyocr.Reader with GPU. Falling back to CPU."
-                )
-                try:
-                    read_currency_amount._ocr = easyocr.Reader(
-                        ["en"], gpu=False
-                    )
-                except Exception:
-                    logging.exception(
-                        "Failed to initialize easyocr.Reader with CPU fallback."
-                    )
-                    return 0
-            # Try to create dxcam camera
-            try:
-                read_currency_amount._camera = dxcam.create(output_idx=0)
-            except Exception:
-                logging.exception("Failed to create dxcam camera.")
-                return 0
-        except ImportError:
-            logging.exception("Failed to import easyocr. OCR will not work.")
-            return 0
-    ocr = read_currency_amount._ocr
-    camera = read_currency_amount._camera
+    camera = _CAMERA
 
     try:
         frame = None
         for attempt in range(3):
             try:
-                frame = camera.grab(region=region)
-            except Exception as e:
-                logging.info(
-                    f"camera.grab exception on attempt {attempt + 1}: {e}"
-                )
-                frame = None
+                left, top, right, bottom = region
+                frame = camera.grab(region=(left, top, right, bottom))
+            except Exception:
+                logging.exception("Camera grab error")
             if frame is not None:
                 break
             logging.info(
@@ -286,44 +262,39 @@ def read_currency_amount(
             )
             return 0
 
-        # Preprocess
+        # Preprocess for OCR
         try:
             cv2.setUseOptimized(True)
             cv2.setNumThreads(1)
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
-            norm = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
-            _, thresh = cv2.threshold(norm, 180, 255, cv2.THRESH_BINARY)
-        except Exception as e:
-            logging.exception(f"Preprocessing error: {e}")
-            return 0
-
-        try:
-            results = ocr.readtext(thresh, allowlist="0123456789,", detail=1)
-            # Concatenate all recognized text, remove commas, and extract digits
-            raw_text = "".join(
-                [text for _, text, conf in results if isinstance(text, str)]
+            gray = _to_grayscale(frame)
+            if gray is None:
+                logging.warning("Frame conversion to grayscale failed.")
+                return 0
+            # Use Otsu's thresholding for robust binarization
+            _, thresh = cv2.threshold(
+                gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
             )
-            # Remove commas and non-digit characters
-            digits = "".join([c for c in raw_text if c.isdigit()])
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
-            norm = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
-            _, thresh = cv2.threshold(norm, 180, 255, cv2.THRESH_BINARY)
-        except Exception as e:
-            logging.exception(f"Preprocessing error: {e}")
+            # Invert so white text becomes black (Tesseract prefers black text on white)
+            inverted = cv2.bitwise_not(thresh)
+            # Convert to RGB for pytesseract
+            rgb = cv2.cvtColor(inverted, cv2.COLOR_GRAY2RGB)
+            pil_img = Image.fromarray(rgb)
+        except Exception:
+            logging.exception("Preprocessing error")
             return 0
 
-        # OCR
+        # OCR with pytesseract
         try:
-            # EasyOCR returns a list of (bbox, text, confidence)
-            results = ocr.readtext(thresh, allowlist="0123456789,", detail=1)
-            raw_text = "".join(
-                [text for _, text, conf in results if isinstance(text, str)]
+            # Only allow digits and commas, use --psm 7 for single line
+            custom_config = r"--psm 7 -c tessedit_char_whitelist=0123456789,"
+            raw_text = pytesseract.image_to_string(
+                pil_img, config=custom_config
             )
             # Remove commas and non-digit characters
             digits = "".join([c for c in raw_text if c.isdigit()])
             value = int(digits) if digits else 0
-        except Exception as e:
-            logging.exception(f"OCR error: {e}")
+        except Exception:
+            logging.exception("OCR error")
             value = 0
 
         if debug:
@@ -333,10 +304,6 @@ def read_currency_amount(
         logging.info("[OCR] Stopped by user.")
         value = 0
     finally:
-        try:
-            camera.stop()
-        except Exception:
-            pass
         try:
             cv2.destroyAllWindows()
         except Exception:
@@ -365,10 +332,7 @@ def is_mostly_black(
         logging.warning("is_mostly_black: Received None or empty image.")
         return False
     # Convert to grayscale if needed
-    if len(image.shape) == 3 and image.shape[2] == 3:
-        image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    else:
-        image_gray = image
+    image_gray = _to_grayscale(image)
     total_pixels = image_gray.size
     black_pixels = np.sum(image_gray < black_level)
     proportion_black = black_pixels / total_pixels
@@ -380,33 +344,29 @@ def is_mostly_black(
 
 def capture_screen(region=None) -> np.ndarray:
     """
-    Capture a screenshot of the specified region using dxcam (Windows-only).
+    Capture a screenshot of the specified region using the module-level BetterCam instance.
     Retries if no new frame is available, up to _CAPTURE_RETRIES times, waiting _CAPTURE_DELAY seconds between attempts.
-    On non-Windows platforms, always returns (None, None) and logs a warning.
-    Args:
+    Parameters:
         region (tuple or None): (left, top, width, height) or None for full screen.
     Returns:
         tuple: (img_bgr, img_gray) OpenCV images (numpy arrays)
     """
-    if not sys.platform.startswith("win"):
-        logging.warning(
-            "capture_screen: dxcam is only supported on Windows. Returning (None, None)."
-        )
-        return None, None
+    cam = _CAMERA
     try:
-        import dxcam
-
-        cam = dxcam.create()
         if region is not None:
             left, top, width, height = region
             right = left + width
             bottom = top + height
-            dxcam_region = (left, top, right, bottom)
+            bettercam_region = (left, top, right, bottom)
         else:
-            dxcam_region = None
+            bettercam_region = None
         img = None
         for attempt in range(_CAPTURE_RETRIES):
-            img = cam.grab(region=dxcam_region)
+            try:
+                img = cam.grab(region=bettercam_region)
+            except Exception:
+                logging.exception("BetterCam grab error")
+                img = None
             if img is not None:
                 break
             logging.info(
@@ -418,9 +378,16 @@ def capture_screen(region=None) -> np.ndarray:
                 f"capture_screen: No frame captured after {_CAPTURE_RETRIES} attempts."
             )
             return None, None
-        # dxcam returns RGB, convert to BGR
-        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+        # Handle BGRA/RGBA images and convert to BGR
+        if img.ndim == 3 and img.shape[2] == 4:
+            # BGRA or RGBA to BGR
+            img_bgr = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+        elif img.ndim == 3 and img.shape[2] == 3:
+            # Already BGR or RGB, assume RGB from BetterCam
+            img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        else:
+            img_bgr = img
+        img_gray = _to_grayscale(img_bgr)
         return img_bgr, img_gray
     except Exception:
         logging.exception(f"Failed to capture screen region {region}")
@@ -437,8 +404,6 @@ def find_element_on_screen(element_image):
     Returns:
         (x, y) tuple: Center coordinates of the matched region if a sufficiently strong match is found, `None` otherwise.
     """
-    import time
-
     start_time = time.time()
     screen_bgr, screen_gray = capture_screen()
     if screen_gray is None:
