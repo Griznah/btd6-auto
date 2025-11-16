@@ -30,8 +30,7 @@ BTD6 Auto is a Python automation bot for Bloons Tower Defense 6 (BTD6), designed
    - Edit configuration files as needed for your setup.
 
 4. **Launch the Bot**:
-   - Use the provided Windows batch file:
-    This will also install dependencies, including Python (3.12)
+   - Use the provided Windows batch file, this will also install dependencies, including Python (3.12)
 
      ```cmd
      run_automation.cmd

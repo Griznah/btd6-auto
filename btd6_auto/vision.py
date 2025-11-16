@@ -342,16 +342,16 @@ def is_mostly_black(
     return proportion_black >= threshold
 
 
-def capture_screen(region=None, camera=None) -> np.ndarray:
+def capture_screen(region=None) -> np.ndarray:
     """
-    Capture a screenshot of the specified region using BetterCam.
+    Capture a screenshot of the specified region using the module-level BetterCam instance.
     Retries if no new frame is available, up to _CAPTURE_RETRIES times, waiting _CAPTURE_DELAY seconds between attempts.
-    Args:
+    Parameters:
         region (tuple or None): (left, top, width, height) or None for full screen.
     Returns:
         tuple: (img_bgr, img_gray) OpenCV images (numpy arrays)
     """
-    cam = camera if camera is not None else _CAMERA
+    cam = _CAMERA
     try:
         if region is not None:
             left, top, width, height = region
@@ -364,8 +364,8 @@ def capture_screen(region=None, camera=None) -> np.ndarray:
         for attempt in range(_CAPTURE_RETRIES):
             try:
                 img = cam.grab(region=bettercam_region)
-            except Exception as e:
-                logging.error(f"BetterCam grab error: {e}")
+            except Exception:
+                logging.exception("BetterCam grab error")
                 img = None
             if img is not None:
                 break
