@@ -99,11 +99,9 @@ def test_capture_screen_full(monkeypatch):
             return np.ones((100, 100), dtype=np.uint8) * 127
         return img
 
-    import bettercam
-
-    monkeypatch.setattr(bettercam, "create", lambda: FakeCamera())
     monkeypatch.setattr("cv2.cvtColor", fake_cvtColor)
-    img_bgr, img_gray = vision.capture_screen(camera=FakeCamera())
+    monkeypatch.setattr(vision, "_CAMERA", FakeCamera())
+    img_bgr, img_gray = vision.capture_screen()
     assert img_bgr is not None, "BGR image should not be None"
     assert img_gray is not None, "Grayscale image should not be None"
     assert isinstance(img_bgr, np.ndarray), "BGR image should be ndarray"
@@ -137,14 +135,10 @@ def test_capture_screen_region(monkeypatch):
         return img
 
     monkeypatch.setattr("cv2.cvtColor", fake_cvtColor)
+    monkeypatch.setattr(vision, "_CAMERA", FakeCamera())
 
-    @pytest.mark.parametrize(
-        "region", [(10, 10, 40, 30), (0, 0, 20, 20), (5, 5, 10, 15)]
-    )
     def run_region_test(region):
-        img_bgr, img_gray = vision.capture_screen(
-            region=region, camera=FakeCamera()
-        )
+        img_bgr, img_gray = vision.capture_screen(region=region)
         assert img_bgr is not None, "BGR image should not be None"
         assert img_gray is not None, "Grayscale image should not be None"
         assert isinstance(img_bgr, np.ndarray), "BGR image should be ndarray"
@@ -188,6 +182,7 @@ def test_capture_screen_error(monkeypatch):
         return img
 
     monkeypatch.setattr("cv2.cvtColor", fake_cvtColor)
-    img_bgr, img_gray = vision.capture_screen(camera=FakeCamera())
+    monkeypatch.setattr(vision, "_CAMERA", FakeCamera())
+    img_bgr, img_gray = vision.capture_screen()
     assert img_bgr is None, "BGR image should be None on error"
     assert img_gray is None, "Grayscale image should be None on error"
