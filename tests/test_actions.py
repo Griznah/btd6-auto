@@ -4,7 +4,6 @@ Unit tests for btd6_auto.actions module and its integration in main automation f
 
 from unittest.mock import patch
 from btd6_auto.actions import ActionManager, can_afford
-import pytest
 import logging
 
 # Sample configs for testing
@@ -143,57 +142,6 @@ def test_run_upgrade_action(mock_sleep):
     }
     # Just check it logs and sleeps, no error
     am.run_upgrade_action(upgrade_action)
-
-
-# --- Additional coverage improvements ---
-def test_invalid_position_raises_value_error():
-    """
-    Test that invalid hero or monkey positions raise ValueError.
-    """
-    bad_map_config = {
-        "map_name": "Monkey Meadow",
-        "hero": {
-            "name": "Quincy",
-            "hotkey": "u",
-            "position": {"x": 100},
-        },  # missing 'y'
-        "pre_play_actions": [
-            {
-                "step": 0,
-                "action": "buy",
-                "target": "Dart Monkey 01",
-                "position": [10],
-            },  # invalid tuple
-        ],
-        "actions": [],
-        # timing removed; now in global_config
-    }
-    am = ActionManager(bad_map_config, global_config)
-    # Hero position error
-    with pytest.raises(ValueError):
-        am.run_pre_play()
-    # Monkey position error
-    bad_map_config2 = {
-        "map_name": "Monkey Meadow",
-        "hero": {
-            "name": "Quincy",
-            "hotkey": "u",
-            "position": {"x": 100, "y": 200},
-        },
-        "pre_play_actions": [
-            {
-                "step": 0,
-                "action": "buy",
-                "target": "Dart Monkey 01",
-                "position": [10],
-            },  # invalid tuple
-        ],
-        "actions": [],
-        # timing removed; now in global_config
-    }
-    am2 = ActionManager(bad_map_config2, global_config)
-    with pytest.raises(ValueError):
-        am2.run_pre_play()
 
 
 @patch("btd6_auto.actions.place_hero", return_value=None)

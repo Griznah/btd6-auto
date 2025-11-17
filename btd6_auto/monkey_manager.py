@@ -2,9 +2,66 @@
 Handles selection and placement of monkeys and heroes.
 """
 
-from .input import click
+from .input import click, cursor_resting_spot
+from .config_utils import get_vision_config
 import logging
 import time
+from .vision import (
+    retry_action,
+    confirm_selection,
+    verify_placement_change,
+    handle_vision_error,
+)
+
+
+def get_regions_for_monkey():
+    """
+    Extract regions and thresholds for monkey placement from vision config.
+    Returns:
+        dict: Dictionary of relevant regions and thresholds.
+    """
+    vision = get_vision_config()
+    from .vision import rect_to_region
+
+    return {
+        "max_attempts": vision.get("max_attempts", 3),
+        "select_threshold": vision.get("select_threshold", 40.0),
+        "place_threshold": vision.get("place_threshold", 85.0),
+        "select_region": rect_to_region(
+            vision.get("select_region", [925, 800, 1135, 950])
+        ),
+        "place_region_1": rect_to_region(
+            vision.get("place_region_1", [35, 65, 415, 940])
+        ),
+        "place_region_2": rect_to_region(
+            vision.get("place_region_2", [1260, 60, 1635, 940])
+        ),
+    }
+
+
+def get_regions_for_hero():
+    """
+    Extract regions and thresholds for hero placement from vision config.
+    Returns:
+        dict: Dictionary of relevant regions and thresholds.
+    """
+    vision = get_vision_config()
+    from .vision import rect_to_region
+
+    return {
+        "max_attempts": vision.get("max_attempts", 3),
+        "select_threshold": vision.get("select_threshold", 40.0),
+        "place_threshold": vision.get("place_threshold", 85.0),
+        "select_region": rect_to_region(
+            vision.get("select_region", [935, 800, 200, 150])
+        ),
+        "place_region_1": rect_to_region(
+            vision.get("place_region_1", [35, 65, 415, 940])
+        ),
+        "place_region_2": rect_to_region(
+            vision.get("place_region_2", [1260, 60, 1635, 940])
+        ),
+    }
 
 
 def place_monkey(
@@ -24,14 +81,59 @@ def place_monkey(
     try:
         import keyboard
 
-        logging.debug(f"Selecting monkey with key '{monkey_key}'")
-        keyboard.send(monkey_key)
-        time.sleep(delay)
-        logging.debug(f"Placing monkey at coordinates {coords}")
-        click(coords[0], coords[1], delay=delay)
-    except Exception as e:
-        logging.error(
-            f"Failed to place monkey at {coords} with key {monkey_key}: {e}"
+        cursor_resting_spot()  # Move cursor to resting spot before action
+
+        regions = get_regions_for_monkey()
+        max_attempts = regions["max_attempts"]
+        select_threshold = regions["select_threshold"]
+        place_threshold = regions["place_threshold"]
+        select_region = regions["select_region"]
+        place_region_1 = regions["place_region_1"]
+        place_region_2 = regions["place_region_2"]
+
+        def select_monkey():
+            keyboard.send(monkey_key)
+            time.sleep(delay)
+
+        selection_success = retry_action(
+            select_monkey,
+            select_region,
+            select_threshold,
+            max_attempts=max_attempts,
+            delay=delay,
+            confirm_fn=confirm_selection,
+        )
+        if not selection_success:
+            logging.error(f"Monkey selection failed for key {monkey_key}")
+            handle_vision_error()
+            return
+
+        def do_place():
+            click(coords[0], coords[1], delay=delay)
+
+        placement_success_1 = retry_action(
+            do_place,
+            place_region_1,
+            place_threshold,
+            max_attempts=max_attempts,
+            delay=delay,
+            confirm_fn=verify_placement_change,
+        )
+        placement_success_2 = retry_action(
+            do_place,
+            place_region_2,
+            place_threshold,
+            max_attempts=max_attempts,
+            delay=delay,
+            confirm_fn=verify_placement_change,
+        )
+        if not (placement_success_1 or placement_success_2):
+            logging.error(f"Monkey placement failed at {coords}")
+            handle_vision_error()
+            return
+    except Exception:
+        logging.exception(
+            f"Failed to place monkey at {coords} with key {monkey_key}"
         )
 
 
@@ -49,13 +151,59 @@ def place_hero(
     try:
         import keyboard
 
-        logging.debug(f"Selecting hero with key '{hero_key}'")
-        keyboard.press(hero_key)
-        time.sleep(delay)
-        keyboard.release(hero_key)
-        logging.debug(f"Placing hero at coordinates {coords}")
-        click(coords[0], coords[1], delay=delay)
-    except Exception as e:
-        logging.error(
-            f"Failed to place hero at {coords} with key {hero_key}: {e}"
+        cursor_resting_spot()  # Move cursor to resting spot before action
+
+        regions = get_regions_for_hero()
+        max_attempts = regions["max_attempts"]
+        select_threshold = regions["select_threshold"]
+        place_threshold = regions["place_threshold"]
+        select_region = regions["select_region"]
+        place_region_1 = regions["place_region_1"]
+        place_region_2 = regions["place_region_2"]
+
+        def select_hero():
+            keyboard.press(hero_key)
+            time.sleep(delay)
+            keyboard.release(hero_key)
+
+        selection_success = retry_action(
+            select_hero,
+            select_region,
+            select_threshold,
+            max_attempts=max_attempts,
+            delay=delay,
+            confirm_fn=confirm_selection,
+        )
+        if not selection_success:
+            logging.error(f"Hero selection failed for key {hero_key}")
+            handle_vision_error()
+            return
+
+        def do_place():
+            click(coords[0], coords[1], delay=delay)
+
+        # Confirm placement: success if either region passes
+        placement_success_1 = retry_action(
+            do_place,
+            place_region_1,
+            place_threshold,
+            max_attempts=max_attempts,
+            delay=delay,
+            confirm_fn=verify_placement_change,
+        )
+        placement_success_2 = retry_action(
+            do_place,
+            place_region_2,
+            place_threshold,
+            max_attempts=max_attempts,
+            delay=delay,
+            confirm_fn=verify_placement_change,
+        )
+        if not (placement_success_1 or placement_success_2):
+            logging.error(f"Hero placement failed at {coords}")
+            handle_vision_error()
+            return
+    except Exception:
+        logging.exception(
+            f"Failed to place hero at {coords} with key {hero_key}"
         )

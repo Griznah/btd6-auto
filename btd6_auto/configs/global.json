@@ -1,4 +1,13 @@
 {
+  "vision": {
+    "max_attempts": 3,
+    "select_threshold": 40.0,
+    "place_threshold": 85.0,
+    "cursor_resting_spot": [1035, 900],
+    "select_region": [925, 800, 1135, 950],
+    "place_region_1": [35, 65, 415, 940],
+    "place_region_2": [1260, 60, 1635, 940]
+  },
   "automation": {
     "pause_between_actions": 0.1,
     "failsafe_enabled": true,

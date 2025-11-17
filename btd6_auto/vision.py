@@ -15,9 +15,157 @@ import time
 import keyboard
 import bettercam
 
-
 # Use ConfigLoader for config loading
 from .config_loader import ConfigLoader
+
+def rect_to_region(rect):
+    """
+    Convert a rectangle from (left, top, right, bottom) to (left, top, width, height).
+    Args:
+        rect (tuple/list): (left, top, right, bottom)
+    Returns:
+        tuple: (left, top, width, height)
+    """
+    if len(rect) != 4:
+        raise ValueError(f"rect_to_region expects 4 values, got {rect}")
+    left, top, right, bottom = rect
+    width = right - left
+    height = bottom - top
+    if width <= 0 or height <= 0:
+        raise ValueError(f"Invalid rectangle dimensions: {rect}")
+    return (left, top, width, height)
+
+
+# Vision-based error handling helpers for monkey selection/placement
+def capture_region(region):
+    """
+    Capture a screenshot of a region using BetterCam (consistent with module).
+    region: (left, top, width, height)
+    Returns: numpy array (BGR)
+    """
+    left, top, width, height = region
+    right = left + width
+    bottom = top + height
+    bettercam_region = (left, top, right, bottom)
+    # Validate region bounds for 1920x1080 screen
+    if not (0 <= left < right <= 1920 and 0 <= top < bottom <= 1080):
+        logging.error(
+            f"capture_region: Invalid region {bettercam_region} (must be within 1920x1080)"
+        )
+        return None
+    cam = _CAMERA
+    img = None
+    for attempt in range(_CAPTURE_RETRIES):
+        try:
+            img = cam.grab(region=bettercam_region)
+        except Exception:
+            logging.exception("BetterCam grab error in capture_region")
+            img = None
+        if img is not None:
+            break
+        logging.info(
+            f"capture_region: No new frame, retrying ({attempt + 1}/{_CAPTURE_RETRIES}) after {_CAPTURE_DELAY}s..."
+        )
+        time.sleep(_CAPTURE_DELAY)
+    if img is None:
+        logging.warning(
+            f"capture_region: No frame captured after {_CAPTURE_RETRIES} attempts."
+        )
+        return None
+    # Handle BGRA/RGBA images and convert to BGR
+    if img.ndim == 3 and img.shape[2] == 4:
+        img_bgr = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+    elif img.ndim == 3 and img.shape[2] == 3:
+        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    else:
+        img_bgr = img
+    return img_bgr
+
+
+def calculate_image_difference(img1, img2):
+    """
+    Calculate the percentage difference between two images.
+    Returns: float (0-100)
+    """
+    if img1.shape != img2.shape:
+        logging.error("Image shapes do not match for comparison.")
+        return 100.0
+    diff = cv2.absdiff(img1, img2)
+    nonzero = np.count_nonzero(diff)
+    total = diff.size
+    percent_diff = (nonzero / total) * 100
+    return percent_diff
+
+
+def verify_placement_change(pre_img, post_img, threshold=85.0):
+    """
+    Compare pre and post images for placement confirmation.
+    Returns: (bool, float) -> (success, percent_diff)
+    """
+    percent_diff = calculate_image_difference(pre_img, post_img)
+    logging.info(
+        f"Placement diff: {percent_diff:.2f}% (threshold: {threshold})"
+    )
+    return percent_diff >= threshold, percent_diff
+
+
+def confirm_selection(pre_img, post_img, threshold=40.0):
+    """
+    Compare pre and post images for selection confirmation.
+    Returns: (bool, float) -> (success, percent_diff)
+    """
+    percent_diff = calculate_image_difference(pre_img, post_img)
+    logging.info(
+        f"Selection diff: {percent_diff:.2f}% (threshold: {threshold})"
+    )
+    return percent_diff >= threshold, percent_diff
+
+
+def retry_action(
+    action_fn,
+    region,
+    threshold,
+    max_attempts=3,
+    delay=0.5,
+    confirm_fn=None,
+    *args,
+    **kwargs,
+):
+    """
+    Retry an action (selection/placement) with vision confirmation.
+    action_fn: function to perform (e.g., select_monkey, place_monkey)
+    region: region tuple for capture
+    threshold: float, percent difference required
+    max_attempts: int
+    delay: float, seconds between attempts
+    confirm_fn: function to confirm (e.g., confirm_selection, verify_placement_change)
+    args, kwargs: passed to action_fn
+    Returns: bool (success)
+    """
+    for attempt in range(1, max_attempts + 1):
+        pre_img = capture_region(region)
+        action_fn(*args, **kwargs)
+        time.sleep(delay)
+        post_img = capture_region(region)
+        success, percent_diff = confirm_fn(pre_img, post_img, threshold)
+        logging.info(
+            f"Attempt {attempt}: diff={percent_diff:.2f}% success={success}"
+        )
+        if success:
+            return True
+    logging.error(f"Action failed after {max_attempts} attempts.")
+    return False
+
+
+def handle_vision_error():
+    """
+    Generic error handler for repeated vision failures.
+    Cleans up and exits.
+    """
+    logging.critical("Max retries reached. Exiting automation.")
+    # Add any cleanup logic here
+    os._exit(1)
+
 
 try:
     _GLOBAL_CONFIG = ConfigLoader.load_global_config()
@@ -90,8 +238,6 @@ def set_round_state(
     """
     # Load retry config from global config if not provided
     try:
-        from .config_loader import ConfigLoader
-
         global_config = ConfigLoader.load_global_config()
         retries_cfg = global_config.get("automation", {}).get("retries", {})
         default_max_retries = retries_cfg.get("max_retries", 3)

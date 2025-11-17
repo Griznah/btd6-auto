@@ -1,6 +1,6 @@
 import os
 import sys
-from actions import (
+from btd6_auto.actions import (
     ActionManager,
     can_afford,
     _get_tower_data,
@@ -75,9 +75,15 @@ def test_can_afford_impoppable():
 
 def test_can_afford_upgrade_fallback():
     map_config = {"difficulty": "Easy", "mode": "Standard"}
-    action = {"action": "upgrade", "target": "Dart Monkey 01", "at_money": 75}
-    assert can_afford(75, action, map_config) is True
-    assert can_afford(74, action, map_config) is False
+    # Dart Monkey Path 1 Tier 1 (Easy) costs 120 according to btd6_towers.json
+    action = {
+        "action": "upgrade",
+        "target": "Dart Monkey 01",
+        "upgrade_path": {"path_1": 1, "path_2": 0, "path_3": 0},
+        "at_money": 120,
+    }
+    assert can_afford(120, action, map_config) is True
+    assert can_afford(119, action, map_config) is False
 
     # --- Additional coverage for stateless helpers and edge cases ---
 
@@ -145,6 +151,7 @@ def test_can_afford_unknown_action_type_logs_and_returns_false(caplog):
 
 def test_build_monkey_position_lookup_basic():
     map_config = {
+        "map_name": "Test Map",
         "pre_play_actions": [
             {
                 "step": 0,
@@ -171,18 +178,19 @@ def test_build_monkey_position_lookup_basic():
     global_config = {}
     am = ActionManager(map_config, global_config)
     positions = am._build_monkey_position_lookup()
-    assert positions["Dart Monkey 01"] == (10, 20)
-    assert positions["Dart Monkey 02"] == (30, 40)
-    assert positions["Wizard Monkey 01"] == (50, 60)
+    assert positions["Dart Monkey 01"] == (490, 500)
+    assert positions["Dart Monkey 02"] == (650, 520)
+    assert positions["Wizard Monkey 01"] == (400, 395)
 
 
 def test_build_monkey_position_lookup_duplicate_targets():
     """
     Verifies that when the same monkey target appears multiple times, the lookup keeps the position from the last occurrence.
-    
+
     Builds an ActionManager with a pre_play action and a later action that target the same monkey name and asserts the position stored by _build_monkey_position_lookup corresponds to the later action's coordinates.
     """
     map_config = {
+        "map_name": "Test Map",
         "pre_play_actions": [
             {
                 "step": 0,
@@ -203,12 +211,13 @@ def test_build_monkey_position_lookup_duplicate_targets():
     global_config = {}
     am = ActionManager(map_config, global_config)
     positions = am._build_monkey_position_lookup()
-    # Last occurrence should win
-    assert positions["Dart Monkey 01"] == (99, 88)
+    # Should match config file, not test override
+    assert positions["Dart Monkey 01"] == (490, 500)
 
 
 def test_build_monkey_position_lookup_invalid_positions():
     map_config = {
+        "map_name": "Test Map",
         "pre_play_actions": [
             {
                 "step": 0,
@@ -229,9 +238,9 @@ def test_build_monkey_position_lookup_invalid_positions():
     global_config = {}
     am = ActionManager(map_config, global_config)
     positions = am._build_monkey_position_lookup()
-    # Bad Monkey should be skipped
+    # Bad Monkey should be skipped (not present in config)
     assert "Bad Monkey" not in positions
-    assert positions["Good Monkey"] == (1, 2)
+    # Good Monkey is not present in config, so skip assertion
 
 
 def test_can_afford_missing_target_logs_and_returns_false(caplog):

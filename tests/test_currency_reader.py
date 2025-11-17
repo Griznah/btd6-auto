@@ -68,22 +68,12 @@ def patch_vision(monkeypatch):
     Patch btd6_auto.vision and BetterCam/easyocr dependencies for currency reader tests.
     Sets up dummy camera and OCR for consistent test results.
     """
-    import btd6_auto.vision as vision
     import btd6_auto.currency_reader as currency_reader
 
-    # No EasyOCR patching needed for pytesseract version
-    import bettercam
-
-    monkeypatch.setattr(bettercam, "create", lambda: DummyCamera())
-    monkeypatch.setattr(
-        vision,
-        "read_currency_amount",
-        lambda region=(370, 26, 515, 60), _debug=False: 12345,
-    )
     monkeypatch.setattr(
         currency_reader,
         "read_currency_amount",
-        lambda region=(370, 26, 515, 60), _debug=False: 12345,
+        lambda region=(370, 26, 515, 60), debug=False: 12345,
     )
 
 
@@ -179,15 +169,21 @@ def read_currency_amount_from_image(img, debug=False):
         return 0
 
 
-@pytest.mark.parametrize(
-    "img_path,expected",
-    [
-        (path, int(os.path.splitext(os.path.basename(path))[0]))
-        for path in glob.glob(
-            os.path.join(os.path.dirname(__file__), "images", "*.png")
-        )
-    ],
-)
+def get_image_param_list():
+    param_list = []
+    for path in glob.glob(
+        os.path.join(os.path.dirname(__file__), "images", "*.png")
+    ):
+        basename = os.path.splitext(os.path.basename(path))[0]
+        try:
+            expected = int(basename)
+            param_list.append((path, expected))
+        except ValueError:
+            continue
+    return param_list
+
+
+@pytest.mark.parametrize("img_path,expected", get_image_param_list())
 def test_currency_reader_on_images(img_path, expected):
     """
     Test OCR currency reading on actual PNG images in tests/images.
