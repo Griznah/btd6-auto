@@ -25,7 +25,7 @@ import keyboard
 from btd6_auto.monkey_manager import place_monkey, place_hero
 from btd6_auto.monkey_hotkey import get_monkey_hotkey
 from btd6_auto.config_loader import get_tower_positions_for_map
-from btd6_auto.input import click
+from btd6_auto.input import move_and_click
 
 
 # Compile regexes at module level
@@ -381,7 +381,7 @@ class ActionManager:
             return
 
         # Click the tower to select it
-        click(pos[0], pos[1], delay=0.2)
+        move_and_click(pos[0], pos[1], delay=0.2)
 
         # Determine which path to upgrade (only one per action)
         path_hotkeys = self.global_config.get("hotkey", {})
@@ -403,7 +403,7 @@ class ActionManager:
                 )
                 keyboard.send(hotkey.lower())
                 time.sleep(self.timing.get("upgrade_delay", 0.3))
-                click(pos[0], pos[1])
+                move_and_click(1035, 900)
                 break  # Only one upgrade per action
 
         time.sleep(self.timing.get("upgrade_delay", 0.5))

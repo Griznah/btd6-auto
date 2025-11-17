@@ -2,7 +2,7 @@
 Handles selection and placement of monkeys and heroes.
 """
 
-from .input import click, cursor_resting_spot
+from .input import click, move_and_click, cursor_resting_spot
 from .config_utils import get_vision_config
 import logging
 import time
@@ -11,7 +11,72 @@ from .vision import (
     confirm_selection,
     verify_placement_change,
     handle_vision_error,
+    capture_region,
 )
+
+
+def try_targeting_success(
+    coords: tuple[int, int],
+    targeting_region_1,
+    targeting_region_2,
+    targeting_threshold,
+    max_attempts,
+    delay,
+    confirm_fn,
+) -> bool:
+    """
+    Clicks at (x, y) and then attempts to verify successful targeting by checking for UI changes
+    in two specified regions. It tries both regions for each attempt, retrying up to max_attempts
+    with a delay between attempts. Returns True if either region confirms success, otherwise False.
+
+    Parameters:
+        coords (tuple[int, int]): X and Y coordinates for targeting action.
+        targeting_region_1, targeting_region_2 (tuple): Regions to check for UI changes.
+        targeting_threshold (float): Threshold for confirming targeting success.
+        max_attempts (int): Maximum attempts.
+        delay (float): Delay after action before checking region.
+        confirm_fn (Callable): Function to confirm targeting (e.g., verify_placement_change).
+
+    Returns:
+        bool: True if targeting is successful in either region, False otherwise.
+    """
+    pre_img_1 = None
+    pre_img_2 = None
+    try:
+        pre_img_1 = capture_region(targeting_region_1)
+        pre_img_2 = capture_region(targeting_region_2)
+    except Exception:
+        logging.exception("Error capturing pre-click regions for targeting.")
+
+    click(coords[0], coords[1], delay=delay)
+
+    for attempt in range(1, max_attempts + 1):
+        # Check region 1
+        post_img_1 = None
+        try:
+            post_img_1 = capture_region(targeting_region_1)
+        except Exception:
+            logging.exception("Error capturing region 1 for targeting.")
+        success_1 = False
+        if pre_img_1 is not None and post_img_1 is not None:
+            success_1, _ = confirm_fn(
+                pre_img_1, post_img_1, targeting_threshold
+            )
+        # Check region 2
+        post_img_2 = None
+        try:
+            post_img_2 = capture_region(targeting_region_2)
+        except Exception:
+            logging.exception("Error capturing region 2 for targeting.")
+        success_2 = False
+        if pre_img_2 is not None and post_img_2 is not None:
+            success_2, _ = confirm_fn(
+                pre_img_2, post_img_2, targeting_threshold
+            )
+        if success_1 or success_2:
+            return True
+        time.sleep(delay)
+    return False
 
 
 def get_regions_for_monkey():
@@ -86,10 +151,10 @@ def place_monkey(
         regions = get_regions_for_monkey()
         max_attempts = regions["max_attempts"]
         select_threshold = regions["select_threshold"]
-        place_threshold = regions["place_threshold"]
+        targeting_threshold = regions["place_threshold"]
         select_region = regions["select_region"]
-        place_region_1 = regions["place_region_1"]
-        place_region_2 = regions["place_region_2"]
+        targeting_region_1 = regions["place_region_1"]
+        targeting_region_2 = regions["place_region_2"]
 
         def select_monkey():
             keyboard.send(monkey_key)
@@ -108,27 +173,19 @@ def place_monkey(
             handle_vision_error()
             return
 
-        def do_place():
-            click(coords[0], coords[1], delay=delay)
+        move_and_click(coords[0], coords[1], delay=delay)
 
-        placement_success_1 = retry_action(
-            do_place,
-            place_region_1,
-            place_threshold,
-            max_attempts=max_attempts,
-            delay=delay,
-            confirm_fn=verify_placement_change,
+        targeting_success = try_targeting_success(
+            coords,
+            targeting_region_1,
+            targeting_region_2,
+            targeting_threshold,
+            max_attempts,
+            delay,
+            verify_placement_change,
         )
-        placement_success_2 = retry_action(
-            do_place,
-            place_region_2,
-            place_threshold,
-            max_attempts=max_attempts,
-            delay=delay,
-            confirm_fn=verify_placement_change,
-        )
-        if not (placement_success_1 or placement_success_2):
-            logging.error(f"Monkey placement failed at {coords}")
+        if not targeting_success:
+            logging.error(f"Monkey targeting failed at {coords}")
             handle_vision_error()
             return
     except Exception:
@@ -156,10 +213,10 @@ def place_hero(
         regions = get_regions_for_hero()
         max_attempts = regions["max_attempts"]
         select_threshold = regions["select_threshold"]
-        place_threshold = regions["place_threshold"]
+        targeting_threshold = regions["place_threshold"]
         select_region = regions["select_region"]
-        place_region_1 = regions["place_region_1"]
-        place_region_2 = regions["place_region_2"]
+        targeting_region_1 = regions["place_region_1"]
+        targeting_region_2 = regions["place_region_2"]
 
         def select_hero():
             keyboard.press(hero_key)
@@ -179,28 +236,19 @@ def place_hero(
             handle_vision_error()
             return
 
-        def do_place():
-            click(coords[0], coords[1], delay=delay)
+        move_and_click(coords[0], coords[1], delay=delay)
 
-        # Confirm placement: success if either region passes
-        placement_success_1 = retry_action(
-            do_place,
-            place_region_1,
-            place_threshold,
-            max_attempts=max_attempts,
-            delay=delay,
-            confirm_fn=verify_placement_change,
+        targeting_success = try_targeting_success(
+            coords,
+            targeting_region_1,
+            targeting_region_2,
+            targeting_threshold,
+            max_attempts,
+            delay,
+            verify_placement_change,
         )
-        placement_success_2 = retry_action(
-            do_place,
-            place_region_2,
-            place_threshold,
-            max_attempts=max_attempts,
-            delay=delay,
-            confirm_fn=verify_placement_change,
-        )
-        if not (placement_success_1 or placement_success_2):
-            logging.error(f"Hero placement failed at {coords}")
+        if not targeting_success:
+            logging.error(f"Hero targeting failed at {coords}")
             handle_vision_error()
             return
     except Exception:

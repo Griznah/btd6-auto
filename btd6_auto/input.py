@@ -45,7 +45,7 @@ def esc_listener():
     return listener
 
 
-def click(x: int, y: int, delay: float = 0.2) -> None:
+def move_and_click(x: int, y: int, delay: float = 0.2) -> None:
     """
     Move the mouse to the specified screen coordinates and perform a left click.
 
@@ -61,8 +61,26 @@ def click(x: int, y: int, delay: float = 0.2) -> None:
         pyautogui.click()
         logging.debug(f"Sleeping for {delay} seconds after click")
         time.sleep(delay)
-    except Exception as e:
-        logging.error(f"Failed to click at ({x}, {y}): {e}")
+    except Exception:
+        logging.exception(f"Failed to click at ({x}, {y})")
+
+
+def click(x: int, y: int, delay: float = 0.2) -> None:
+    """
+    Click the specified screen coordinates with a left click.
+
+    Parameters:
+        x (int): Horizontal screen coordinate in pixels.
+        y (int): Vertical screen coordinate in pixels.
+        delay (float): Seconds to wait after the click (default 0.2).
+    """
+    try:
+        logging.debug(f"Clicking at ({x}, {y})")
+        pyautogui.click(x, y)
+        logging.debug(f"Sleeping for {delay} seconds after click")
+        time.sleep(delay)
+    except Exception:
+        logging.exception(f"Failed to click at ({x}, {y})")
 
 
 def type_text(text: str, interval: float = 0.05) -> None:

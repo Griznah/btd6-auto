@@ -18,6 +18,7 @@ import bettercam
 # Use ConfigLoader for config loading
 from .config_loader import ConfigLoader
 
+
 def rect_to_region(rect):
     """
     Convert a rectangle from (left, top, right, bottom) to (left, top, width, height).
@@ -103,7 +104,7 @@ def verify_placement_change(pre_img, post_img, threshold=85.0):
     Returns: (bool, float) -> (success, percent_diff)
     """
     percent_diff = calculate_image_difference(pre_img, post_img)
-    logging.info(
+    logging.debug(
         f"Placement diff: {percent_diff:.2f}% (threshold: {threshold})"
     )
     return percent_diff >= threshold, percent_diff
@@ -126,7 +127,7 @@ def retry_action(
     region,
     threshold,
     max_attempts=3,
-    delay=0.5,
+    delay=0.3,
     confirm_fn=None,
     *args,
     **kwargs,

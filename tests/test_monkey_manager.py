@@ -38,7 +38,9 @@ def mock_vision(monkeypatch):
 
 @pytest.fixture
 def mock_click(monkeypatch):
-    monkeypatch.setattr(monkey_manager, "click", lambda x, y, delay=0.2: None)
+    monkeypatch.setattr(
+        monkey_manager, "move_and_click", lambda x, y, delay=0.2: None
+    )
 
 
 @pytest.mark.usefixtures("mock_config", "mock_vision", "mock_click")
