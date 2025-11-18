@@ -49,7 +49,7 @@ def try_targeting_success(
         logging.exception("Error capturing pre-click regions for targeting.")
 
     for _ in range(1, max_attempts + 1):
-        # Perform the click action to select the target becuase we unselect a tower after we do actions.
+        # Perform the click action to select the target
         move_and_click(coords[0], coords[1], delay=delay)
         # Check region 1
         post_img_1 = None
@@ -173,8 +173,6 @@ def place_monkey(
             handle_vision_error()
             return
 
-        move_and_click(coords[0], coords[1], delay=delay)
-
         targeting_success = try_targeting_success(
             coords,
             targeting_region_1,
@@ -235,8 +233,6 @@ def place_hero(
             logging.error(f"Hero selection failed for key {hero_key}")
             handle_vision_error()
             return
-
-        move_and_click(coords[0], coords[1], delay=delay)
 
         targeting_success = try_targeting_success(
             coords,

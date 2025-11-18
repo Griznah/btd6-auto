@@ -19,12 +19,17 @@ def get_vision_config():
         with open(config_path, "r", encoding="utf-8") as f:
             config = json.load(f)
         return config.get("vision", {})
-    except Exception as e:
+    except (
+        FileNotFoundError,
+        json.JSONDecodeError,
+        PermissionError,
+        OSError,
+    ):
         # Log error if logging is available
         try:
             import logging
 
-            logging.error(f"Failed to load vision config: {e}")
+            logging.exception("Failed to load vision config")
         except ImportError:
             pass
         return {}

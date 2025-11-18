@@ -1,11 +1,14 @@
 #! python3
-import pyautogui, sys
-print('Press Ctrl-C to quit.')
+import pyautogui
+import time
+
+print("Press Ctrl-C to quit.")
 try:
     while True:
         x, y = pyautogui.position()
-        positionStr = 'X: ' + str(x).rjust(4) + ' Y: ' + str(y).rjust(4)
-        print(positionStr, end='')
-        print('\b' * len(positionStr), end='', flush=True)
+        positionStr = "X: " + str(x).rjust(4) + " Y: " + str(y).rjust(4)
+        print(positionStr, end="")
+        print("\b" * len(positionStr), end="", flush=True)
+        time.sleep(0.1)  # a little pause to ease CPU usage
 except KeyboardInterrupt:
-    print('\n')
+    print("\n")
