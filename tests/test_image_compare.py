@@ -2,27 +2,48 @@ import cv2
 import numpy as np
 import logging
 import os
+from typing import Optional
+
+# Set up logging at module level
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("ImageCompare")
 
 
-def compare_images(img_path1, img_path2, threshold=30):
-    # Set up logging
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("ImageCompare")
+def compare_images(
+    img_path1: str,
+    img_path2: str,
+    threshold: int = 30,
+    save_path: Optional[str] = None,
+) -> float:
+    """
+    Compare two images and return the percent difference.
 
-    # Load images
+    Args:
+        img_path1 (str): Path to first image.
+        img_path2 (str): Path to second image.
+        threshold (int): Pixel difference threshold (default: 30).
+        save_path (Optional[str]): If provided, saves the diff image to this path.
+
+    Returns:
+        float: Percent of pixels above threshold.
+
+    Raises:
+        FileNotFoundError: If either image cannot be loaded.
+        ValueError: If image shapes differ.
+    """
     img1 = cv2.imread(img_path1)
     img2 = cv2.imread(img_path2)
 
     if img1 is None or img2 is None:
         logger.error(f"Could not load images: {img_path1}, {img_path2}")
-        return False
+        raise FileNotFoundError(
+            f"Could not load images: {img_path1}, {img_path2}"
+        )
 
-    # Ensure images are the same size
     if img1.shape != img2.shape:
         logger.error(f"Image shapes differ: {img1.shape} vs {img2.shape}")
-        return False
+        raise ValueError(f"Image shapes differ: {img1.shape} vs {img2.shape}")
 
-    # Compute absolute difference
     diff = cv2.absdiff(img1, img2)
     diff_gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
     nonzero_count = np.count_nonzero(diff_gray > threshold)
@@ -33,10 +54,9 @@ def compare_images(img_path1, img_path2, threshold=30):
     logger.info(f"Pixels above threshold ({threshold}): {nonzero_count}")
     logger.info(f"Percent difference: {percent_diff:.2f}%")
 
-    # Optionally save diff image for inspection
-    diff_path = os.path.join(os.path.dirname(img_path1), "diff.png")
-    cv2.imwrite(diff_path, diff)
-    logger.info(f"Diff image saved to: {diff_path}")
+    if save_path:
+        cv2.imwrite(save_path, diff)
+        logger.info(f"Diff image saved to: {save_path}")
 
     return percent_diff
 
@@ -44,27 +64,33 @@ def compare_images(img_path1, img_path2, threshold=30):
 if __name__ == "__main__":
     img1 = os.path.join("tests", "images", "pre_monkey.png")
     img2 = os.path.join("tests", "images", "post_monkey.png")
-    compare_images(img1, img2)
+    try:
+        percent_diff = compare_images(
+            img1,
+            img2,
+            save_path=os.path.join(os.path.dirname(img1), "diff.png"),
+        )
+        logger.info(f"Percent difference: {percent_diff:.2f}%")
+    except (FileNotFoundError, ValueError) as e:
+        logger.error(f"Error comparing images: {e}")
 
     # Template matching test
-    logging.info("Starting template matching test...")
+    logger.info("Starting template matching test...")
     img_full = cv2.imread(img2)
     img_template = cv2.imread(img1)
     if img_full is None or img_template is None:
-        logging.error(
+        logger.error(
             f"Could not load images for template matching: {img2}, {img1}"
         )
     else:
-        # Convert to grayscale for template matching
         img_full_gray = cv2.cvtColor(img_full, cv2.COLOR_BGR2GRAY)
         img_template_gray = cv2.cvtColor(img_template, cv2.COLOR_BGR2GRAY)
         res = cv2.matchTemplate(
             img_full_gray, img_template_gray, cv2.TM_CCOEFF_NORMED
         )
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-        logging.info(f"Template matching max value: {max_val}")
-        logging.info(f"Template matching location: {max_loc}")
-        # Draw rectangle on match
+        logger.info(f"Template matching max value: {max_val}")
+        logger.info(f"Template matching location: {max_loc}")
         h, w = img_template_gray.shape
         img_matched = img_full.copy()
         cv2.rectangle(
@@ -76,4 +102,4 @@ if __name__ == "__main__":
         )
         matched_path = os.path.join(os.path.dirname(img2), "matched.png")
         cv2.imwrite(matched_path, img_matched)
-        logging.info(f"Matched image saved to: {matched_path}")
+        logger.info(f"Matched image saved to: {matched_path}")

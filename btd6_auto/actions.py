@@ -25,7 +25,7 @@ import keyboard
 from btd6_auto.monkey_manager import place_monkey, place_hero
 from btd6_auto.monkey_hotkey import get_monkey_hotkey
 from btd6_auto.config_loader import get_tower_positions_for_map
-from btd6_auto.input import move_and_click
+from btd6_auto.input import move_and_click, cursor_resting_spot
 
 
 # Compile regexes at module level
@@ -403,7 +403,8 @@ class ActionManager:
                 )
                 keyboard.send(hotkey.lower())
                 time.sleep(self.timing.get("upgrade_delay", 0.3))
-                move_and_click(1035, 900)
+                coords = cursor_resting_spot()
+                move_and_click(coords[0], coords[1])
                 break  # Only one upgrade per action
 
         time.sleep(self.timing.get("upgrade_delay", 0.5))

@@ -1,5 +1,6 @@
 {
   "vision": {
+    "_comment": "Coordinate regions are specified as [x1, y1, x2, y2] where (x1, y1) is top-left and (x2, y2) is bottom-right",
     "max_attempts": 3,
     "select_threshold": 40.0,
     "place_threshold": 85.0,

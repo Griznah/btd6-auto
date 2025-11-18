@@ -2,7 +2,7 @@
 Handles selection and placement of monkeys and heroes.
 """
 
-from .input import click, move_and_click, cursor_resting_spot
+from .input import move_and_click, cursor_resting_spot
 from .config_utils import get_vision_config
 import logging
 import time
@@ -48,9 +48,9 @@ def try_targeting_success(
     except Exception:
         logging.exception("Error capturing pre-click regions for targeting.")
 
-    click(coords[0], coords[1], delay=delay)
-
-    for attempt in range(1, max_attempts + 1):
+    for _ in range(1, max_attempts + 1):
+        # Perform the click action to select the target becuase we unselect a tower after we do actions.
+        move_and_click(coords[0], coords[1], delay=delay)
         # Check region 1
         post_img_1 = None
         try:
@@ -118,7 +118,7 @@ def get_regions_for_hero():
         "select_threshold": vision.get("select_threshold", 40.0),
         "place_threshold": vision.get("place_threshold", 85.0),
         "select_region": rect_to_region(
-            vision.get("select_region", [935, 800, 200, 150])
+            vision.get("select_region", [935, 800, 1135, 950])
         ),
         "place_region_1": rect_to_region(
             vision.get("place_region_1", [35, 65, 415, 940])

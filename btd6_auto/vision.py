@@ -148,6 +148,11 @@ def retry_action(
         action_fn(*args, **kwargs)
         time.sleep(delay)
         post_img = capture_region(region)
+        if pre_img is None or post_img is None:
+            logging.warning(
+                f"Attempt {attempt}: capture_region returned None for pre_img or post_img in region {region}. Skipping confirm_fn and retrying."
+            )
+            continue
         success, percent_diff = confirm_fn(pre_img, post_img, threshold)
         logging.info(
             f"Attempt {attempt}: diff={percent_diff:.2f}% success={success}"

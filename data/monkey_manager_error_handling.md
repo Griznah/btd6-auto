@@ -17,7 +17,7 @@ Add robust error handling to monkey selection and placement by verifying actions
    - Move cursor to desired location
    - Make sure the circle around the tower/cursor is not red
    - Try to mouse click the tower into place
-   - After expected placement, click tower and use vision to confirm the monkey/hero appears at the intended location. When selecting a tower, the areas at either (Top Left: {X: 35, Y:65} Bottom Right: {X:415, Y:940}) or (Top Left: {X: 1260, Y:60} Bottom Right: {X:1635, Y:940}) has at least a 85% change. Make this a seperate function called confirm_selection()
+   - After expected placement, click tower and use vision to confirm the monkey/hero appears at the intended location. When selecting a tower, the areas at either (Top Left: {X: 35, Y:65} Bottom Right: {X:415, Y:940}) or (Top Left: {X: 1260, Y:60} Bottom Right: {X:1635, Y:940}) has at least a 85% change. Make this a separate function called confirm_selection()
    - Retry placement or log error if confirmation fails. Log each attempt with threshold.
 4. Add configurable retry logic and delays, using global config for max attempts and timing.
 5. Log all failures and recovery attempts for debugging and reliability.
