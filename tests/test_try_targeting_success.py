@@ -32,6 +32,10 @@ def both_success_confirm(pre, post, threshold):
 
 
 def test_try_targeting_success_region1(monkeypatch):
+    """
+    Test try_targeting_success when only region1 succeeds.
+    Expected: Returns True when region1 is confirmed as successful.
+    """
     monkeypatch.setattr(
         "btd6_auto.monkey_manager.capture_region",
         lambda region: region
@@ -51,6 +55,10 @@ def test_try_targeting_success_region1(monkeypatch):
 
 
 def test_try_targeting_success_region2(monkeypatch):
+    """
+    Test try_targeting_success when only region2 succeeds.
+    Expected: Returns True when region2 is confirmed as successful.
+    """
     monkeypatch.setattr(
         "btd6_auto.monkey_manager.capture_region", lambda region: "region2"
     )
@@ -67,6 +75,10 @@ def test_try_targeting_success_region2(monkeypatch):
 
 
 def test_try_targeting_success_both(monkeypatch):
+    """
+    Test try_targeting_success when both regions succeed.
+    Expected: Returns True when confirmation always succeeds.
+    """
     monkeypatch.setattr(
         "btd6_auto.monkey_manager.capture_region", lambda region: "any"
     )
@@ -83,6 +95,10 @@ def test_try_targeting_success_both(monkeypatch):
 
 
 def test_try_targeting_success_fail(monkeypatch):
+    """
+    Test try_targeting_success when confirmation always fails.
+    Expected: Returns False when no region is confirmed as successful.
+    """
     monkeypatch.setattr(
         "btd6_auto.monkey_manager.capture_region", lambda region: "none"
     )
@@ -99,6 +115,11 @@ def test_try_targeting_success_fail(monkeypatch):
 
 
 def test_try_targeting_success_exception(monkeypatch):
+    """
+    Test try_targeting_success when capture_region raises an exception.
+    Expected: Returns False when an exception occurs during region capture.
+    """
+
     def raise_exception(region):
         raise Exception("fail")
 

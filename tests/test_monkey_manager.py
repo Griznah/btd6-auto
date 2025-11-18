@@ -8,6 +8,20 @@ from btd6_auto import monkey_manager
 
 @pytest.fixture
 def mock_config(monkeypatch):
+    """
+    Mocks the 'get_vision_config' function in the 'monkey_manager' module to return a predefined configuration dictionary.
+
+    Args:
+        monkeypatch: pytest's monkeypatch fixture used to override attributes during testing.
+
+    The mocked configuration includes:
+        - max_attempts: Maximum number of attempts allowed.
+        - select_threshold: Threshold value for selection.
+        - place_threshold: Threshold value for placement.
+        - select_region: Coordinates defining the selection region.
+        - place_region_1: Coordinates for the first placement region.
+        - place_region_2: Coordinates for the second placement region.
+    """
     monkeypatch.setattr(
         monkey_manager,
         "get_vision_config",
@@ -45,18 +59,31 @@ def mock_click(monkeypatch):
 
 @pytest.mark.usefixtures("mock_config", "mock_vision", "mock_click")
 def test_place_monkey_success():
-    # Should not raise or call error handler
+    """
+    Test successful placement of a monkey.
+    Scenario: Vision and click actions succeed, no error handler is called.
+    Expected outcome: No exceptions, no error handling triggered.
+    """
     monkey_manager.place_monkey((100, 200), "q")
 
 
 @pytest.mark.usefixtures("mock_config", "mock_vision", "mock_click")
 def test_place_hero_success():
-    # Should not raise or call error handler
+    """
+    Test successful placement of a hero.
+    Scenario: Vision and click actions succeed, no error handler is called.
+    Expected outcome: No exceptions, no error handling triggered.
+    """
     monkey_manager.place_hero((300, 400), "u")
 
 
 @pytest.mark.usefixtures("mock_config", "mock_click")
 def test_place_monkey_failure(monkeypatch):
+    """
+    Test monkey placement failure triggers error handler.
+    Scenario: Vision retry fails, error handler should be called.
+    Expected outcome: Error handler is triggered and sets 'error' flag.
+    """
     monkeypatch.setattr(
         monkey_manager, "retry_action", lambda *a, **kw: False
     )
@@ -72,6 +99,11 @@ def test_place_monkey_failure(monkeypatch):
 
 @pytest.mark.usefixtures("mock_config", "mock_click")
 def test_place_hero_failure(monkeypatch):
+    """
+    Test hero placement failure triggers error handler.
+    Scenario: Vision retry fails, error handler should be called.
+    Expected outcome: Error handler is triggered and sets 'error' flag.
+    """
     monkeypatch.setattr(
         monkey_manager, "retry_action", lambda *a, **kw: False
     )
