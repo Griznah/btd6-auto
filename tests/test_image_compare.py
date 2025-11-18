@@ -16,20 +16,20 @@ def compare_images(
     save_path: Optional[str] = None,
 ) -> float:
     """
-    Compare two images and return the percent difference.
-
-    Args:
-        img_path1 (str): Path to first image.
-        img_path2 (str): Path to second image.
-        threshold (int): Pixel difference threshold (default: 30).
-        save_path (Optional[str]): If provided, saves the diff image to this path.
-
+    Compute the percentage of pixels that differ between two images beyond a given threshold.
+    
+    Parameters:
+        img_path1 (str): Path to the first image file.
+        img_path2 (str): Path to the second image file.
+        threshold (int): Pixel intensity difference threshold; a pixel is counted if its grayscale difference is greater than this value.
+        save_path (Optional[str]): If provided, writes the visual difference image to this path.
+    
     Returns:
-        float: Percent of pixels above threshold.
-
+        float: Percent of pixels whose grayscale difference is greater than `threshold`.
+    
     Raises:
-        FileNotFoundError: If either image cannot be loaded.
-        ValueError: If image shapes differ.
+        FileNotFoundError: If either image cannot be loaded from the provided paths.
+        ValueError: If the two images do not have the same shape.
     """
     img1 = cv2.imread(img_path1)
     img2 = cv2.imread(img_path2)

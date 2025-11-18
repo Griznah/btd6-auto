@@ -22,10 +22,15 @@ from .config_loader import ConfigLoader
 def rect_to_region(rect):
     """
     Convert a rectangle from (left, top, right, bottom) to (left, top, width, height).
-    Args:
-        rect (tuple/list): (left, top, right, bottom)
+    
+    Parameters:
+        rect (tuple | list): Four numeric values in the order (left, top, right, bottom).
+    
     Returns:
-        tuple: (left, top, width, height)
+        tuple: A 4-tuple (left, top, width, height) where width = right - left and height = bottom - top.
+    
+    Raises:
+        ValueError: If `rect` does not contain exactly four values or if computed width or height is less than or equal to zero.
     """
     if len(rect) != 4:
         raise ValueError(f"rect_to_region expects 4 values, got {rect}")
@@ -40,9 +45,13 @@ def rect_to_region(rect):
 # Vision-based error handling helpers for monkey selection/placement
 def capture_region(region):
     """
-    Capture a screenshot of a region using BetterCam (consistent with module).
-    region: (left, top, width, height)
-    Returns: numpy array (BGR)
+    Capture a screenshot of a rectangular region from the screen using the module's BetterCam.
+    
+    Parameters:
+        region (tuple): (left, top, width, height) coordinates of the capture rectangle. Coordinates must lie within a 1920x1080 screen.
+    
+    Returns:
+        numpy.ndarray or None: BGR image array for the captured region, or `None` if the region is invalid or no frame could be captured.
     """
     left, top, width, height = region
     right = left + width
@@ -85,8 +94,14 @@ def capture_region(region):
 
 def calculate_image_difference(img1, img2):
     """
-    Calculate the percentage difference between two images.
-    Returns: float (0-100)
+    Compute the percentage of differing pixels between two images.
+    
+    Parameters:
+        img1 (np.ndarray): First image array.
+        img2 (np.ndarray): Second image array; must have the same shape as `img1`.
+    
+    Returns:
+        float: Percentage of pixels that differ between the images, in the range 0.0 to 100.0. Returns 100.0 if the images have different shapes.
     """
     if img1.shape != img2.shape:
         logging.error("Image shapes do not match for comparison.")
@@ -100,8 +115,16 @@ def calculate_image_difference(img1, img2):
 
 def verify_placement_change(pre_img, post_img, threshold=85.0):
     """
-    Compare pre and post images for placement confirmation.
-    Returns: (bool, float) -> (success, percent_diff)
+    Determine whether the visual difference between two images meets a minimum percent threshold.
+    
+    Parameters:
+        pre_img (np.ndarray): Image captured before the action.
+        post_img (np.ndarray): Image captured after the action.
+        threshold (float): Minimum percent difference required to consider the placement change successful.
+    
+    Returns:
+        success (bool): `true` if the percent difference is greater than or equal to `threshold`, `false` otherwise.
+        percent_diff (float): Percentage of pixels that differ between `pre_img` and `post_img`.
     """
     percent_diff = calculate_image_difference(pre_img, post_img)
     logging.debug(
@@ -112,8 +135,15 @@ def verify_placement_change(pre_img, post_img, threshold=85.0):
 
 def confirm_selection(pre_img, post_img, threshold=40.0):
     """
-    Compare pre and post images for selection confirmation.
-    Returns: (bool, float) -> (success, percent_diff)
+    Determine whether a selection change occurred by comparing two images.
+    
+    Parameters:
+        pre_img (np.ndarray): Image captured before the action.
+        post_img (np.ndarray): Image captured after the action.
+        threshold (float): Minimum percent difference required to consider the selection confirmed.
+    
+    Returns:
+        (bool, float): First element is `true` if the percent difference is greater than or equal to `threshold`, `false` otherwise; second element is the percent difference between the images.
     """
     percent_diff = calculate_image_difference(pre_img, post_img)
     logging.info(
@@ -133,15 +163,20 @@ def retry_action(
     **kwargs,
 ):
     """
-    Retry an action (selection/placement) with vision confirmation.
-    action_fn: function to perform (e.g., select_monkey, place_monkey)
-    region: region tuple for capture
-    threshold: float, percent difference required
-    max_attempts: int
-    delay: float, seconds between attempts
-    confirm_fn: function to confirm (e.g., confirm_selection, verify_placement_change)
-    args, kwargs: passed to action_fn
-    Returns: bool (success)
+    Retry an action until a vision-based confirmation indicates success or the maximum attempts are exhausted.
+    
+    Parameters:
+        action_fn (callable): Function that performs the action to be verified (e.g., a selection or placement). It will be called with `*args` and `**kwargs`.
+        region (tuple): Screen region used for pre- and post-action captures, typically (left, top, width, height).
+        threshold (float): Percentage difference threshold required by `confirm_fn` to consider the action successful.
+        max_attempts (int): Maximum number of attempts to perform the action and confirm it.
+        delay (float): Seconds to wait after performing the action before taking the post-action capture.
+        confirm_fn (callable): Function that compares pre- and post-action images and returns a tuple `(success: bool, percent_diff: float)`.
+        *args: Positional arguments forwarded to `action_fn`.
+        **kwargs: Keyword arguments forwarded to `action_fn`.
+    
+    Returns:
+        bool: `True` if the action was confirmed successful within the allotted attempts, `False` otherwise.
     """
     for attempt in range(1, max_attempts + 1):
         pre_img = capture_region(region)
@@ -165,8 +200,9 @@ def retry_action(
 
 def handle_vision_error():
     """
-    Generic error handler for repeated vision failures.
-    Cleans up and exits.
+    Terminate the process after a critical vision failure.
+    
+    Logs a critical message and exits the process immediately.
     """
     logging.critical("Max retries reached. Exiting automation.")
     # Add any cleanup logic here
@@ -225,22 +261,17 @@ def set_round_state(
     find_in_region=None,
 ) -> bool:
     """
-    Set the round state by ensuring the correct speed or start button is active.
-
-    This function uses image recognition to detect the current round state ("fast", "slow", or "start")
-    and simulates pressing the Spacebar to toggle speed as needed. For the "start" state, it ensures
-    the start button is visible and the speed is set to fast. The function retries up to max_retries
-    times, waiting delay seconds between attempts. Defaults are loaded from global config.
-
+    Ensure the game's visual round state ("fast", "slow", or "start") is active, toggling speed as needed.
+    
     Parameters:
-        state (str): One of "fast", "slow", or "start".
-        region (tuple): (left, top, right, bottom) coordinates to search for the state image.
-        max_retries (int, optional): Maximum number of attempts to set the state. Defaults to global config.
-        delay (float, optional): Delay in seconds between attempts. Defaults to global config.
-        find_in_region (callable, optional): Function to check for template in region (for testing/mocking).
-
+        state (str): Desired state; one of "fast", "slow", or "start".
+        region (tuple): (left, top, right, bottom) coordinates defining the search region for state indicators.
+        max_retries (int, optional): Maximum number of attempts to verify/set the state. If None, a default is read from global configuration.
+        delay (float, optional): Seconds to wait between attempts. If None, a default is read from global configuration.
+        find_in_region (callable, optional): Optional injected function for template detection (used for testing or mocking). Expected to accept a template path and region and to return either a boolean or a tuple `(found, confidence)`; various call signatures `(template_path, region, threshold)`, `(template_path, region)`, or `(template_path, threshold)` are supported by the adapter.
+    
     Returns:
-        bool: True if the requested state was set successfully, False otherwise.
+        bool: `True` if the requested state was detected or set within the allowed attempts, `False` otherwise.
     """
     # Load retry config from global config if not provided
     try:

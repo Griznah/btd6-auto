@@ -16,10 +16,10 @@ from .config_utils import get_vision_config
 
 def esc_listener():
     """
-    Start a keyboard listener that triggers a killswitch when the Escape key is pressed.
-
-    On Escape press, sets KILL_SWITCH to True and immediately terminates the process (Windows-only).
-
+    Start a keyboard listener that activates a hard kill switch when the Escape key is pressed.
+    
+    When Escape is pressed, sets SharedState.KILL_SWITCH to True and terminates the process immediately using os._exit(0).
+    
     Returns:
         pynput.keyboard.Listener: The started listener instance.
     """
@@ -47,8 +47,8 @@ def esc_listener():
 
 def move_and_click(x: int, y: int, delay: float = 0.2) -> None:
     """
-    Move the mouse to the specified screen coordinates and perform a left click.
-
+    Move the mouse to the given screen coordinates and perform a left click.
+    
     Parameters:
         x (int): Horizontal screen coordinate in pixels.
         y (int): Vertical screen coordinate in pixels.
@@ -85,10 +85,11 @@ def click(x: int, y: int, delay: float = 0.2) -> None:
 
 def type_text(text: str, interval: float = 0.05) -> None:
     """
-    Type text using pyautogui.
-    Args:
-        text (str): The text to type.
-        interval (float): Delay between key presses.
+    Simulate typing the given text into the active application.
+    
+    Parameters:
+        text (str): The string to type.
+        interval (float): Delay in seconds between individual key presses (defaults to 0.05).
     """
     try:
         pyautogui.write(text, interval=interval)
