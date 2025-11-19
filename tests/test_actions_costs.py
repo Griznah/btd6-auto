@@ -185,9 +185,9 @@ def test_build_monkey_position_lookup_basic():
 
 def test_build_monkey_position_lookup_duplicate_targets():
     """
-    Verifies that when the same monkey target appears multiple times, the lookup keeps the position from the last occurrence.
-
-    Builds an ActionManager with a pre_play action and a later action that target the same monkey name and asserts the position stored by _build_monkey_position_lookup corresponds to the later action's coordinates.
+    Verify that when a monkey target appears multiple times, the position from the later occurrence is used in the lookup.
+    
+    Asserts that ActionManager._build_monkey_position_lookup resolves the final pixel coordinates for a duplicate monkey target according to the later action entry.
     """
     map_config = {
         "map_name": "Test Map",

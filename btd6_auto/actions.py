@@ -360,11 +360,13 @@ class ActionManager:
 
     def run_upgrade_action(self, action: Dict[str, Any]) -> None:
         """
-        Execute an upgrade action for a tower.
-        Presses the hotkey for the desired upgrade path. Only one upgrade is performed per action.
-
-        Args:
-            action (Dict[str, Any]): Action dictionary containing target and upgrade_path.
+        Perform a single upgrade for the specified tower using the configured upgrade-path hotkeys.
+        
+        Parameters:
+            action (Dict[str, Any]): Action dictionary with keys:
+                - target (str): Name of the tower to upgrade.
+                - upgrade_path (Dict[str, int]): Mapping like {"path_1": n, "path_2": m, "path_3": k} where the first path with a value > 0 is applied.
+        
         """
         target = action.get("target")
         upgrade_path = action.get("upgrade_path", {})

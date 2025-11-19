@@ -93,7 +93,14 @@ def test_capture_screen_full(monkeypatch):
 
     def fake_cvtColor(img, code):
         """
-        Fake cv2.cvtColor for testing. Returns a grayscale image for code 6.
+        Provide a simplified stand-in for cv2.cvtColor used in tests.
+        
+        Parameters:
+            img (array-like): Input image returned unchanged unless `code` equals 6.
+            code (int): Color conversion code; treated as 6 to simulate BGR->GRAY conversion.
+        
+        Returns:
+            numpy.ndarray: A 100x100 uint8 grayscale array with value 127 when `code` is 6, otherwise the original `img`.
         """
         if code == 6:
             return np.ones((100, 100), dtype=np.uint8) * 127
@@ -129,6 +136,16 @@ def test_capture_screen_region(monkeypatch):
     # bettercam.create patch is not needed since camera=FakeCamera() is passed directly
 
     def fake_cvtColor(img, code):
+        """
+        Simulate cv2.cvtColor for tests by converting BGR images to a constant mid-gray image or returning the input unchanged.
+        
+        Parameters:
+            img (numpy.ndarray): Source image array.
+            code (int): OpenCV color conversion code; when equal to cv2.COLOR_BGR2GRAY a grayscale image is produced.
+        
+        Returns:
+            numpy.ndarray: If `code` is `cv2.COLOR_BGR2GRAY`, a 2-D uint8 array of the same height and width with every pixel set to 127; otherwise the original `img`.
+        """
         if code == cv2.COLOR_BGR2GRAY:
             h, w = img.shape[:2]
             return np.ones((h, w), dtype=np.uint8) * 127
@@ -175,7 +192,14 @@ def test_capture_screen_error(monkeypatch):
 
     def fake_cvtColor(img, code):
         """
-        Fake cv2.cvtColor for error test. Returns a grayscale image for code 6.
+        Provide a test replacement for cv2.cvtColor that returns a fixed grayscale image when given a specific conversion code.
+        
+        Parameters:
+            img (ndarray): Input image; returned unchanged unless `code` triggers the fake conversion.
+            code (int): OpenCV color conversion code; when equal to 6 this function returns a synthetic grayscale image.
+        
+        Returns:
+            ndarray: If `code` is 6, a uint8 grayscale image of shape (100, 100) filled with value 127; otherwise the original `img`.
         """
         if code == 6:
             return np.ones((100, 100), dtype=np.uint8) * 127

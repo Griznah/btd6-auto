@@ -65,8 +65,11 @@ class DummyOCR:
 
 def patch_vision(monkeypatch):
     """
-    Patch btd6_auto.vision and BetterCam/easyocr dependencies for currency reader tests.
-    Sets up dummy camera and OCR for consistent test results.
+    Make OCR-based currency reads deterministic for tests by patching CurrencyReader.
+    
+    Replaces btd6_auto.currency_reader.read_currency_amount with a stub that accepts the usual
+    (region, debug) parameters and always returns 12345, so tests relying on currency reads get
+    a consistent value.
     """
     import btd6_auto.currency_reader as currency_reader
 
@@ -124,12 +127,14 @@ def test_currency_reader_stop_idempotent(monkeypatch):
 
 def read_currency_amount_from_image(img, debug=False):
     """
-    Reads currency amount from a provided image using the same OCR pipeline as read_currency_amount.
-    Args:
-        img (np.ndarray): Image array (BGRA or RGBA or RGB or grayscale)
-        debug (bool): If True, logs the detected value.
+    Extracts an integer currency amount from an image using OCR.
+    
+    Parameters:
+        img (np.ndarray): Input image expected as grayscale, BGR/RGB (3-channel), or BGRA/RGBA (4-channel).
+        debug (bool): If True, prints the detected integer and the raw OCR text for debugging.
+    
     Returns:
-        int: Parsed currency value, or 0 if not found or error.
+        int: Parsed currency value, or 0 if no digits are found or an error occurs.
     """
     try:
         cv2.setUseOptimized(True)
@@ -170,6 +175,14 @@ def read_currency_amount_from_image(img, debug=False):
 
 
 def get_image_param_list():
+    """
+    Collect PNG test images from the tests/images directory and pair each file path with the integer parsed from its filename.
+    
+    Files whose basenames cannot be parsed as an integer are skipped.
+    
+    Returns:
+        list: A list of (path, expected) tuples where `path` is the image file path and `expected` is the integer obtained from the filename.
+    """
     param_list = []
     for path in glob.glob(
         os.path.join(os.path.dirname(__file__), "images", "*.png")

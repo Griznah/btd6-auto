@@ -9,18 +9,15 @@ from btd6_auto import monkey_manager
 @pytest.fixture
 def mock_config(monkeypatch):
     """
-    Mocks the 'get_vision_config' function in the 'monkey_manager' module to return a predefined configuration dictionary.
-
-    Args:
-        monkeypatch: pytest's monkeypatch fixture used to override attributes during testing.
-
-    The mocked configuration includes:
-        - max_attempts: Maximum number of attempts allowed.
-        - select_threshold: Threshold value for selection.
-        - place_threshold: Threshold value for placement.
-        - select_region: Coordinates defining the selection region.
-        - place_region_1: Coordinates for the first placement region.
-        - place_region_2: Coordinates for the second placement region.
+    Mock get_vision_config in monkey_manager to return a fixed vision configuration used by the tests.
+    
+    The mocked configuration contains:
+    - max_attempts: 2
+    - select_threshold: 40.0
+    - place_threshold: 85.0
+    - select_region: [925, 800, 1135, 950]
+    - place_region_1: [35, 65, 415, 940]
+    - place_region_2: [1260, 60, 1635, 940]
     """
     monkeypatch.setattr(
         monkey_manager,
@@ -38,6 +35,17 @@ def mock_config(monkeypatch):
 
 @pytest.fixture
 def mock_vision(monkeypatch):
+    """
+    Pytest fixture that stubs monkey_manager vision functions to simulate successful vision outcomes.
+    
+    Replaces:
+    - `retry_action` with a callable that always returns `True`.
+    - `confirm_selection` with a callable that returns `(True, 50.0)`.
+    - `verify_placement_change` with a callable that returns `(True, 90.0)`.
+    - `handle_vision_error` with a no-op callable.
+    
+    This fixture does not return a value; it mutates the monkey_manager module via the provided `monkeypatch`.
+    """
     monkeypatch.setattr(monkey_manager, "retry_action", lambda *a, **kw: True)
     monkeypatch.setattr(
         monkey_manager, "confirm_selection", lambda *a, **kw: (True, 50.0)
@@ -52,6 +60,12 @@ def mock_vision(monkeypatch):
 
 @pytest.fixture
 def mock_click(monkeypatch):
+    """
+    Patch monkey_manager.move_and_click to a no-op for tests.
+    
+    Parameters:
+        monkeypatch: pytest's monkeypatch fixture used to replace the move_and_click function with a lambda that does nothing.
+    """
     monkeypatch.setattr(
         monkey_manager, "move_and_click", lambda x, y, delay=0.2: None
     )
