@@ -12,7 +12,7 @@ import pyautogui
 import pygetwindow as gw
 
 # Local imports
-from .input import click
+from .input import move_and_click
 from .vision import capture_screen, find_element_on_screen, is_mostly_black
 
 DATA_IMAGE_PATH = os.path.join(
@@ -61,7 +61,7 @@ def load_map(map_config: dict, global_config: dict) -> bool:
     play_img = get_image_path("button_play1080p.png")
     play_coords = find_element_on_screen(play_img)
     if play_coords:
-        click(*play_coords)
+        move_and_click(*play_coords)
         logging.info(f"Clicked Play button at {play_coords}")
     else:
         logging.error("Could not find Play button on screen.")
@@ -103,7 +103,7 @@ def load_map(map_config: dict, global_config: dict) -> bool:
         # screen = capture_screen()
         coords = find_element_on_screen(img_path)
         if coords:
-            click(*coords)
+            move_and_click(*coords)
             logging.info(f"Clicked {desc} at {coords}")
         else:
             logging.error(f"Could not find {desc} on screen.")
@@ -118,7 +118,7 @@ def load_map(map_config: dict, global_config: dict) -> bool:
         ok_img = get_image_path("overwrite_ok1080p.png")
         ok_coords = find_element_on_screen(ok_img)
         if ok_coords:
-            click(*ok_coords)
+            move_and_click(*ok_coords)
             logging.info(f"Clicked Overwrite OK at {ok_coords}")
         else:
             logging.error("Could not find Overwrite OK button on screen.")

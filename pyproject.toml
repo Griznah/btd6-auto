@@ -13,7 +13,19 @@ dependencies = [
   "pygetwindow",
   "keyboard",
   "pywin32>=311",
-  "pytest>=8.4.2",
   "bettercam>=1.0.0",
   "pytesseract>=0.3.13",
+]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
+]
+python_files = [
+    "test_*.py"
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
 ]

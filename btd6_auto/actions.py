@@ -25,7 +25,7 @@ import keyboard
 from btd6_auto.monkey_manager import place_monkey, place_hero
 from btd6_auto.monkey_hotkey import get_monkey_hotkey
 from btd6_auto.config_loader import get_tower_positions_for_map
-from btd6_auto.input import click
+from btd6_auto.input import move_and_click, cursor_resting_spot
 
 
 # Compile regexes at module level
@@ -360,11 +360,13 @@ class ActionManager:
 
     def run_upgrade_action(self, action: Dict[str, Any]) -> None:
         """
-        Execute an upgrade action for a tower.
-        Presses the hotkey for the desired upgrade path. Only one upgrade is performed per action.
-
-        Args:
-            action (Dict[str, Any]): Action dictionary containing target and upgrade_path.
+        Perform a single upgrade for the specified tower using the configured upgrade-path hotkeys.
+        
+        Parameters:
+            action (Dict[str, Any]): Action dictionary with keys:
+                - target (str): Name of the tower to upgrade.
+                - upgrade_path (Dict[str, int]): Mapping like {"path_1": n, "path_2": m, "path_3": k} where the first path with a value > 0 is applied.
+        
         """
         target = action.get("target")
         upgrade_path = action.get("upgrade_path", {})
@@ -381,7 +383,7 @@ class ActionManager:
             return
 
         # Click the tower to select it
-        click(pos[0], pos[1], delay=0.2)
+        move_and_click(pos[0], pos[1], delay=0.2)
 
         # Determine which path to upgrade (only one per action)
         path_hotkeys = self.global_config.get("hotkey", {})
@@ -403,7 +405,8 @@ class ActionManager:
                 )
                 keyboard.send(hotkey.lower())
                 time.sleep(self.timing.get("upgrade_delay", 0.3))
-                click(pos[0], pos[1])
+                coords = cursor_resting_spot()
+                move_and_click(coords[0], coords[1])
                 break  # Only one upgrade per action
 
         time.sleep(self.timing.get("upgrade_delay", 0.5))

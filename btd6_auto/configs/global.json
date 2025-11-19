@@ -1,4 +1,14 @@
 {
+  "vision": {
+    "_comment": "Coordinate regions are specified as [x1, y1, x2, y2] where (x1, y1) is top-left and (x2, y2) is bottom-right",
+    "max_attempts": 3,
+    "select_threshold": 40.0,
+    "place_threshold": 85.0,
+    "cursor_resting_spot": [1035, 900],
+    "select_region": [925, 800, 1135, 950],
+    "place_region_2": [35, 65, 415, 940],
+    "place_region_1": [1260, 60, 1635, 940]
+  },
   "automation": {
     "pause_between_actions": 0.1,
     "failsafe_enabled": true,
@@ -12,7 +22,7 @@
     },
     "retries": {
       "max_retries": 3,
-      "retry_delay": 1.0,
+      "retry_delay": 0.5,
       "image_recognition_timeout": 5.0
     }
   },
@@ -103,8 +113,8 @@
     "confidence_threshold": 0.8,
     "template_matching_method": "cv2.TM_CCOEFF_NORMED",
     "screenshot_delay": 0.2,
-    "capture_screen_retry": 5,
-    "capture_screen_delay": 1.0
+    "capture_screen_retry": 10,
+    "capture_screen_delay": 0.5
   },
   "error_handling": {
     "max_consecutive_failures": 2,

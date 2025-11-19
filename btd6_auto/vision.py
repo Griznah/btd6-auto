@@ -15,9 +15,199 @@ import time
 import keyboard
 import bettercam
 
-
 # Use ConfigLoader for config loading
 from .config_loader import ConfigLoader
+
+
+def rect_to_region(rect):
+    """
+    Convert a rectangle from (left, top, right, bottom) to (left, top, width, height).
+    
+    Parameters:
+        rect (tuple | list): Four numeric values in the order (left, top, right, bottom).
+    
+    Returns:
+        tuple: A 4-tuple (left, top, width, height) where width = right - left and height = bottom - top.
+    
+    Raises:
+        ValueError: If `rect` does not contain exactly four values or if computed width or height is less than or equal to zero.
+    """
+    if len(rect) != 4:
+        raise ValueError(f"rect_to_region expects 4 values, got {rect}")
+    left, top, right, bottom = rect
+    width = right - left
+    height = bottom - top
+    if width <= 0 or height <= 0:
+        raise ValueError(f"Invalid rectangle dimensions: {rect}")
+    return (left, top, width, height)
+
+
+# Vision-based error handling helpers for monkey selection/placement
+def capture_region(region):
+    """
+    Capture a screenshot of a rectangular region from the screen using the module's BetterCam.
+    
+    Parameters:
+        region (tuple): (left, top, width, height) coordinates of the capture rectangle. Coordinates must lie within a 1920x1080 screen.
+    
+    Returns:
+        numpy.ndarray or None: BGR image array for the captured region, or `None` if the region is invalid or no frame could be captured.
+    """
+    left, top, width, height = region
+    right = left + width
+    bottom = top + height
+    bettercam_region = (left, top, right, bottom)
+    # Validate region bounds for 1920x1080 screen
+    if not (0 <= left < right <= 1920 and 0 <= top < bottom <= 1080):
+        logging.error(
+            f"capture_region: Invalid region {bettercam_region} (must be within 1920x1080)"
+        )
+        return None
+    cam = _CAMERA
+    img = None
+    for attempt in range(_CAPTURE_RETRIES):
+        try:
+            img = cam.grab(region=bettercam_region)
+        except Exception:
+            logging.exception("BetterCam grab error in capture_region")
+            img = None
+        if img is not None:
+            break
+        logging.info(
+            f"capture_region: No new frame, retrying ({attempt + 1}/{_CAPTURE_RETRIES}) after {_CAPTURE_DELAY}s..."
+        )
+        time.sleep(_CAPTURE_DELAY)
+    if img is None:
+        logging.warning(
+            f"capture_region: No frame captured after {_CAPTURE_RETRIES} attempts."
+        )
+        return None
+    # Handle BGRA/RGBA images and convert to BGR
+    if img.ndim == 3 and img.shape[2] == 4:
+        img_bgr = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+    elif img.ndim == 3 and img.shape[2] == 3:
+        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    else:
+        img_bgr = img
+    return img_bgr
+
+
+def calculate_image_difference(img1, img2):
+    """
+    Compute the percentage of differing pixels between two images.
+    
+    Parameters:
+        img1 (np.ndarray): First image array.
+        img2 (np.ndarray): Second image array; must have the same shape as `img1`.
+    
+    Returns:
+        float: Percentage of pixels that differ between the images, in the range 0.0 to 100.0. Returns 100.0 if the images have different shapes.
+    """
+    if img1.shape != img2.shape:
+        logging.error("Image shapes do not match for comparison.")
+        return 100.0
+    diff = cv2.absdiff(img1, img2)
+    nonzero = np.count_nonzero(diff)
+    total = diff.size
+    percent_diff = (nonzero / total) * 100
+    return percent_diff
+
+
+def verify_placement_change(pre_img, post_img, threshold=85.0):
+    """
+    Determine whether the visual difference between two images meets a minimum percent threshold.
+    
+    Parameters:
+        pre_img (np.ndarray): Image captured before the action.
+        post_img (np.ndarray): Image captured after the action.
+        threshold (float): Minimum percent difference required to consider the placement change successful.
+    
+    Returns:
+        success (bool): `true` if the percent difference is greater than or equal to `threshold`, `false` otherwise.
+        percent_diff (float): Percentage of pixels that differ between `pre_img` and `post_img`.
+    """
+    percent_diff = calculate_image_difference(pre_img, post_img)
+    logging.debug(
+        f"Placement diff: {percent_diff:.2f}% (threshold: {threshold})"
+    )
+    return percent_diff >= threshold, percent_diff
+
+
+def confirm_selection(pre_img, post_img, threshold=40.0):
+    """
+    Determine whether a selection change occurred by comparing two images.
+    
+    Parameters:
+        pre_img (np.ndarray): Image captured before the action.
+        post_img (np.ndarray): Image captured after the action.
+        threshold (float): Minimum percent difference required to consider the selection confirmed.
+    
+    Returns:
+        (bool, float): First element is `true` if the percent difference is greater than or equal to `threshold`, `false` otherwise; second element is the percent difference between the images.
+    """
+    percent_diff = calculate_image_difference(pre_img, post_img)
+    logging.info(
+        f"Selection diff: {percent_diff:.2f}% (threshold: {threshold})"
+    )
+    return percent_diff >= threshold, percent_diff
+
+
+def retry_action(
+    action_fn,
+    region,
+    threshold,
+    max_attempts=3,
+    delay=0.3,
+    confirm_fn=None,
+    *args,
+    **kwargs,
+):
+    """
+    Retry an action until a vision-based confirmation indicates success or the maximum attempts are exhausted.
+    
+    Parameters:
+        action_fn (callable): Function that performs the action to be verified (e.g., a selection or placement). It will be called with `*args` and `**kwargs`.
+        region (tuple): Screen region used for pre- and post-action captures, typically (left, top, width, height).
+        threshold (float): Percentage difference threshold required by `confirm_fn` to consider the action successful.
+        max_attempts (int): Maximum number of attempts to perform the action and confirm it.
+        delay (float): Seconds to wait after performing the action before taking the post-action capture.
+        confirm_fn (callable): Function that compares pre- and post-action images and returns a tuple `(success: bool, percent_diff: float)`.
+        *args: Positional arguments forwarded to `action_fn`.
+        **kwargs: Keyword arguments forwarded to `action_fn`.
+    
+    Returns:
+        bool: `True` if the action was confirmed successful within the allotted attempts, `False` otherwise.
+    """
+    for attempt in range(1, max_attempts + 1):
+        pre_img = capture_region(region)
+        action_fn(*args, **kwargs)
+        time.sleep(delay)
+        post_img = capture_region(region)
+        if pre_img is None or post_img is None:
+            logging.warning(
+                f"Attempt {attempt}: capture_region returned None for pre_img or post_img in region {region}. Skipping confirm_fn and retrying."
+            )
+            continue
+        success, percent_diff = confirm_fn(pre_img, post_img, threshold)
+        logging.info(
+            f"Attempt {attempt}: diff={percent_diff:.2f}% success={success}"
+        )
+        if success:
+            return True
+    logging.error(f"Action failed after {max_attempts} attempts.")
+    return False
+
+
+def handle_vision_error():
+    """
+    Terminate the process after a critical vision failure.
+    
+    Logs a critical message and exits the process immediately.
+    """
+    logging.critical("Max retries reached. Exiting automation.")
+    # Add any cleanup logic here
+    os._exit(1)
+
 
 try:
     _GLOBAL_CONFIG = ConfigLoader.load_global_config()
@@ -71,27 +261,20 @@ def set_round_state(
     find_in_region=None,
 ) -> bool:
     """
-    Set the round state by ensuring the correct speed or start button is active.
-
-    This function uses image recognition to detect the current round state ("fast", "slow", or "start")
-    and simulates pressing the Spacebar to toggle speed as needed. For the "start" state, it ensures
-    the start button is visible and the speed is set to fast. The function retries up to max_retries
-    times, waiting delay seconds between attempts. Defaults are loaded from global config.
-
+    Ensure the game's visual round state ("fast", "slow", or "start") is active, toggling speed as needed.
+    
     Parameters:
-        state (str): One of "fast", "slow", or "start".
-        region (tuple): (left, top, right, bottom) coordinates to search for the state image.
-        max_retries (int, optional): Maximum number of attempts to set the state. Defaults to global config.
-        delay (float, optional): Delay in seconds between attempts. Defaults to global config.
-        find_in_region (callable, optional): Function to check for template in region (for testing/mocking).
-
+        state (str): Desired state; one of "fast", "slow", or "start".
+        region (tuple): (left, top, right, bottom) coordinates defining the search region for state indicators.
+        max_retries (int, optional): Maximum number of attempts to verify/set the state. If None, a default is read from global configuration.
+        delay (float, optional): Seconds to wait between attempts. If None, a default is read from global configuration.
+        find_in_region (callable, optional): Optional injected function for template detection (used for testing or mocking). Expected to accept a template path and region and to return either a boolean or a tuple `(found, confidence)`; various call signatures `(template_path, region, threshold)`, `(template_path, region)`, or `(template_path, threshold)` are supported by the adapter.
+    
     Returns:
-        bool: True if the requested state was set successfully, False otherwise.
+        bool: `True` if the requested state was detected or set within the allowed attempts, `False` otherwise.
     """
     # Load retry config from global config if not provided
     try:
-        from .config_loader import ConfigLoader
-
         global_config = ConfigLoader.load_global_config()
         retries_cfg = global_config.get("automation", {}).get("retries", {})
         default_max_retries = retries_cfg.get("max_retries", 3)
@@ -425,8 +608,8 @@ def find_element_on_screen(element_image):
         # screenshot_path = os.path.join(screenshots_dir, screenshot_filename)
         # cv2.imwrite(screenshot_path, screen_bgr)
         # logging.info(f"Saved screenshot for debug: {screenshot_path}")
-    except Exception as e:
-        logging.error(f"Failed to save debug screenshot: {e}")
+    except Exception:
+        logging.exception("Failed to save debug screenshot.")
 
     try:
         template = cv2.imread(element_image, cv2.IMREAD_GRAYSCALE)
@@ -455,8 +638,6 @@ def find_element_on_screen(element_image):
                 f"No match for {element_image} (max_val={max_val:.2f})"
             )
             return None
-    except Exception as e:
-        logging.error(f"Error in find_element_on_screen: {e}")
     except Exception:
         logging.exception("Error in find_element_on_screen")
         return None
