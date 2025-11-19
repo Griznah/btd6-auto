@@ -35,7 +35,6 @@ dependencies = [
     { name = "pynput" },
     { name = "pyscreeze" },
     { name = "pytesseract" },
-    { name = "pytest" },
     { name = "pywin32" },
 ]
 
@@ -56,7 +55,6 @@ requires-dist = [
     { name = "pynput" },
     { name = "pyscreeze" },
     { name = "pytesseract", specifier = ">=0.3.13" },
-    { name = "pytest", specifier = ">=8.4.2" },
     { name = "pywin32", specifier = ">=311" },
 ]
 
