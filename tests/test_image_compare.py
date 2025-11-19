@@ -17,16 +17,16 @@ def compare_images(
 ) -> float:
     """
     Compute the percentage of pixels that differ between two images beyond a given threshold.
-    
+
     Parameters:
         img_path1 (str): Path to the first image file.
         img_path2 (str): Path to the second image file.
         threshold (int): Pixel intensity difference threshold; a pixel is counted if its grayscale difference is greater than this value.
         save_path (Optional[str]): If provided, writes the visual difference image to this path.
-    
+
     Returns:
         float: Percent of pixels whose grayscale difference is greater than `threshold`.
-    
+
     Raises:
         FileNotFoundError: If either image cannot be loaded from the provided paths.
         ValueError: If the two images do not have the same shape.
@@ -71,8 +71,8 @@ if __name__ == "__main__":
             save_path=os.path.join(os.path.dirname(img1), "diff.png"),
         )
         logger.info(f"Percent difference: {percent_diff:.2f}%")
-    except (FileNotFoundError, ValueError) as e:
-        logger.error(f"Error comparing images: {e}")
+    except (FileNotFoundError, ValueError):
+        logger.exception("Error comparing images.")
 
     # Template matching test
     logger.info("Starting template matching test...")
