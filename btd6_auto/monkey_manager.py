@@ -40,6 +40,7 @@ def try_targeting_success(
     Returns:
         bool: True if targeting is successful in either region, False otherwise.
     """
+    # These pre-images are captured once before the attempts begin since they should remain constant
     pre_img_1 = None
     pre_img_2 = None
     try:
