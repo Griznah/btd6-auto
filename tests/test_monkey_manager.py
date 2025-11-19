@@ -115,3 +115,64 @@ def test_place_hero_failure(monkeypatch):
     )
     monkey_manager.place_hero((300, 400), "u")
     assert called.get("error")
+
+
+@pytest.mark.usefixtures("mock_config", "mock_click")
+def test_place_monkey_targeting_failure(monkeypatch):
+    """
+    Test monkey placement targeting failure triggers error handler.
+    Scenario: retry_action succeeds, but try_targeting_success fails, error handler should be called.
+    Expected outcome: Error handler is triggered and sets 'error' flag.
+    """
+    monkeypatch.setattr(monkey_manager, "retry_action", lambda *a, **kw: True)
+    monkeypatch.setattr(
+        monkey_manager, "try_targeting_success", lambda *a, **kw: False
+    )
+    monkeypatch.setattr(monkey_manager, "cursor_resting_spot", lambda: None)
+    called = {}
+    monkeypatch.setattr(
+        monkey_manager,
+        "handle_vision_error",
+        lambda: called.setdefault("error", True),
+    )
+    import sys
+
+    class MockKeyboard:
+        def send(self, *a, **kw):
+            pass
+
+    sys.modules["keyboard"] = MockKeyboard()
+    monkey_manager.place_monkey((100, 200), "q")
+    assert called.get("error")
+
+
+@pytest.mark.usefixtures("mock_config", "mock_click")
+def test_place_hero_targeting_failure(monkeypatch):
+    """
+    Test hero placement targeting failure triggers error handler.
+    Scenario: retry_action succeeds, but try_targeting_success fails, error handler should be called.
+    Expected outcome: Error handler is triggered and sets 'error' flag.
+    """
+    monkeypatch.setattr(monkey_manager, "retry_action", lambda *a, **kw: True)
+    monkeypatch.setattr(
+        monkey_manager, "try_targeting_success", lambda *a, **kw: False
+    )
+    monkeypatch.setattr(monkey_manager, "cursor_resting_spot", lambda: None)
+    called = {}
+    monkeypatch.setattr(
+        monkey_manager,
+        "handle_vision_error",
+        lambda: called.setdefault("error", True),
+    )
+    import sys
+
+    class MockKeyboard:
+        def press(self, *a, **kw):
+            pass
+
+        def release(self, *a, **kw):
+            pass
+
+    sys.modules["keyboard"] = MockKeyboard()
+    monkey_manager.place_hero((300, 400), "u")
+    assert called.get("error")

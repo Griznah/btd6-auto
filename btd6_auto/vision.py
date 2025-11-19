@@ -577,8 +577,8 @@ def find_element_on_screen(element_image):
         # screenshot_path = os.path.join(screenshots_dir, screenshot_filename)
         # cv2.imwrite(screenshot_path, screen_bgr)
         # logging.info(f"Saved screenshot for debug: {screenshot_path}")
-    except Exception as e:
-        logging.error(f"Failed to save debug screenshot: {e}")
+    except Exception:
+        logging.exception("Failed to save debug screenshot.")
 
     try:
         template = cv2.imread(element_image, cv2.IMREAD_GRAYSCALE)
@@ -607,8 +607,6 @@ def find_element_on_screen(element_image):
                 f"No match for {element_image} (max_val={max_val:.2f})"
             )
             return None
-    except Exception as e:
-        logging.error(f"Error in find_element_on_screen: {e}")
     except Exception:
         logging.exception("Error in find_element_on_screen")
         return None

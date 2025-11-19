@@ -92,8 +92,8 @@ def type_text(text: str, interval: float = 0.05) -> None:
     """
     try:
         pyautogui.write(text, interval=interval)
-    except Exception as e:
-        logging.error(f"Failed to type text '{text}': {e}")
+    except Exception:
+        logging.exception(f"Failed to type text '{text}'.")
 
 
 def cursor_resting_spot() -> tuple[int, int]:
