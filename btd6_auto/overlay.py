@@ -20,6 +20,7 @@ if sys.platform.startswith("win"):
     import win32con
     import win32gui
     import win32api
+
     _class_lock = threading.Lock()
 else:
     raise ImportError("overlay.py only works on Windows platforms.")
@@ -34,7 +35,7 @@ class OverlayWindow:
     def __init__(self, text):
         """
         Initialize the OverlayWindow instance with the text to display and prepare identifiers needed to create the Win32 window.
-        
+
         Parameters:
             text (str): The text to be shown in the overlay window.
         """
@@ -60,14 +61,19 @@ class OverlayWindow:
                 lf.lfFaceName = "Arial"
                 hfont = win32gui.CreateFontIndirect(lf)
                 oldfont = win32gui.SelectObject(hdc, hfont)
-            except Exception as e:
+            except Exception:
                 logging.exception("Overlay font creation failed:")
                 hfont = None
                 oldfont = None
             # Draw text, left aligned, vertically centered
             win32gui.DrawText(
-                hdc, self.text, -1, rect,
-                win32con.DT_LEFT | win32con.DT_VCENTER | win32con.DT_SINGLELINE
+                hdc,
+                self.text,
+                -1,
+                rect,
+                win32con.DT_LEFT
+                | win32con.DT_VCENTER
+                | win32con.DT_SINGLELINE,
             )
             # Cleanup font resources
             if oldfont:
@@ -86,9 +92,9 @@ class OverlayWindow:
     def run(self, x, y, width, height, duration):
         """
         Create and display the overlay window at the specified position and size for a limited duration.
-        
+
         Registers the window class (thread-safe), creates a layered, topmost, color-key transparent window, stores its HWND for singleton management, schedules an automatic close after `duration` seconds, processes the window message loop until the window closes, and clears the stored HWND when done.
-        
+
         Parameters:
             x (int): X coordinate of the window's top-left corner.
             y (int): Y coordinate of the window's top-left corner.
@@ -102,22 +108,32 @@ class OverlayWindow:
             wndclass.hInstance = self.hInstance
             wndclass.lpszClassName = self.className
             wndclass.hCursor = win32gui.LoadCursor(None, win32con.IDC_ARROW)
-            wndclass.hbrBackground = 0  # No background brush for full transparency
+            wndclass.hbrBackground = (
+                0  # No background brush for full transparency
+            )
             try:
                 # Register window class if not already registered
                 win32gui.RegisterClass(wndclass)
                 logging.info("Overlay window class registered.")
             except win32gui.error as e:
-                if hasattr(e, 'winerror') and e.winerror == 1410:  # Class already exists
+                if (
+                    hasattr(e, "winerror") and e.winerror == 1410
+                ):  # Class already exists
                     logging.info("Overlay window class already registered.")
                 else:
-                    logging.exception("Overlay window class registration failed:")
+                    logging.exception(
+                        "Overlay window class registration failed:"
+                    )
                     raise
         # Always use class name for CreateWindowEx (works for both new and existing classes)
         atom = self.className
 
-        exStyle = (win32con.WS_EX_LAYERED | win32con.WS_EX_TOPMOST |
-                   win32con.WS_EX_TRANSPARENT | win32con.WS_EX_TOOLWINDOW)
+        exStyle = (
+            win32con.WS_EX_LAYERED
+            | win32con.WS_EX_TOPMOST
+            | win32con.WS_EX_TRANSPARENT
+            | win32con.WS_EX_TOOLWINDOW
+        )
         style = win32con.WS_POPUP
 
         try:
@@ -126,17 +142,27 @@ class OverlayWindow:
                 atom,
                 None,
                 style,
-                x, y, width, height,
-                0, 0, self.hInstance, None
+                x,
+                y,
+                width,
+                height,
+                0,
+                0,
+                self.hInstance,
+                None,
             )
-        except Exception as e:
+        except Exception:
             logging.exception("Overlay window creation failed:")
             return
 
         # Set color key to black for full transparency
-        win32gui.SetLayeredWindowAttributes(self.hwnd, 0x000000, 255, win32con.LWA_COLORKEY)
+        win32gui.SetLayeredWindowAttributes(
+            self.hwnd, 0x000000, 255, win32con.LWA_COLORKEY
+        )
         win32gui.ShowWindow(self.hwnd, win32con.SW_SHOWNORMAL)
-        logging.info(f"Overlay shown: '{self.text}' at ({x},{y}) for {duration}s.")
+        logging.info(
+            f"Overlay shown: '{self.text}' at ({x},{y}) for {duration}s."
+        )
 
         # Store hwnd for singleton management
         global _current_overlay_hwnd
@@ -147,17 +173,18 @@ class OverlayWindow:
         def close_after_delay():
             """
             Sleep for `duration` seconds and then post a WM_CLOSE message to the overlay window if it still exists.
-            
+
             Parameters:
                 duration (float): Number of seconds to wait before attempting to close the window (captured from outer scope).
                 self: The OverlayWindow instance whose `hwnd` (captured from outer scope) will receive the WM_CLOSE message.
-            
+
             Notes:
                 If `self.hwnd` is falsy when the wait completes, no message is posted.
             """
             time.sleep(duration)
             if self.hwnd:
                 win32gui.PostMessage(self.hwnd, win32con.WM_CLOSE, 0, 0)
+
         threading.Thread(target=close_after_delay, daemon=True).start()
 
         # Message loop
@@ -174,23 +201,26 @@ class OverlayWindow:
             if _current_overlay_hwnd == self.hwnd:
                 _current_overlay_hwnd = None
 
+
 def show_overlay_text(overlay_text: str, seconds: int):
     """
     Show a singleton transparent, always-on-top, click-through text overlay.
-    
+
     Parameters:
-    	overlay_text (str): Text to display in a large, left-aligned red font.
-    	seconds (int): Duration in seconds to show the overlay.
-    
+        overlay_text (str): Text to display in a large, left-aligned red font.
+        seconds (int): Duration in seconds to show the overlay.
+
     Notes:
-    	Windows only — uses the Win32 API. If an overlay is already active, it will be closed before the new one is shown.
+        Windows only — uses the Win32 API. If an overlay is already active, it will be closed before the new one is shown.
     """
     global _current_overlay_thread, _current_overlay_hwnd
     with _overlay_lock:
         # If an overlay is running, close it
         if _current_overlay_hwnd:
             try:
-                win32gui.PostMessage(_current_overlay_hwnd, win32con.WM_CLOSE, 0, 0)
+                win32gui.PostMessage(
+                    _current_overlay_hwnd, win32con.WM_CLOSE, 0, 0
+                )
             except Exception:
                 pass
             _current_overlay_hwnd = None
@@ -202,7 +232,7 @@ def show_overlay_text(overlay_text: str, seconds: int):
         def overlay_thread():
             """
             Create and display an OverlayWindow at a fixed position and size showing the provided text for the specified duration.
-            
+
             The overlay is created with position (200, 800) and size (600x60) and will remain visible for `seconds` seconds before closing.
             """
             x, y = 200, 800

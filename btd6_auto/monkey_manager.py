@@ -26,7 +26,7 @@ def try_targeting_success(
 ) -> bool:
     """
     Attempt a targeting click at the given coordinates and verify success by checking for UI changes in two regions, retrying up to max_attempts with delay between attempts.
-    
+
     Parameters:
         coords (tuple[int, int]): (x, y) coordinates to click.
         targeting_region_1: First screen region to capture and compare for a post-click change.
@@ -35,7 +35,7 @@ def try_targeting_success(
         max_attempts (int): Number of click-and-check attempts to perform.
         delay (float): Delay after each click before capturing post-action regions and between attempts.
         confirm_fn (Callable): Function that compares two region images and the threshold, returning (bool, details).
-    
+
     Returns:
         bool: True if either region confirms targeting success within the allowed attempts, False otherwise.
     """
@@ -74,6 +74,7 @@ def try_targeting_success(
                 pre_img_2, post_img_2, targeting_threshold
             )
         if success_1 or success_2:
+            move_and_click(coords[0], coords[1], delay=delay)
             return True
         time.sleep(delay)
     return False
@@ -82,7 +83,7 @@ def try_targeting_success(
 def get_regions_for_monkey():
     """
     Retrieve vision regions and thresholds used for monkey selection and placement.
-    
+
     Returns:
         dict: Mapping with keys:
             - max_attempts (int): Maximum targeting attempts (default 3).
@@ -114,7 +115,7 @@ def get_regions_for_monkey():
 def get_regions_for_hero():
     """
     Retrieve vision regions and thresholds used for hero selection and placement.
-    
+
     Returns:
         dict: Mapping with keys:
             - max_attempts (int): Number of placement attempts to try.
@@ -148,9 +149,9 @@ def place_monkey(
 ) -> None:
     """
     Place a monkey by selecting it with a keyboard key and clicking the specified screen coordinates, verifying placement via vision and retrying as configured.
-    
+
     This function sends the selection key, moves the cursor to the configured resting spot, attempts placement at `coords` with vision-based verification (including retries), and invokes the configured vision error handler on failure. It performs real input actions and logs failures instead of raising exceptions.
-    
+
     Parameters:
         coords (tuple[int, int]): Target screen (x, y) coordinates for the monkey placement.
         monkey_key (str): Keyboard key or key sequence used to select the monkey before placement.
@@ -213,7 +214,7 @@ def place_hero(
 ) -> None:
     """
     Selects a hero by keyboard key and places it at the given screen coordinates while verifying selection and placement with vision checks.
-    
+
     Parameters:
         coords (tuple[int, int]): Screen (x, y) coordinates where the hero should be placed.
         hero_key (str): Keyboard key used to select the hero.
@@ -235,7 +236,7 @@ def place_hero(
         def select_hero():
             """
             Presses and releases the configured hero key to select a hero.
-            
+
             Holds the key down for the configured delay before releasing it; uses `hero_key` and `delay` from the enclosing scope.
             """
             keyboard.press(hero_key)
