@@ -22,13 +22,13 @@ from .config_loader import ConfigLoader
 def rect_to_region(rect):
     """
     Convert a rectangle from (left, top, right, bottom) to (left, top, width, height).
-    
+
     Parameters:
         rect (tuple | list): Four numeric values in the order (left, top, right, bottom).
-    
+
     Returns:
         tuple: A 4-tuple (left, top, width, height) where width = right - left and height = bottom - top.
-    
+
     Raises:
         ValueError: If `rect` does not contain exactly four values or if computed width or height is less than or equal to zero.
     """
@@ -46,10 +46,10 @@ def rect_to_region(rect):
 def capture_region(region):
     """
     Capture a screenshot of a rectangular region from the screen using the module's BetterCam.
-    
+
     Parameters:
         region (tuple): (left, top, width, height) coordinates of the capture rectangle. Coordinates must lie within a 1920x1080 screen.
-    
+
     Returns:
         numpy.ndarray or None: BGR image array for the captured region, or `None` if the region is invalid or no frame could be captured.
     """
@@ -95,11 +95,11 @@ def capture_region(region):
 def calculate_image_difference(img1, img2):
     """
     Compute the percentage of differing pixels between two images.
-    
+
     Parameters:
         img1 (np.ndarray): First image array.
         img2 (np.ndarray): Second image array; must have the same shape as `img1`.
-    
+
     Returns:
         float: Percentage of pixels that differ between the images, in the range 0.0 to 100.0. Returns 100.0 if the images have different shapes.
     """
@@ -116,12 +116,12 @@ def calculate_image_difference(img1, img2):
 def verify_placement_change(pre_img, post_img, threshold=85.0):
     """
     Determine whether the visual difference between two images meets a minimum percent threshold.
-    
+
     Parameters:
         pre_img (np.ndarray): Image captured before the action.
         post_img (np.ndarray): Image captured after the action.
         threshold (float): Minimum percent difference required to consider the placement change successful.
-    
+
     Returns:
         success (bool): `true` if the percent difference is greater than or equal to `threshold`, `false` otherwise.
         percent_diff (float): Percentage of pixels that differ between `pre_img` and `post_img`.
@@ -136,12 +136,12 @@ def verify_placement_change(pre_img, post_img, threshold=85.0):
 def confirm_selection(pre_img, post_img, threshold=40.0):
     """
     Determine whether a selection change occurred by comparing two images.
-    
+
     Parameters:
         pre_img (np.ndarray): Image captured before the action.
         post_img (np.ndarray): Image captured after the action.
         threshold (float): Minimum percent difference required to consider the selection confirmed.
-    
+
     Returns:
         (bool, float): First element is `true` if the percent difference is greater than or equal to `threshold`, `false` otherwise; second element is the percent difference between the images.
     """
@@ -164,7 +164,7 @@ def retry_action(
 ):
     """
     Retry an action until a vision-based confirmation indicates success or the maximum attempts are exhausted.
-    
+
     Parameters:
         action_fn (callable): Function that performs the action to be verified (e.g., a selection or placement). It will be called with `*args` and `**kwargs`.
         region (tuple): Screen region used for pre- and post-action captures, typically (left, top, width, height).
@@ -174,7 +174,7 @@ def retry_action(
         confirm_fn (callable): Function that compares pre- and post-action images and returns a tuple `(success: bool, percent_diff: float)`.
         *args: Positional arguments forwarded to `action_fn`.
         **kwargs: Keyword arguments forwarded to `action_fn`.
-    
+
     Returns:
         bool: `True` if the action was confirmed successful within the allotted attempts, `False` otherwise.
     """
@@ -201,7 +201,7 @@ def retry_action(
 def handle_vision_error():
     """
     Terminate the process after a critical vision failure.
-    
+
     Logs a critical message and exits the process immediately.
     """
     logging.critical("Max retries reached. Exiting automation.")
@@ -262,14 +262,14 @@ def set_round_state(
 ) -> bool:
     """
     Ensure the game's visual round state ("fast", "slow", or "start") is active, toggling speed as needed.
-    
+
     Parameters:
         state (str): Desired state; one of "fast", "slow", or "start".
         region (tuple): (left, top, right, bottom) coordinates defining the search region for state indicators.
         max_retries (int, optional): Maximum number of attempts to verify/set the state. If None, a default is read from global configuration.
         delay (float, optional): Seconds to wait between attempts. If None, a default is read from global configuration.
         find_in_region (callable, optional): Optional injected function for template detection (used for testing or mocking). Expected to accept a template path and region and to return either a boolean or a tuple `(found, confidence)`; various call signatures `(template_path, region, threshold)`, `(template_path, region)`, or `(template_path, threshold)` are supported by the adapter.
-    
+
     Returns:
         bool: `True` if the requested state was detected or set within the allowed attempts, `False` otherwise.
     """
@@ -467,21 +467,28 @@ def read_currency_amount(
             return 0
 
         # OCR with pytesseract
+        import re
+
         try:
             # Only allow digits and commas, use --psm 7 for single line
             custom_config = r"--psm 7 -c tessedit_char_whitelist=0123456789,"
             raw_text = pytesseract.image_to_string(
                 pil_img, config=custom_config
             )
-            # Remove commas and non-digit characters
-            digits = "".join([c for c in raw_text if c.isdigit()])
-            value = int(digits) if digits else 0
+            # Extract all digit groups (1-7 digits)
+            digit_groups = re.findall(r"\d{1,7}", raw_text)
+            value = 0
+            if digit_groups:
+                # Pick the group with the most digits (most likely actual value)
+                value = int(max(digit_groups, key=len))
+            else:
+                value = 0
         except Exception:
             logging.exception("OCR error")
             value = 0
 
         if debug:
-            logging.debug(f"[OCR] Currency: {value}")
+            logging.debug(f"[OCR] raw: {raw_text} | parsed: {value}")
 
     except KeyboardInterrupt:
         logging.info("[OCR] Stopped by user.")

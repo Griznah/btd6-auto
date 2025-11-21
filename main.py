@@ -140,10 +140,10 @@ def main() -> None:
                 time.sleep(0.2)
                 continue
             if next_action["action"] == "buy":
-                logging.info(f"We have {currency} to buy")
+                logging.info(f"We have ${currency} to buy")
                 action_manager.run_buy_action(next_action)
             elif next_action["action"] == "upgrade":
-                logging.info(f"We have {currency} to upgrade")
+                logging.info(f"We have ${currency} to upgrade")
                 action_manager.run_upgrade_action(next_action)
             else:
                 logging.warning(
