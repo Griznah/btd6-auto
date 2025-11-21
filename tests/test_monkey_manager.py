@@ -157,7 +157,7 @@ def test_place_monkey_targeting_failure(monkeypatch):
         def send(self, *a, **kw):
             pass
 
-    sys.modules["keyboard"] = MockKeyboard()
+    monkeypatch.setitem(sys.modules, "keyboard", MockKeyboard())
     monkey_manager.place_monkey((100, 200), "q")
     assert called.get("error")
 
@@ -191,6 +191,6 @@ def test_place_hero_targeting_failure(monkeypatch):
         def release(self, *a, **kw):
             pass
 
-    sys.modules["keyboard"] = MockKeyboard()
+    monkeypatch.setitem(sys.modules, "keyboard", MockKeyboard())
     monkey_manager.place_hero((300, 400), "u")
     assert called.get("error")

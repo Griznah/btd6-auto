@@ -44,8 +44,7 @@ def load_map(map_config: dict, global_config: dict) -> bool:
             - "map_name": map name to search (default "Monkey Meadow").
             - "difficulty": difficulty name (default "Easy").
             - "mode": game mode/start type (default "Standard").
-            - "game_settings" (optional): dict that may contain "window_title" to override the window title used for activation.
-        global_config (dict): Global configuration; may contain "window_title" used if map_config does not provide one.
+        global_config (dict): Global configuration; may contain "window_title" used for window activation.
 
     Returns:
         bool: `True` if the map was started successfully, `False` otherwise.
@@ -154,8 +153,7 @@ def activate_btd6_window(global_config=None) -> bool:
         global_config (dict | None): Optional global configuration that may contain `window_title`.
 
     Returns:
-        bool: `true` if a matching window was found and activated, `false` otherwise.
-    """
+        bool: `True` if a matching window was found and activated, `False` otherwise."""
     window_title = None
     if not window_title and global_config and "window_title" in global_config:
         window_title = global_config["window_title"]

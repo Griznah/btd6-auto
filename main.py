@@ -156,7 +156,8 @@ def main() -> None:
         currency_reader.stop()
 
     except Exception:
-        currency_reader.stop()
+        if "currency_reader" in locals():
+            currency_reader.stop()
         logging.exception("Automation error")
 
 

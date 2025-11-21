@@ -5,6 +5,7 @@ Handles selection and placement of monkeys and heroes.
 from .config_utils import get_vision_config
 import logging
 import time
+import numpy as np
 from .vision import (
     retry_action,
     confirm_selection,
@@ -23,7 +24,7 @@ def try_targeting_success(
     max_attempts,
     delay,
     confirm_fn,
-) -> bool:
+) -> tuple[bool, str | None, np.ndarray | None]:
     """
     Attempt a targeting click at the given coordinates and verify success by checking for UI changes in two regions, retrying up to max_attempts with delay between attempts.
 

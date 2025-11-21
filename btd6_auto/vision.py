@@ -14,6 +14,8 @@ import os
 import time
 import keyboard
 import bettercam
+import re
+
 
 # Use ConfigLoader for config loading
 from .config_loader import ConfigLoader
@@ -467,8 +469,7 @@ def read_currency_amount(
             return 0
 
         # OCR with pytesseract
-        import re
-
+        raw_text = ""
         try:
             # Only allow digits and commas, use --psm 7 for single line
             custom_config = r"--psm 7 -c tessedit_char_whitelist=0123456789,"
