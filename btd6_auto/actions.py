@@ -22,10 +22,11 @@ import logging
 import time
 import keyboard
 
-from btd6_auto.monkey_manager import place_monkey, place_hero
-from btd6_auto.monkey_hotkey import get_monkey_hotkey
-from btd6_auto.config_loader import get_tower_positions_for_map
-from btd6_auto.input import move_and_click, cursor_resting_spot
+from .monkey_manager import place_monkey, place_hero
+from .monkey_hotkey import get_monkey_hotkey
+from .config_loader import get_tower_positions_for_map
+from .input import move_and_click, cursor_resting_spot
+from .game_launcher import activate_btd6_window
 
 
 # Compile regexes at module level
@@ -332,6 +333,7 @@ class ActionManager:
         Args:
             action (Dict[str, Any]): Action dictionary containing target and position.
         """
+        activate_btd6_window()
         try:
             pos = self._normalize_position(action["position"])
         except ValueError:
@@ -365,6 +367,7 @@ class ActionManager:
         Args:
             action (Dict[str, Any]): Action dict with 'target' and 'upgrade_path'.
         """
+        activate_btd6_window()
         target = action.get("target")
         upgrade_path = action.get("upgrade_path", {})
         if not target or not upgrade_path:

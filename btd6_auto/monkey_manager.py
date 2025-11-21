@@ -2,7 +2,6 @@
 Handles selection and placement of monkeys and heroes.
 """
 
-from .input import move_and_click, cursor_resting_spot
 from .config_utils import get_vision_config
 import logging
 import time
@@ -13,6 +12,7 @@ from .vision import (
     handle_vision_error,
     capture_region,
 )
+from .input import move_and_click, cursor_resting_spot
 
 
 def try_targeting_success(
@@ -74,7 +74,6 @@ def try_targeting_success(
                 pre_img_2, post_img_2, targeting_threshold
             )
         if success_1 or success_2:
-            move_and_click(coords[0], coords[1], delay=delay)
             return True
         time.sleep(delay)
     return False
