@@ -195,6 +195,7 @@ class ActionManager:
         self.monkey_positions = self._build_monkey_position_lookup()
         self.completed_steps = set()
         self.timing = global_config.get("automation", {}).get("timing", {})
+        self.monkey_upgrade_state = {}
 
     def _normalize_position(self, pos: Any) -> Tuple[int, int]:
         """
@@ -360,13 +361,9 @@ class ActionManager:
 
     def run_upgrade_action(self, action: Dict[str, Any]) -> None:
         """
-        Perform a single upgrade for the specified tower using the configured upgrade-path hotkeys.
-        
-        Parameters:
-            action (Dict[str, Any]): Action dictionary with keys:
-                - target (str): Name of the tower to upgrade.
-                - upgrade_path (Dict[str, int]): Mapping like {"path_1": n, "path_2": m, "path_3": k} where the first path with a value > 0 is applied.
-        
+        Execute upgrades for a monkey/tower, only upgrading from current tier to requested tier for each path.
+        Args:
+            action (Dict[str, Any]): Action dict with 'target' and 'upgrade_path'.
         """
         target = action.get("target")
         upgrade_path = action.get("upgrade_path", {})
@@ -374,7 +371,6 @@ class ActionManager:
             logging.warning("Upgrade action missing target or upgrade_path.")
             return
 
-        # Get tower position
         pos = self.get_monkey_position(target)
         if not pos:
             logging.warning(
@@ -382,34 +378,42 @@ class ActionManager:
             )
             return
 
-        # Click the tower to select it
         move_and_click(pos[0], pos[1], delay=0.2)
 
-        # Determine which path to upgrade (only one per action)
+        current_tiers = self.monkey_upgrade_state.get(
+            target, {"path_1": 0, "path_2": 0, "path_3": 0}
+        )
         path_hotkeys = self.global_config.get("hotkey", {})
         path_map = {
             "path_1": "upgrade_path_1",
             "path_2": "upgrade_path_2",
             "path_3": "upgrade_path_3",
         }
-        for path_key, hotkey_name in path_map.items():
-            if upgrade_path.get(path_key, 0) > 0:
-                hotkey = path_hotkeys.get(hotkey_name)
-                if not hotkey:
-                    logging.warning(
-                        f"No hotkey defined for {hotkey_name} in global config."
-                    )
-                    continue
+        for path_idx in (1, 2, 3):
+            path_key = f"path_{path_idx}"
+            requested = upgrade_path.get(path_key)
+            current = current_tiers.get(path_key, 0)
+            if requested is None or requested <= current:
+                continue
+            hotkey_name = path_map[path_key]
+            hotkey = path_hotkeys.get(hotkey_name)
+            if not hotkey:
+                logging.warning(
+                    f"No hotkey defined for {hotkey_name} in global config."
+                )
+                continue
+            for t in range(current + 1, requested + 1):
                 logging.info(
-                    f"Upgrading {target} at {pos} via {hotkey_name} ({hotkey})"
+                    f"Upgrading {target} at {pos} via {hotkey_name} ({hotkey}) to tier {t}"
                 )
                 keyboard.send(hotkey.lower())
                 time.sleep(self.timing.get("upgrade_delay", 0.3))
-                coords = cursor_resting_spot()
-                move_and_click(coords[0], coords[1])
-                break  # Only one upgrade per action
-
+            current_tiers[path_key] = requested
+        coords = cursor_resting_spot()
+        move_and_click(coords[0], coords[1])
         time.sleep(self.timing.get("upgrade_delay", 0.5))
+        self.monkey_upgrade_state[target] = current_tiers
+        self.mark_completed(action.get("step", -1))
 
 
 # --- Stateless helpers ---
