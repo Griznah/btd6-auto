@@ -140,7 +140,9 @@ def test_place_monkey_targeting_failure(monkeypatch):
     """
     monkeypatch.setattr(monkey_manager, "retry_action", lambda *a, **kw: True)
     monkeypatch.setattr(
-        monkey_manager, "try_targeting_success", lambda *a, **kw: False
+        monkey_manager,
+        "try_targeting_success",
+        lambda *a, **kw: (False, None, None),
     )
     monkeypatch.setattr(monkey_manager, "cursor_resting_spot", lambda: None)
     called = {}
@@ -169,7 +171,9 @@ def test_place_hero_targeting_failure(monkeypatch):
     """
     monkeypatch.setattr(monkey_manager, "retry_action", lambda *a, **kw: True)
     monkeypatch.setattr(
-        monkey_manager, "try_targeting_success", lambda *a, **kw: False
+        monkey_manager,
+        "try_targeting_success",
+        lambda *a, **kw: (False, None, None),
     )
     monkeypatch.setattr(monkey_manager, "cursor_resting_spot", lambda: None)
     called = {}

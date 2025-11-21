@@ -37,9 +37,11 @@ def try_targeting_success(
         confirm_fn (Callable): Function that compares two region images and the threshold, returning (bool, details).
 
     Returns:
-        bool: True if either region confirms targeting success within the allowed attempts, False otherwise.
+        tuple: (success: bool, region_id: str | None, pre_img: np.ndarray | None)
+            - success (bool): True if either region confirms targeting success within the allowed attempts, False otherwise.
+            - region_id (str | None): 'region1' or 'region2' if success, None otherwise.
+            - pre_img (np.ndarray | None): The pre-captured image of the successful region, or None if not successful.
     """
-    # These pre-images are captured once before the attempts begin since they should remain constant
     pre_img_1 = None
     pre_img_2 = None
     try:
@@ -49,7 +51,6 @@ def try_targeting_success(
         logging.exception("Error capturing pre-click regions for targeting.")
 
     for _ in range(1, max_attempts + 1):
-        # Perform the click action to select the target
         move_and_click(coords[0], coords[1], delay=delay)
         # Check region 1
         post_img_1 = None
@@ -62,6 +63,8 @@ def try_targeting_success(
             success_1, _ = confirm_fn(
                 pre_img_1, post_img_1, targeting_threshold
             )
+        if success_1:
+            return True, "region1", pre_img_1
         # Check region 2
         post_img_2 = None
         try:
@@ -73,10 +76,10 @@ def try_targeting_success(
             success_2, _ = confirm_fn(
                 pre_img_2, post_img_2, targeting_threshold
             )
-        if success_1 or success_2:
-            return True
+        if success_2:
+            return True, "region2", pre_img_2
         time.sleep(delay)
-    return False
+    return False, None, None
 
 
 def get_regions_for_monkey():
@@ -189,7 +192,7 @@ def place_monkey(
             handle_vision_error()
             return
 
-        targeting_success = try_targeting_success(
+        targeting_success, region_id, pre_img = try_targeting_success(
             coords,
             targeting_region_1,
             targeting_region_2,
@@ -255,7 +258,7 @@ def place_hero(
             handle_vision_error()
             return
 
-        targeting_success = try_targeting_success(
+        targeting_success, region_id, pre_img = try_targeting_success(
             coords,
             targeting_region_1,
             targeting_region_2,
