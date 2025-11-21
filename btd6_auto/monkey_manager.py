@@ -89,8 +89,8 @@ def get_regions_for_monkey():
             - select_threshold (float): Threshold for confirming selection (default 40.0).
             - place_threshold (float): Threshold for confirming placement (default 85.0).
             - select_region (tuple): Region for selection checks as returned by rect_to_region (default rect [925, 800, 1135, 950]).
-            - place_region_1 (tuple): Primary placement verification region (default rect [35, 65, 415, 940]).
-            - place_region_2 (tuple): Secondary placement verification region (default rect [1260, 60, 1635, 940]).
+            - target_region_1 (tuple): Primary placement verification region (default rect [35, 65, 415, 940]).
+            - target_region_2 (tuple): Secondary placement verification region (default rect [1260, 60, 1635, 940]).
     """
     vision = get_vision_config()
     from .vision import rect_to_region
@@ -102,11 +102,11 @@ def get_regions_for_monkey():
         "select_region": rect_to_region(
             vision.get("select_region", [925, 800, 1135, 950])
         ),
-        "place_region_1": rect_to_region(
-            vision.get("place_region_1", [35, 65, 415, 940])
+        "target_region_1": rect_to_region(
+            vision.get("target_region_1", [35, 65, 415, 940])
         ),
-        "place_region_2": rect_to_region(
-            vision.get("place_region_2", [1260, 60, 1635, 940])
+        "target_region_2": rect_to_region(
+            vision.get("target_region_2", [1260, 60, 1635, 940])
         ),
     }
 
@@ -121,8 +121,8 @@ def get_regions_for_hero():
             - select_threshold (float): Threshold used to confirm hero selection.
             - place_threshold (float): Threshold used to confirm hero placement.
             - select_region (tuple): Region rectangle for selection, converted by `rect_to_region`.
-            - place_region_1 (tuple): First region rectangle to verify placement, converted by `rect_to_region`.
-            - place_region_2 (tuple): Second region rectangle to verify placement, converted by `rect_to_region`.
+            - target_region_1 (tuple): First region rectangle to verify placement, converted by `rect_to_region`.
+            - target_region_2 (tuple): Second region rectangle to verify placement, converted by `rect_to_region`.
     """
     vision = get_vision_config()
     from .vision import rect_to_region
@@ -134,11 +134,11 @@ def get_regions_for_hero():
         "select_region": rect_to_region(
             vision.get("select_region", [935, 800, 1135, 950])
         ),
-        "place_region_1": rect_to_region(
-            vision.get("place_region_1", [35, 65, 415, 940])
+        "target_region_1": rect_to_region(
+            vision.get("target_region_1", [35, 65, 415, 940])
         ),
-        "place_region_2": rect_to_region(
-            vision.get("place_region_2", [1260, 60, 1635, 940])
+        "target_region_2": rect_to_region(
+            vision.get("target_region_2", [1260, 60, 1635, 940])
         ),
     }
 
@@ -166,8 +166,8 @@ def place_monkey(
         select_threshold = regions["select_threshold"]
         targeting_threshold = regions["place_threshold"]
         select_region = regions["select_region"]
-        targeting_region_1 = regions["place_region_1"]
-        targeting_region_2 = regions["place_region_2"]
+        targeting_region_1 = regions["target_region_1"]
+        targeting_region_2 = regions["target_region_2"]
 
         def select_monkey():
             """
@@ -229,8 +229,8 @@ def place_hero(
         select_threshold = regions["select_threshold"]
         targeting_threshold = regions["place_threshold"]
         select_region = regions["select_region"]
-        targeting_region_1 = regions["place_region_1"]
-        targeting_region_2 = regions["place_region_2"]
+        targeting_region_1 = regions["target_region_1"]
+        targeting_region_2 = regions["target_region_2"]
 
         def select_hero():
             """
