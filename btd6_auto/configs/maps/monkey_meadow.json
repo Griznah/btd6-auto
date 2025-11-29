@@ -18,13 +18,13 @@
       "step": 1,
       "action": "buy",
       "target": "Dart Monkey 02",
-      "position": { "x": 650, "y": 520 }
+      "position": { "x": 300, "y": 500 }
     }
   ],
   "hero": {
     "name": "Any",
     "hotkey": "u",
-    "position": { "x": 485, "y": 395 }
+    "position": { "x": 645, "y": 390 }
   },
   "actions": [
     {
@@ -79,19 +79,19 @@
       "step": 9,
       "action": "upgrade",
       "target": "Spike Factory 01",
-      "upgrade_path": { "path_1": 0, "path_2": 1, "path_3": 0 }
+      "upgrade_path": { "path_1": 1, "path_2": 0, "path_3": 0 }
     },
     {
       "step": 10,
       "action": "upgrade",
       "target": "Spike Factory 01",
-      "upgrade_path": { "path_1": 0, "path_2": 2, "path_3": 0 }
+      "upgrade_path": { "path_1": 2, "path_2": 0, "path_3": 0 }
     },
     {
       "step": 11,
       "action": "upgrade",
       "target": "Spike Factory 01",
-      "upgrade_path": { "path_1": 1, "path_2": 2, "path_3": 0 }
+      "upgrade_path": { "path_1": 2, "path_2": 1, "path_3": 0 }
     },
     {
       "step": 12,

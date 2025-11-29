@@ -8,7 +8,7 @@ from btd6_auto.monkey_manager import try_targeting_success
 def dummy_action():
     """
     No-op placeholder action used in tests.
-    
+
     This function performs no operation and exists as a stand-in where a callable is required.
     """
     pass
@@ -17,7 +17,7 @@ def dummy_action():
 def always_fail_confirm(pre, post, threshold):
     """
     Always indicates that the confirmation failed and provides zero confidence.
-    
+
     Returns:
         tuple: `(False, 0.0)` where the first element is `False` indicating failure and the second is the confidence score `0.0`.
     """
@@ -28,12 +28,12 @@ def region1_success_confirm(pre, post, threshold):
     # Only region 1 will succeed
     """
     Confirm success for region1 based on captured pre/post region identifiers.
-    
+
     Parameters:
         pre (str): Identifier captured before the action.
         post (str): Identifier captured after the action.
         threshold (float): Confidence threshold for confirmation.
-    
+
     Returns:
         tuple: `(True, 90.0)` if both `pre` and `post` are `"region1"`, ` (False, 0.0)` otherwise.
     """
@@ -46,12 +46,12 @@ def region2_success_confirm(pre, post, threshold):
     # Only region 2 will succeed
     """
     Confirm success for region2 based on pre- and post-capture identifiers.
-    
+
     Parameters:
         pre (str): Identifier captured before the action.
         post (str): Identifier captured after the action.
         threshold (float): Confidence threshold (unused by this helper).
-    
+
     Returns:
         (bool, float): `True` and a confidence score of 90.0 if both `pre` and `post` equal "region2"; `False` and 0.0 otherwise.
     """
@@ -63,12 +63,12 @@ def region2_success_confirm(pre, post, threshold):
 def both_success_confirm(pre, post, threshold):
     """
     Always confirms success for both regions with a fixed confidence score.
-    
+
     Parameters:
         pre (str): Pre-action region identifier (unused).
         post (str): Post-action region identifier (unused).
         threshold (float): Confidence threshold (unused).
-    
+
     Returns:
         tuple: `(True, 90.0)` where `True` indicates success and `90.0` is the confidence score.
     """
@@ -95,7 +95,7 @@ def test_try_targeting_success_region1(monkeypatch):
         0.05,  # delay
         region1_success_confirm,  # confirm_fn
     )
-    assert result is True
+    assert result[0] is True
 
 
 def test_try_targeting_success_region2(monkeypatch):
@@ -115,7 +115,7 @@ def test_try_targeting_success_region2(monkeypatch):
         0.01,
         region2_success_confirm,
     )
-    assert result is True
+    assert result[0] is True
 
 
 def test_try_targeting_success_both(monkeypatch):
@@ -135,7 +135,7 @@ def test_try_targeting_success_both(monkeypatch):
         0.01,
         both_success_confirm,
     )
-    assert result is True
+    assert result[0] is True
 
 
 def test_try_targeting_success_fail(monkeypatch):
@@ -155,7 +155,7 @@ def test_try_targeting_success_fail(monkeypatch):
         0.01,
         always_fail_confirm,
     )
-    assert result is False
+    assert result[0] is False
 
 
 def test_try_targeting_success_exception(monkeypatch):
@@ -167,10 +167,10 @@ def test_try_targeting_success_exception(monkeypatch):
     def raise_exception(region):
         """
         Always raises Exception("fail") to simulate a failure when capturing a region.
-        
+
         Parameters:
             region: The region argument (ignored).
-        
+
         Raises:
             Exception: Always raised with message "fail".
         """
@@ -188,4 +188,4 @@ def test_try_targeting_success_exception(monkeypatch):
         0.01,
         always_fail_confirm,
     )
-    assert result is False
+    assert result[0] is False

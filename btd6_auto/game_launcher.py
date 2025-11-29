@@ -44,13 +44,12 @@ def load_map(map_config: dict, global_config: dict) -> bool:
             - "map_name": map name to search (default "Monkey Meadow").
             - "difficulty": difficulty name (default "Easy").
             - "mode": game mode/start type (default "Standard").
-            - "game_settings" (optional): dict that may contain "window_title" to override the window title used for activation.
-        global_config (dict): Global configuration; may contain "window_title" used if map_config does not provide one.
+        global_config (dict): Global configuration; may contain "window_title" used for window activation.
 
     Returns:
         bool: `True` if the map was started successfully, `False` otherwise.
     """
-    if not activate_btd6_window(map_config, global_config):
+    if not activate_btd6_window(global_config):
         logging.error("BTD6 window not activated.")
         return False
 
@@ -144,22 +143,18 @@ def load_map(map_config: dict, global_config: dict) -> bool:
     return True
 
 
-def activate_btd6_window(map_config=None, global_config=None) -> bool:
+def activate_btd6_window(global_config=None) -> bool:
     """
     Activate the Bloons TD6 game window using a title resolved from provided configuration.
 
-    Resolves the window title in this order: map_config["game_settings"].get("window_title"), global_config["window_title"], then "BloonsTD6". Only effective on Windows; attempts to find and activate the first window matching the resolved title.
+    Resolves the window title in this order: global_config["window_title"], then "BloonsTD6". Only effective on Windows; attempts to find and activate the first window matching the resolved title.
 
     Parameters:
-        map_config (dict | None): Optional map-specific configuration that may contain a nested `game_settings.window_title`.
         global_config (dict | None): Optional global configuration that may contain `window_title`.
 
     Returns:
-        bool: `true` if a matching window was found and activated, `false` otherwise.
-    """
+        bool: `True` if a matching window was found and activated, `False` otherwise."""
     window_title = None
-    if map_config and "game_settings" in map_config:
-        window_title = map_config["game_settings"].get("window_title")
     if not window_title and global_config and "window_title" in global_config:
         window_title = global_config["window_title"]
     if not window_title:
@@ -167,15 +162,15 @@ def activate_btd6_window(map_config=None, global_config=None) -> bool:
     try:
         windows = gw.getWindowsWithTitle(window_title)
         if not windows:
-            print(
+            logging.error(
                 f"Error: Could not find window with title '{window_title}'. (Windows-only)"
             )
             return False
         win = windows[0]
         win.activate()
-        time.sleep(0.5)  # Wait for the window to come to the foreground
-        print(f"Activated window: {win.title}")
+        time.sleep(0.2)  # Wait for the window to come to the foreground
+        logging.debug(f"Activated window: {win.title}")
         return True
-    except Exception as e:
-        print(f"Exception during window activation: {e}")
+    except Exception:
+        logging.exception("Exception during window activation.")
         return False

@@ -22,10 +22,11 @@ import logging
 import time
 import keyboard
 
-from btd6_auto.monkey_manager import place_monkey, place_hero
-from btd6_auto.monkey_hotkey import get_monkey_hotkey
-from btd6_auto.config_loader import get_tower_positions_for_map
-from btd6_auto.input import move_and_click, cursor_resting_spot
+from .monkey_manager import place_monkey, place_hero
+from .monkey_hotkey import get_monkey_hotkey
+from .config_loader import get_tower_positions_for_map
+from .input import move_and_click, cursor_resting_spot
+from .game_launcher import activate_btd6_window
 
 
 # Compile regexes at module level
@@ -149,9 +150,7 @@ class ActionManager:
 
         map_name = self.map_config.get("map_name")
         if not map_name:
-            raise ValueError(
-                "Map name not found in config; position lookup will be empty"
-            )
+            raise ValueError("Map name not found in config; position lookup will be empty")
         return get_tower_positions_for_map(map_name)
 
     def _check_placement_result(self, result, target, pos, placement_type):
@@ -172,9 +171,7 @@ class ActionManager:
                 f"{placement_type} placement returned False for {target} at {pos}."
             )
 
-    def __init__(
-        self, map_config: Dict[str, Any], global_config: Dict[str, Any]
-    ) -> None:
+    def __init__(self, map_config: Dict[str, Any], global_config: Dict[str, Any]) -> None:
         """
         Initialize the ActionManager with map and global configuration.
 
@@ -184,9 +181,7 @@ class ActionManager:
         """
         self.map_config = map_config
         self.global_config = global_config
-        self.actions = sorted(
-            map_config.get("actions", []), key=lambda a: a.get("step", 0)
-        )
+        self.actions = sorted(map_config.get("actions", []), key=lambda a: a.get("step", 0))
         self.pre_play_actions = sorted(
             map_config.get("pre_play_actions", []),
             key=lambda a: a.get("step", 0),
@@ -195,6 +190,7 @@ class ActionManager:
         self.monkey_positions = self._build_monkey_position_lookup()
         self.completed_steps = set()
         self.timing = global_config.get("automation", {}).get("timing", {})
+        self.monkey_upgrade_state = {}
 
     def _normalize_position(self, pos: Any) -> Tuple[int, int]:
         """
@@ -238,17 +234,9 @@ class ActionManager:
         Returns:
             int: Number of remaining steps.
         """
-        return len(
-            [
-                a
-                for a in self.actions
-                if a.get("step") not in self.completed_steps
-            ]
-        )
+        return len([a for a in self.actions if a.get("step") not in self.completed_steps])
 
-    def get_monkey_position(
-        self, monkey_name: str
-    ) -> Optional[Tuple[int, int]]:
+    def get_monkey_position(self, monkey_name: str) -> Optional[Tuple[int, int]]:
         """
         Get the (x, y) position of a monkey by name from the position lookup.
         Args:
@@ -286,9 +274,7 @@ class ActionManager:
             logging.info(f"Placing hero {hero.get('name', '')} at {pos}")
             try:
                 result = place_hero(pos, hotkey)
-                self._check_placement_result(
-                    result, hero.get("name", ""), pos, "hero"
-                )
+                self._check_placement_result(result, hero.get("name", ""), pos, "hero")
             except Exception:
                 logging.exception("Exception during hero placement")
                 raise
@@ -299,15 +285,11 @@ class ActionManager:
                 try:
                     pos = self._normalize_position(action["position"])
                 except ValueError:
-                    logging.exception(
-                        f"Invalid position for monkey '{action['target']}'"
-                    )
+                    logging.exception(f"Invalid position for monkey '{action['target']}'")
                     raise
                 hotkey = action.get("hotkey")
                 if not hotkey and "target" in action:
-                    normalized_name = normalize_monkey_name_for_hotkey(
-                        action["target"]
-                    )
+                    normalized_name = normalize_monkey_name_for_hotkey(action["target"])
                     hotkey = get_monkey_hotkey(
                         normalized_name,
                         self.global_config.get("default_monkey_key", "q"),
@@ -315,9 +297,7 @@ class ActionManager:
                 logging.info(f"Placing {action['target']} at {pos}")
                 try:
                     result = place_monkey(pos, hotkey)
-                    self._check_placement_result(
-                        result, action["target"], pos, "monkey"
-                    )
+                    self._check_placement_result(result, action["target"], pos, "monkey")
                 except Exception:
                     logging.exception("Exception during monkey placement")
                     raise
@@ -331,18 +311,15 @@ class ActionManager:
         Args:
             action (Dict[str, Any]): Action dictionary containing target and position.
         """
+        activate_btd6_window()
         try:
             pos = self._normalize_position(action["position"])
         except ValueError:
-            logging.exception(
-                f"Invalid position for monkey '{action['target']}'"
-            )
+            logging.exception(f"Invalid position for monkey '{action['target']}'")
             raise
         hotkey = action.get("hotkey")
         if not hotkey and "target" in action:
-            normalized_name = normalize_monkey_name_for_hotkey(
-                action["target"]
-            )
+            normalized_name = normalize_monkey_name_for_hotkey(action["target"])
             hotkey = get_monkey_hotkey(
                 normalized_name,
                 self.global_config.get("default_monkey_key", "q"),
@@ -350,9 +327,7 @@ class ActionManager:
         logging.info(f"Placing {action['target']} at {pos}")
         try:
             result = place_monkey(pos, hotkey)
-            self._check_placement_result(
-                result, action["target"], pos, "monkey"
-            )
+            self._check_placement_result(result, action["target"], pos, "monkey")
         except Exception:
             logging.exception("Exception during monkey placement")
             raise
@@ -360,56 +335,68 @@ class ActionManager:
 
     def run_upgrade_action(self, action: Dict[str, Any]) -> None:
         """
-        Perform a single upgrade for the specified tower using the configured upgrade-path hotkeys.
-        
-        Parameters:
-            action (Dict[str, Any]): Action dictionary with keys:
-                - target (str): Name of the tower to upgrade.
-                - upgrade_path (Dict[str, int]): Mapping like {"path_1": n, "path_2": m, "path_3": k} where the first path with a value > 0 is applied.
-        
+        Execute a single upgrade for a monkey/tower, only upgrading one tier by one step per call.
+        Args:
+            action (Dict[str, Any]): Action dict with 'target' and 'upgrade_path'.
         """
+        activate_btd6_window()
         target = action.get("target")
         upgrade_path = action.get("upgrade_path", {})
         if not target or not upgrade_path:
             logging.warning("Upgrade action missing target or upgrade_path.")
             return
 
-        # Get tower position
         pos = self.get_monkey_position(target)
         if not pos:
-            logging.warning(
-                f"No position found for tower '{target}' during upgrade."
-            )
+            logging.warning(f"No position found for tower '{target}' during upgrade.")
             return
 
-        # Click the tower to select it
-        move_and_click(pos[0], pos[1], delay=0.2)
-
-        # Determine which path to upgrade (only one per action)
+        current_tiers = self.monkey_upgrade_state.get(
+            target, {"path_1": 0, "path_2": 0, "path_3": 0}
+        )
         path_hotkeys = self.global_config.get("hotkey", {})
         path_map = {
             "path_1": "upgrade_path_1",
             "path_2": "upgrade_path_2",
             "path_3": "upgrade_path_3",
         }
-        for path_key, hotkey_name in path_map.items():
-            if upgrade_path.get(path_key, 0) > 0:
-                hotkey = path_hotkeys.get(hotkey_name)
-                if not hotkey:
-                    logging.warning(
-                        f"No hotkey defined for {hotkey_name} in global config."
-                    )
-                    continue
-                logging.info(
-                    f"Upgrading {target} at {pos} via {hotkey_name} ({hotkey})"
-                )
-                keyboard.send(hotkey.lower())
-                time.sleep(self.timing.get("upgrade_delay", 0.3))
-                coords = cursor_resting_spot()
-                move_and_click(coords[0], coords[1])
-                break  # Only one upgrade per action
 
+        # Only perform a single upgrade per call
+        for path_idx in (1, 2, 3):
+            path_key = f"path_{path_idx}"
+            requested = upgrade_path.get(path_key)
+            current = current_tiers.get(path_key, 0)
+            if requested is None or requested <= current:
+                continue
+            hotkey_name = path_map[path_key]
+            hotkey = path_hotkeys.get(hotkey_name)
+            if not hotkey:
+                logging.warning(f"No hotkey defined for {hotkey_name} in global config.")
+                continue
+            # Move and click to select the monkey
+            move_and_click(pos[0], pos[1], delay=0.2)
+            next_tier = current + 1
+            logging.info(
+                f"Upgrading {target} at {pos} via {hotkey_name} ({hotkey}) to tier {next_tier}"
+            )
+            keyboard.send(hotkey.lower())
+            time.sleep(self.timing.get("upgrade_delay", 0.3))
+            current_tiers[path_key] = next_tier
+            break  # Only one upgrade per call
+
+        # Always move cursor away after upgrade attempt
+        coords = cursor_resting_spot()
+        move_and_click(coords[0], coords[1])
         time.sleep(self.timing.get("upgrade_delay", 0.5))
+        self.monkey_upgrade_state[target] = current_tiers
+
+        # Mark as completed only if all requested upgrades are done
+        all_upgraded = all(
+            upgrade_path.get(f"path_{i}", 0) <= current_tiers.get(f"path_{i}", 0)
+            for i in (1, 2, 3)
+        )
+        if all_upgraded:
+            self.mark_completed(action.get("step", -1))
 
 
 # --- Stateless helpers ---
@@ -521,9 +508,7 @@ def can_afford(
             return False
         cost = _parse_tower_costs(tower_data, difficulty, mode)
         if cost is None:
-            logging.warning(
-                f"Cost not found for {tower_name} ({difficulty}, {mode})"
-            )
+            logging.warning(f"Cost not found for {tower_name} ({difficulty}, {mode})")
             return False
         return current_money >= cost
     elif act_type == "upgrade":
@@ -542,14 +527,10 @@ def can_afford(
             val = upgrade_path.get(key, 0)
             if val > 0:
                 path_idx = i
-                tier = (
-                    val - 1
-                )  # val is the new tier (1-based), index is 0-based
+                tier = val - 1  # val is the new tier (1-based), index is 0-based
                 break
         if path_idx is None or tier is None:
-            logging.warning(
-                f"Upgrade action missing valid path/tier: {upgrade_path}"
-            )
+            logging.warning(f"Upgrade action missing valid path/tier: {upgrade_path}")
             return False
         cost = _get_upgrade_cost(tower_data, path_idx, tier, difficulty, mode)
         if cost is None:

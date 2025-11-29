@@ -6,8 +6,8 @@
     "place_threshold": 85.0,
     "cursor_resting_spot": [1035, 900],
     "select_region": [925, 800, 1135, 950],
-    "place_region_2": [35, 65, 415, 940],
-    "place_region_1": [1260, 60, 1635, 940]
+    "target_region_2": [35, 65, 415, 940],
+    "target_region_1": [1260, 60, 1635, 940]
   },
   "automation": {
     "pause_between_actions": 0.1,
