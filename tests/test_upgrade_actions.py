@@ -1,4 +1,22 @@
+import pytest
+from unittest.mock import patch
 from btd6_auto.actions import ActionManager
+
+"""
+All tests in this module patch GUI/input helpers to prevent real mouse/keyboard actions.
+This avoids side effects and CI failures when running tests that invoke run_upgrade_action.
+"""
+
+
+# Patch move_and_click, cursor_resting_spot, and keyboard.send for all tests
+@pytest.fixture(autouse=True)
+def patch_gui_input():
+    with (
+        patch("btd6_auto.input.move_and_click"),
+        patch("btd6_auto.input.cursor_resting_spot", return_value=(0, 0)),
+        patch("keyboard.send"),
+    ):
+        yield
 
 
 class DummyGlobalConfig(dict):

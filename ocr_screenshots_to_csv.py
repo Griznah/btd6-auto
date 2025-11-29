@@ -28,7 +28,7 @@ def ocr_digits_from_image(image_path):
         return digits, digits2, duration
     except Exception as e:
         duration = time.time() - start_time
-        return f"ERROR: {e}", duration
+        return f"ERROR: {e}", "", duration
 
 
 def main():
