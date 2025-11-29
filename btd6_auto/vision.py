@@ -12,13 +12,29 @@ import numpy as np
 import logging
 import os
 import time
+import math
+from datetime import datetime
 import keyboard
 import bettercam
-import re
-
 
 # Use ConfigLoader for config loading
 from .config_loader import ConfigLoader
+
+
+def make_unique_filename(prefix: str, folder: str = "screenshots") -> str:
+    """
+    Generate a unique filename with the given prefix and current timestamp.
+
+    Parameters:
+        prefix (str): Prefix for the filename.
+        folder (str): Folder to save the file in.
+
+    Returns:
+        str: Unique filename in the format '{folder}\\{prefix}_{timestamp}.png'.
+    """
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filename = f"{prefix}_{timestamp}.png"
+    return os.path.join(folder, filename)
 
 
 def rect_to_region(rect):
@@ -129,9 +145,7 @@ def verify_placement_change(pre_img, post_img, threshold=85.0):
         percent_diff (float): Percentage of pixels that differ between `pre_img` and `post_img`.
     """
     percent_diff = calculate_image_difference(pre_img, post_img)
-    logging.debug(
-        f"Placement diff: {percent_diff:.2f}% (threshold: {threshold})"
-    )
+    logging.debug(f"Placement diff: {percent_diff:.2f}% (threshold: {threshold})")
     return percent_diff >= threshold, percent_diff
 
 
@@ -148,9 +162,7 @@ def confirm_selection(pre_img, post_img, threshold=40.0):
         (bool, float): First element is `true` if the percent difference is greater than or equal to `threshold`, `false` otherwise; second element is the percent difference between the images.
     """
     percent_diff = calculate_image_difference(pre_img, post_img)
-    logging.info(
-        f"Selection diff: {percent_diff:.2f}% (threshold: {threshold})"
-    )
+    logging.info(f"Selection diff: {percent_diff:.2f}% (threshold: {threshold})")
     return percent_diff >= threshold, percent_diff
 
 
@@ -191,9 +203,7 @@ def retry_action(
             )
             continue
         success, percent_diff = confirm_fn(pre_img, post_img, threshold)
-        logging.info(
-            f"Attempt {attempt}: diff={percent_diff:.2f}% success={success}"
-        )
+        logging.info(f"Attempt {attempt}: diff={percent_diff:.2f}% success={success}")
         if success:
             return True
     logging.error(f"Action failed after {max_attempts} attempts.")
@@ -302,9 +312,7 @@ def set_round_state(
             _, screen_gray = capture_screen(region=(left, top, width, height))
             if screen_gray is None:
                 return False, None
-            res = cv2.matchTemplate(
-                screen_gray, template, cv2.TM_CCOEFF_NORMED
-            )
+            res = cv2.matchTemplate(screen_gray, template, cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
             return max_val >= threshold, max_val
         else:
@@ -333,17 +341,13 @@ def set_round_state(
         logging.error(f"Invalid state '{state}' for set_round_state.")
         return False
 
-    images_dir = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "data", "images"
-    )
+    images_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "images")
     img_fast = os.path.join(images_dir, image_map["fast"])
     img_slow = os.path.join(images_dir, image_map["slow"])
     img_start = os.path.join(images_dir, image_map["start"])
 
     for attempt in range(1, max_retries + 1):
-        logging.info(
-            f"[set_round_state] Attempt {attempt} for state '{state}'"
-        )
+        logging.info(f"[set_round_state] Attempt {attempt} for state '{state}'")
         if state == "fast":
             # we need higher threshold for fast due to high similarity for images
             found, max_val = _find_in_region_adapter(img_fast, threshold=0.93)
@@ -406,9 +410,7 @@ def _to_grayscale(image: np.ndarray) -> np.ndarray:
     return image
 
 
-def read_currency_amount(
-    region: tuple = (370, 26, 515, 60), debug: bool = False
-) -> int:
+def read_currency_amount(region: tuple, debug: bool = False) -> int:
     """
     Reads the currency amount from the defined screen region using OCR.
 
@@ -442,48 +444,65 @@ def read_currency_amount(
             )
             time.sleep(0.2)
         if frame is None:
-            logging.warning(
-                "No frame captured for currency region after 3 attempts."
-            )
+            logging.warning("No frame captured for currency region after 3 attempts.")
             return 0
 
         # Preprocess for OCR
         try:
             cv2.setUseOptimized(True)
             cv2.setNumThreads(1)
-            gray = _to_grayscale(frame)
+            frame_scaled = cv2.resize(
+                frame, None, fx=3.0, fy=3.0, interpolation=cv2.INTER_CUBIC
+            )
+            gray = _to_grayscale(frame_scaled)
             if gray is None:
                 logging.warning("Frame conversion to grayscale failed.")
                 return 0
             # Use Otsu's thresholding for robust binarization
-            _, thresh = cv2.threshold(
-                gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
-            )
-            # Invert so white text becomes black (Tesseract prefers black text on white)
+            ret, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+            # Invert thresholded image
             inverted = cv2.bitwise_not(thresh)
+            inverted2 = cv2.bitwise_not(gray)
             # Convert to RGB for pytesseract
-            rgb = cv2.cvtColor(inverted, cv2.COLOR_GRAY2RGB)
-            pil_img = Image.fromarray(rgb)
+            rgb_thresh = cv2.cvtColor(thresh, cv2.COLOR_GRAY2RGB)
+            rgb_inverted2 = cv2.cvtColor(inverted2, cv2.COLOR_GRAY2RGB)
+            rgb_gray = cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
+            rgb_inverted = cv2.cvtColor(inverted, cv2.COLOR_GRAY2RGB)
+            pil_img1 = Image.fromarray(rgb_inverted)
+            pil_img2 = Image.fromarray(rgb_thresh)
+            pil_img3 = Image.fromarray(rgb_inverted2)
+            pil_img4 = Image.fromarray(rgb_gray)
         except Exception:
             logging.exception("Preprocessing error")
             return 0
 
         # OCR with pytesseract
         raw_text = ""
+        values = []  # Collect all OCR results for comparison
         try:
-            # Only allow digits and commas, use --psm 7 for single line
-            custom_config = r"--psm 7 -c tessedit_char_whitelist=0123456789,"
-            raw_text = pytesseract.image_to_string(
-                pil_img, config=custom_config
-            )
-            # Extract all digit groups (1-7 digits)
-            digit_groups = re.findall(r"\d{1,7}", raw_text)
-            value = 0
-            if digit_groups:
-                # Pick the group with the most digits (most likely actual value)
-                value = int(max(digit_groups, key=len))
-            else:
-                value = 0
+            # Only allow digits, dollarsign and commas, use --psm 7 for single line
+            custom_config = r"--psm 7 -c tessedit_char_whitelist=0123456789$,"
+            for pil_img in [pil_img1, pil_img2, pil_img3, pil_img4]:
+                raw_text = pytesseract.image_to_string(pil_img, config=custom_config)
+                raw_text = raw_text.strip()
+                digits = "".join(filter(str.isdigit, raw_text))
+                value = int(digits) if digits.isdigit() else 0
+                values.append(value)
+            # Use the minimum value as the final result as we have issues with reading too high (robust to OCR errors)
+            value = min(values) if values else 0
+            if debug:
+                logging.info(f"[OCR] All parsed values: {values}")
+                value_digits = int(math.log10(value)) + 1 if value > 0 else 0
+                # adding some debug code to save images to run external OCR to find best settings
+                if value_digits > 4:
+                    logging.info(f"[OCR] value: {value} (digits: {value_digits})")
+                    cv2.imwrite(make_unique_filename("debug_currency_gray"), gray)
+                    cv2.imwrite(make_unique_filename("debug_currency_thresh"), thresh)
+                    cv2.imwrite(
+                        make_unique_filename("debug_currency_inverted"),
+                        inverted,
+                    )
+                    cv2.imwrite(make_unique_filename("debug_currency_rgb2"), inverted2)
         except Exception:
             logging.exception("OCR error")
             value = 0
@@ -502,9 +521,7 @@ def read_currency_amount(
     return value
 
 
-def is_mostly_black(
-    image: np.ndarray, threshold: float = 0.9, black_level: int = 30
-) -> bool:
+def is_mostly_black(image: np.ndarray, threshold: float = 0.9, black_level: int = 30) -> bool:
     """
     Determine if the given image is mostly black.
 
@@ -637,14 +654,10 @@ def find_element_on_screen(element_image):
             center_x = max_loc[0] + w // 2
             center_y = max_loc[1] + h // 2
             total_time = time.time() - start_time
-            logging.info(
-                f"find_element_on_screen total time: {total_time:.3f}s"
-            )
+            logging.info(f"find_element_on_screen total time: {total_time:.3f}s")
             return (center_x, center_y)
         else:
-            logging.info(
-                f"No match for {element_image} (max_val={max_val:.2f})"
-            )
+            logging.info(f"No match for {element_image} (max_val={max_val:.2f})")
             return None
     except Exception:
         logging.exception("Error in find_element_on_screen")
