@@ -460,6 +460,7 @@ def read_currency_amount(region: tuple, debug: bool = False) -> int:
                 return 0
             # Use Otsu's thresholding for robust binarization
             ret, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+            ret2, thresh2 = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             # Invert thresholded image
             inverted = cv2.bitwise_not(thresh)
             inverted2 = cv2.bitwise_not(gray)
@@ -468,10 +469,13 @@ def read_currency_amount(region: tuple, debug: bool = False) -> int:
             rgb_inverted2 = cv2.cvtColor(inverted2, cv2.COLOR_GRAY2RGB)
             rgb_gray = cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
             rgb_inverted = cv2.cvtColor(inverted, cv2.COLOR_GRAY2RGB)
+            rgb_thresh2 = cv2.cvtColor(thresh2, cv2.COLOR_GRAY2RGB)
+            # Create PIL images for pytesseract
             pil_img1 = Image.fromarray(rgb_inverted)
             pil_img2 = Image.fromarray(rgb_thresh)
             pil_img3 = Image.fromarray(rgb_inverted2)
             pil_img4 = Image.fromarray(rgb_gray)
+            pil_img5 = Image.fromarray(rgb_thresh2)
         except Exception:
             logging.exception("Preprocessing error")
             return 0
@@ -482,7 +486,7 @@ def read_currency_amount(region: tuple, debug: bool = False) -> int:
         try:
             # Only allow digits, dollarsign and commas, use --psm 7 for single line
             custom_config = r"--psm 7 -c tessedit_char_whitelist=0123456789$,"
-            for pil_img in [pil_img1, pil_img2, pil_img3, pil_img4]:
+            for pil_img in [pil_img1, pil_img2, pil_img3, pil_img4, pil_img5]:
                 raw_text = pytesseract.image_to_string(pil_img, config=custom_config)
                 raw_text = raw_text.strip()
                 digits = "".join(filter(str.isdigit, raw_text))
@@ -496,13 +500,14 @@ def read_currency_amount(region: tuple, debug: bool = False) -> int:
                 # adding some debug code to save images to run external OCR to find best settings
                 if value_digits > 4:
                     logging.info(f"[OCR] value: {value} (digits: {value_digits})")
-                    cv2.imwrite(make_unique_filename("debug_currency_gray"), gray)
-                    cv2.imwrite(make_unique_filename("debug_currency_thresh"), thresh)
+                    cv2.imwrite(make_unique_filename("currency_gray"), gray)
+                    cv2.imwrite(make_unique_filename("currency_thresh"), thresh)
                     cv2.imwrite(
-                        make_unique_filename("debug_currency_inverted"),
+                        make_unique_filename("currency_inverted"),
                         inverted,
                     )
-                    cv2.imwrite(make_unique_filename("debug_currency_rgb2"), inverted2)
+                    cv2.imwrite(make_unique_filename("currency_inverted2"), inverted2)
+                    cv2.imwrite(make_unique_filename("currency_rgb_thresh2"), rgb_thresh2)
         except Exception:
             logging.exception("OCR error")
             value = 0

@@ -9,12 +9,14 @@ import logging
 
 from btd6_auto.vision import read_currency_amount
 
+
 class CurrencyReader:
     """
     Continuously reads the in-game currency in a background thread.
     Provides thread-safe access to the latest value.
     """
-    def __init__(self, region: tuple = (370, 26, 515, 60), poll_interval: float = 0.5):
+
+    def __init__(self, region: tuple = (367, 15, 515, 70), poll_interval: float = 0.5):
         """
         Initialize the currency reader.
         Parameters:
@@ -46,7 +48,7 @@ class CurrencyReader:
 
     def _run(self) -> None:
         while not self._stop_event.is_set():
-            value = read_currency_amount(region=self.region, debug=False)
+            value = read_currency_amount(region=self.region, debug=True)
             logging.debug(f"CurrencyReader OCR value: {value}")
             with self._lock:
                 self._currency = value

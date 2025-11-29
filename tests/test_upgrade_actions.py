@@ -93,7 +93,13 @@ def test_upgrade_action_multiple_paths():
         "target": "Dart Monkey 01",
         "upgrade_path": {"path_1": 1, "path_2": 2, "path_3": 0},
     }
-    manager.run_upgrade_action(action)
+    # Call repeatedly until all upgrades are applied (action marked completed)
+    for _ in range(10):  # Prevent infinite loop
+        manager.run_upgrade_action(action)
+        state = manager.monkey_upgrade_state["Dart Monkey 01"]
+        # Optionally, check intermediate state here if desired
+        if action["step"] in manager.completed_steps:
+            break
     state = manager.monkey_upgrade_state["Dart Monkey 01"]
     assert state["path_1"] == 1
     assert state["path_2"] == 2

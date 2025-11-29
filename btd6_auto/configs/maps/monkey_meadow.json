@@ -18,13 +18,13 @@
       "step": 1,
       "action": "buy",
       "target": "Dart Monkey 02",
-      "position": { "x": 650, "y": 520 }
+      "position": { "x": 300, "y": 500 }
     }
   ],
   "hero": {
     "name": "Any",
     "hotkey": "u",
-    "position": { "x": 485, "y": 395 }
+    "position": { "x": 645, "y": 390 }
   },
   "actions": [
     {
