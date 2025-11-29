@@ -48,11 +48,15 @@ class CurrencyReader:
 
     def _run(self) -> None:
         while not self._stop_event.is_set():
-            value = read_currency_amount(region=self.region, debug=False)
-            logging.debug(f"CurrencyReader OCR value: {value}")
-            with self._lock:
-                self._currency = value
-            time.sleep(self.poll_interval)
+            try:
+                value = read_currency_amount(region=self.region, debug=False)
+                logging.debug(f"CurrencyReader OCR value: {value}")
+                with self._lock:
+                    self._currency = value
+            except Exception:
+                logging.exception("Exception in CurrencyReader OCR thread.")
+            finally:
+                time.sleep(self.poll_interval)
 
     def get_currency(self) -> int:
         """Get the latest currency value (thread-safe)."""

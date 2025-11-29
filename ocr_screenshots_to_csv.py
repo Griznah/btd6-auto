@@ -20,7 +20,7 @@ def ocr_digits_from_image(image_path):
     start_time = time.time()
     try:
         img = Image.open(image_path)
-        custom_config = r"--psm 7 -c tessedit_char_whitelist=$0123456789,"
+        custom_config = r"--psm 7 -c tessedit_char_whitelist=0123456789$,"
         text = pytesseract.image_to_string(img, config=custom_config)
         digits = text.strip().replace(",", "").replace("$", "")
         digits2 = "".join(filter(str.isdigit, text))
@@ -28,13 +28,15 @@ def ocr_digits_from_image(image_path):
         return digits, digits2, duration
     except Exception as e:
         duration = time.time() - start_time
-        return f"ERROR: {e}", "", duration
+        error_msg = f"ERROR: {e}"
+        return error_msg, error_msg, duration
 
 
 def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     screenshots_dir = os.path.join(os.path.dirname(__file__), "screenshots")
     output_csv = os.path.join(os.path.dirname(__file__), "data", "screenshots_ocr.csv")
+    os.makedirs(os.path.dirname(output_csv), exist_ok=True)
     rows = []
     for fname in os.listdir(screenshots_dir):
         if fname.lower().endswith(".png") and os.path.isfile(
