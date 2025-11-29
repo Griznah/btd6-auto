@@ -46,16 +46,20 @@ def main() -> None:
         )
         map_config = ConfigLoader.load_map_config("Monkey Meadow")
 
-    logging.basicConfig(
-        level=getattr(
-            logging,
-            global_config.get("automation", {}).get("logging_level", "INFO"),
-        ),
-        format="%(asctime)s %(levelname)s: %(message)s",
+    # Set up logging to both file and STDOUT
+    log_level = getattr(
+        logging,
+        global_config.get("automation", {}).get("logging_level", "INFO"),
     )
-    logging.info(
-        "BTD6 Automation Bot starting, press ESC to exit at any time."
-    )
+    log_format = "%(asctime)s %(levelname)s: %(message)s"
+    log_file = "btd6_automation.log"
+
+    handlers = [
+        logging.FileHandler(log_file, mode="a", encoding="utf-8"),
+        logging.StreamHandler(),
+    ]
+    logging.basicConfig(level=log_level, format=log_format, handlers=handlers)
+    logging.info("BTD6 Automation Bot starting, press ESC to exit at any time.")
 
     # Start killswitch listener
     esc_listener()
@@ -126,9 +130,7 @@ def main() -> None:
         # --- Main action loop (buy/upgrade) ---
         while True:
             if SharedState.KILL_SWITCH:
-                logging.info(
-                    "Kill switch activated. Exiting main action loop."
-                )
+                logging.info("Kill switch activated. Exiting main action loop.")
                 break
             next_action = action_manager.get_next_action()
             if not next_action:
@@ -136,27 +138,25 @@ def main() -> None:
                 break
             # Wait for enough money
             currency = currency_reader.get_currency()
+            # break  # break here for testing/debugging purposes
             if not can_afford(currency, next_action, map_config):
                 time.sleep(0.2)
                 continue
             if next_action["action"] == "buy":
-                logging.info(f"We have {currency} to buy")
+                logging.info(f"We have ${currency} to buy")
                 action_manager.run_buy_action(next_action)
             elif next_action["action"] == "upgrade":
-                logging.info(f"We have {currency} to upgrade")
+                logging.info(f"We have ${currency} to upgrade")
                 action_manager.run_upgrade_action(next_action)
             else:
-                logging.warning(
-                    f"Unknown action type: {next_action['action']}"
-                )
+                logging.warning(f"Unknown action type: {next_action['action']}")
             action_manager.mark_completed(next_action["step"])
-            logging.info(
-                f"Steps remaining: {action_manager.steps_remaining()}"
-            )
+            logging.info(f"Steps remaining: {action_manager.steps_remaining()}")
         currency_reader.stop()
 
     except Exception:
-        currency_reader.stop()
+        if "currency_reader" in locals():
+            currency_reader.stop()
         logging.exception("Automation error")
 
 

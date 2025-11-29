@@ -2,10 +2,10 @@
 Handles selection and placement of monkeys and heroes.
 """
 
-from .input import move_and_click, cursor_resting_spot
 from .config_utils import get_vision_config
 import logging
 import time
+import numpy as np
 from .vision import (
     retry_action,
     confirm_selection,
@@ -13,6 +13,7 @@ from .vision import (
     handle_vision_error,
     capture_region,
 )
+from .input import move_and_click, cursor_resting_spot
 
 
 def try_targeting_success(
@@ -23,7 +24,7 @@ def try_targeting_success(
     max_attempts,
     delay,
     confirm_fn,
-) -> bool:
+) -> tuple[bool, str | None, np.ndarray | None]:
     """
     Attempt a targeting click at the given coordinates and verify success by checking for UI changes in two regions, retrying up to max_attempts with delay between attempts.
 
@@ -37,9 +38,11 @@ def try_targeting_success(
         confirm_fn (Callable): Function that compares two region images and the threshold, returning (bool, details).
 
     Returns:
-        bool: True if either region confirms targeting success within the allowed attempts, False otherwise.
+        tuple: (success: bool, region_id: str | None, pre_img: np.ndarray | None)
+            - success (bool): True if either region confirms targeting success within the allowed attempts, False otherwise.
+            - region_id (str | None): 'region1' or 'region2' if success, None otherwise.
+            - pre_img (np.ndarray | None): The pre-captured image of the successful region, or None if not successful.
     """
-    # These pre-images are captured once before the attempts begin since they should remain constant
     pre_img_1 = None
     pre_img_2 = None
     try:
@@ -49,7 +52,6 @@ def try_targeting_success(
         logging.exception("Error capturing pre-click regions for targeting.")
 
     for _ in range(1, max_attempts + 1):
-        # Perform the click action to select the target
         move_and_click(coords[0], coords[1], delay=delay)
         # Check region 1
         post_img_1 = None
@@ -62,6 +64,8 @@ def try_targeting_success(
             success_1, _ = confirm_fn(
                 pre_img_1, post_img_1, targeting_threshold
             )
+        if success_1:
+            return True, "region1", pre_img_1
         # Check region 2
         post_img_2 = None
         try:
@@ -73,11 +77,10 @@ def try_targeting_success(
             success_2, _ = confirm_fn(
                 pre_img_2, post_img_2, targeting_threshold
             )
-        if success_1 or success_2:
-            move_and_click(coords[0], coords[1], delay=delay)
-            return True
+        if success_2:
+            return True, "region2", pre_img_2
         time.sleep(delay)
-    return False
+    return False, None, None
 
 
 def get_regions_for_monkey():
@@ -90,8 +93,8 @@ def get_regions_for_monkey():
             - select_threshold (float): Threshold for confirming selection (default 40.0).
             - place_threshold (float): Threshold for confirming placement (default 85.0).
             - select_region (tuple): Region for selection checks as returned by rect_to_region (default rect [925, 800, 1135, 950]).
-            - place_region_1 (tuple): Primary placement verification region (default rect [35, 65, 415, 940]).
-            - place_region_2 (tuple): Secondary placement verification region (default rect [1260, 60, 1635, 940]).
+            - target_region_1 (tuple): Primary placement verification region (default rect [35, 65, 415, 940]).
+            - target_region_2 (tuple): Secondary placement verification region (default rect [1260, 60, 1635, 940]).
     """
     vision = get_vision_config()
     from .vision import rect_to_region
@@ -103,11 +106,11 @@ def get_regions_for_monkey():
         "select_region": rect_to_region(
             vision.get("select_region", [925, 800, 1135, 950])
         ),
-        "place_region_1": rect_to_region(
-            vision.get("place_region_1", [35, 65, 415, 940])
+        "target_region_1": rect_to_region(
+            vision.get("target_region_1", [35, 65, 415, 940])
         ),
-        "place_region_2": rect_to_region(
-            vision.get("place_region_2", [1260, 60, 1635, 940])
+        "target_region_2": rect_to_region(
+            vision.get("target_region_2", [1260, 60, 1635, 940])
         ),
     }
 
@@ -122,8 +125,8 @@ def get_regions_for_hero():
             - select_threshold (float): Threshold used to confirm hero selection.
             - place_threshold (float): Threshold used to confirm hero placement.
             - select_region (tuple): Region rectangle for selection, converted by `rect_to_region`.
-            - place_region_1 (tuple): First region rectangle to verify placement, converted by `rect_to_region`.
-            - place_region_2 (tuple): Second region rectangle to verify placement, converted by `rect_to_region`.
+            - target_region_1 (tuple): First region rectangle to verify placement, converted by `rect_to_region`.
+            - target_region_2 (tuple): Second region rectangle to verify placement, converted by `rect_to_region`.
     """
     vision = get_vision_config()
     from .vision import rect_to_region
@@ -135,11 +138,11 @@ def get_regions_for_hero():
         "select_region": rect_to_region(
             vision.get("select_region", [935, 800, 1135, 950])
         ),
-        "place_region_1": rect_to_region(
-            vision.get("place_region_1", [35, 65, 415, 940])
+        "target_region_1": rect_to_region(
+            vision.get("target_region_1", [35, 65, 415, 940])
         ),
-        "place_region_2": rect_to_region(
-            vision.get("place_region_2", [1260, 60, 1635, 940])
+        "target_region_2": rect_to_region(
+            vision.get("target_region_2", [1260, 60, 1635, 940])
         ),
     }
 
@@ -167,8 +170,8 @@ def place_monkey(
         select_threshold = regions["select_threshold"]
         targeting_threshold = regions["place_threshold"]
         select_region = regions["select_region"]
-        targeting_region_1 = regions["place_region_1"]
-        targeting_region_2 = regions["place_region_2"]
+        targeting_region_1 = regions["target_region_1"]
+        targeting_region_2 = regions["target_region_2"]
 
         def select_monkey():
             """
@@ -190,7 +193,7 @@ def place_monkey(
             handle_vision_error()
             return
 
-        targeting_success = try_targeting_success(
+        targeting_success, region_id, pre_img = try_targeting_success(
             coords,
             targeting_region_1,
             targeting_region_2,
@@ -230,8 +233,8 @@ def place_hero(
         select_threshold = regions["select_threshold"]
         targeting_threshold = regions["place_threshold"]
         select_region = regions["select_region"]
-        targeting_region_1 = regions["place_region_1"]
-        targeting_region_2 = regions["place_region_2"]
+        targeting_region_1 = regions["target_region_1"]
+        targeting_region_2 = regions["target_region_2"]
 
         def select_hero():
             """
@@ -256,7 +259,7 @@ def place_hero(
             handle_vision_error()
             return
 
-        targeting_success = try_targeting_success(
+        targeting_success, region_id, pre_img = try_targeting_success(
             coords,
             targeting_region_1,
             targeting_region_2,

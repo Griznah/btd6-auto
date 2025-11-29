@@ -16,7 +16,7 @@ global_config = {
 }
 
 map_config = {
-    "map_name": "Monkey Meadow",
+    "map_name": "Test Map",
     "hero": {
         "name": "Quincy",
         "hotkey": "u",
@@ -61,9 +61,9 @@ map_config = {
 def test_monkey_position_lookup():
     from btd6_auto.config_loader import ConfigLoader
 
-    real_map_config = ConfigLoader.load_map_config("Monkey Meadow")
+    real_map_config = ConfigLoader.load_map_config("Test Map")
     am = ActionManager(real_map_config, global_config)
-    # Dart Monkey 01 and Dart Monkey 02 positions from Monkey Meadow config
+    # Dart Monkey 01 and Dart Monkey 02 positions from Test Map config
     assert am.get_monkey_position("Dart Monkey 01") == (490, 500)
     assert am.get_monkey_position("Dart Monkey 02") == (650, 520)
     assert am.get_monkey_position("Wizard Monkey 01") == (400, 395)
@@ -155,13 +155,8 @@ def test_placement_result_logging(mock_place_monkey, mock_place_hero, caplog):
         am.run_pre_play()
     # Should NOT log warnings for None, only for False
     # Should NOT log warnings for None, only for False
-    assert not any(
-        "hero placement returned False" in r for r in caplog.text.splitlines()
-    )
-    assert not any(
-        "monkey placement returned False" in r
-        for r in caplog.text.splitlines()
-    )
+    assert not any("hero placement returned False" in r for r in caplog.text.splitlines())
+    assert not any("monkey placement returned False" in r for r in caplog.text.splitlines())
 
 
 def test_action_manager_empty_and_duplicate_steps():
@@ -169,7 +164,7 @@ def test_action_manager_empty_and_duplicate_steps():
     Test ActionManager behavior with empty and duplicate step configs.
     """
     empty_config = {
-        "map_name": "Monkey Meadow",
+        "map_name": "Test Map",
         "pre_play_actions": [],
         "actions": [],
     }
@@ -178,7 +173,7 @@ def test_action_manager_empty_and_duplicate_steps():
     assert am.steps_remaining() == 0
     # Duplicate steps
     dup_config = {
-        "map_name": "Monkey Meadow",
+        "map_name": "Test Map",
         "pre_play_actions": [],
         "actions": [
             {

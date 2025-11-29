@@ -12,6 +12,8 @@ import numpy as np
 import logging
 import os
 import time
+import math
+from datetime import datetime
 import keyboard
 import bettercam
 
@@ -19,16 +21,32 @@ import bettercam
 from .config_loader import ConfigLoader
 
 
+def make_unique_filename(prefix: str, folder: str = "screenshots") -> str:
+    """
+    Generate a unique filename with the given prefix and current timestamp.
+
+    Parameters:
+        prefix (str): Prefix for the filename.
+        folder (str): Folder to save the file in.
+
+    Returns:
+        str: Unique filename in the format '{folder}\\{prefix}_{timestamp}.png'.
+    """
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filename = f"{prefix}_{timestamp}.png"
+    return os.path.join(folder, filename)
+
+
 def rect_to_region(rect):
     """
     Convert a rectangle from (left, top, right, bottom) to (left, top, width, height).
-    
+
     Parameters:
         rect (tuple | list): Four numeric values in the order (left, top, right, bottom).
-    
+
     Returns:
         tuple: A 4-tuple (left, top, width, height) where width = right - left and height = bottom - top.
-    
+
     Raises:
         ValueError: If `rect` does not contain exactly four values or if computed width or height is less than or equal to zero.
     """
@@ -46,10 +64,10 @@ def rect_to_region(rect):
 def capture_region(region):
     """
     Capture a screenshot of a rectangular region from the screen using the module's BetterCam.
-    
+
     Parameters:
         region (tuple): (left, top, width, height) coordinates of the capture rectangle. Coordinates must lie within a 1920x1080 screen.
-    
+
     Returns:
         numpy.ndarray or None: BGR image array for the captured region, or `None` if the region is invalid or no frame could be captured.
     """
@@ -95,11 +113,11 @@ def capture_region(region):
 def calculate_image_difference(img1, img2):
     """
     Compute the percentage of differing pixels between two images.
-    
+
     Parameters:
         img1 (np.ndarray): First image array.
         img2 (np.ndarray): Second image array; must have the same shape as `img1`.
-    
+
     Returns:
         float: Percentage of pixels that differ between the images, in the range 0.0 to 100.0. Returns 100.0 if the images have different shapes.
     """
@@ -116,39 +134,35 @@ def calculate_image_difference(img1, img2):
 def verify_placement_change(pre_img, post_img, threshold=85.0):
     """
     Determine whether the visual difference between two images meets a minimum percent threshold.
-    
+
     Parameters:
         pre_img (np.ndarray): Image captured before the action.
         post_img (np.ndarray): Image captured after the action.
         threshold (float): Minimum percent difference required to consider the placement change successful.
-    
+
     Returns:
         success (bool): `true` if the percent difference is greater than or equal to `threshold`, `false` otherwise.
         percent_diff (float): Percentage of pixels that differ between `pre_img` and `post_img`.
     """
     percent_diff = calculate_image_difference(pre_img, post_img)
-    logging.debug(
-        f"Placement diff: {percent_diff:.2f}% (threshold: {threshold})"
-    )
+    logging.debug(f"Placement diff: {percent_diff:.2f}% (threshold: {threshold})")
     return percent_diff >= threshold, percent_diff
 
 
 def confirm_selection(pre_img, post_img, threshold=40.0):
     """
     Determine whether a selection change occurred by comparing two images.
-    
+
     Parameters:
         pre_img (np.ndarray): Image captured before the action.
         post_img (np.ndarray): Image captured after the action.
         threshold (float): Minimum percent difference required to consider the selection confirmed.
-    
+
     Returns:
         (bool, float): First element is `true` if the percent difference is greater than or equal to `threshold`, `false` otherwise; second element is the percent difference between the images.
     """
     percent_diff = calculate_image_difference(pre_img, post_img)
-    logging.info(
-        f"Selection diff: {percent_diff:.2f}% (threshold: {threshold})"
-    )
+    logging.info(f"Selection diff: {percent_diff:.2f}% (threshold: {threshold})")
     return percent_diff >= threshold, percent_diff
 
 
@@ -164,7 +178,7 @@ def retry_action(
 ):
     """
     Retry an action until a vision-based confirmation indicates success or the maximum attempts are exhausted.
-    
+
     Parameters:
         action_fn (callable): Function that performs the action to be verified (e.g., a selection or placement). It will be called with `*args` and `**kwargs`.
         region (tuple): Screen region used for pre- and post-action captures, typically (left, top, width, height).
@@ -174,7 +188,7 @@ def retry_action(
         confirm_fn (callable): Function that compares pre- and post-action images and returns a tuple `(success: bool, percent_diff: float)`.
         *args: Positional arguments forwarded to `action_fn`.
         **kwargs: Keyword arguments forwarded to `action_fn`.
-    
+
     Returns:
         bool: `True` if the action was confirmed successful within the allotted attempts, `False` otherwise.
     """
@@ -189,9 +203,7 @@ def retry_action(
             )
             continue
         success, percent_diff = confirm_fn(pre_img, post_img, threshold)
-        logging.info(
-            f"Attempt {attempt}: diff={percent_diff:.2f}% success={success}"
-        )
+        logging.info(f"Attempt {attempt}: diff={percent_diff:.2f}% success={success}")
         if success:
             return True
     logging.error(f"Action failed after {max_attempts} attempts.")
@@ -201,7 +213,7 @@ def retry_action(
 def handle_vision_error():
     """
     Terminate the process after a critical vision failure.
-    
+
     Logs a critical message and exits the process immediately.
     """
     logging.critical("Max retries reached. Exiting automation.")
@@ -262,14 +274,14 @@ def set_round_state(
 ) -> bool:
     """
     Ensure the game's visual round state ("fast", "slow", or "start") is active, toggling speed as needed.
-    
+
     Parameters:
         state (str): Desired state; one of "fast", "slow", or "start".
         region (tuple): (left, top, right, bottom) coordinates defining the search region for state indicators.
         max_retries (int, optional): Maximum number of attempts to verify/set the state. If None, a default is read from global configuration.
         delay (float, optional): Seconds to wait between attempts. If None, a default is read from global configuration.
         find_in_region (callable, optional): Optional injected function for template detection (used for testing or mocking). Expected to accept a template path and region and to return either a boolean or a tuple `(found, confidence)`; various call signatures `(template_path, region, threshold)`, `(template_path, region)`, or `(template_path, threshold)` are supported by the adapter.
-    
+
     Returns:
         bool: `True` if the requested state was detected or set within the allowed attempts, `False` otherwise.
     """
@@ -300,9 +312,7 @@ def set_round_state(
             _, screen_gray = capture_screen(region=(left, top, width, height))
             if screen_gray is None:
                 return False, None
-            res = cv2.matchTemplate(
-                screen_gray, template, cv2.TM_CCOEFF_NORMED
-            )
+            res = cv2.matchTemplate(screen_gray, template, cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
             return max_val >= threshold, max_val
         else:
@@ -331,17 +341,13 @@ def set_round_state(
         logging.error(f"Invalid state '{state}' for set_round_state.")
         return False
 
-    images_dir = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "data", "images"
-    )
+    images_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "images")
     img_fast = os.path.join(images_dir, image_map["fast"])
     img_slow = os.path.join(images_dir, image_map["slow"])
     img_start = os.path.join(images_dir, image_map["start"])
 
     for attempt in range(1, max_retries + 1):
-        logging.info(
-            f"[set_round_state] Attempt {attempt} for state '{state}'"
-        )
+        logging.info(f"[set_round_state] Attempt {attempt} for state '{state}'")
         if state == "fast":
             # we need higher threshold for fast due to high similarity for images
             found, max_val = _find_in_region_adapter(img_fast, threshold=0.93)
@@ -404,9 +410,7 @@ def _to_grayscale(image: np.ndarray) -> np.ndarray:
     return image
 
 
-def read_currency_amount(
-    region: tuple = (370, 26, 515, 60), debug: bool = False
-) -> int:
+def read_currency_amount(region: tuple, debug: bool = False) -> int:
     """
     Reads the currency amount from the defined screen region using OCR.
 
@@ -440,48 +444,76 @@ def read_currency_amount(
             )
             time.sleep(0.2)
         if frame is None:
-            logging.warning(
-                "No frame captured for currency region after 3 attempts."
-            )
+            logging.warning("No frame captured for currency region after 3 attempts.")
             return 0
 
         # Preprocess for OCR
         try:
             cv2.setUseOptimized(True)
             cv2.setNumThreads(1)
-            gray = _to_grayscale(frame)
+            frame_scaled = cv2.resize(
+                frame, None, fx=3.0, fy=3.0, interpolation=cv2.INTER_CUBIC
+            )
+            gray = _to_grayscale(frame_scaled)
             if gray is None:
                 logging.warning("Frame conversion to grayscale failed.")
                 return 0
             # Use Otsu's thresholding for robust binarization
-            _, thresh = cv2.threshold(
-                gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
-            )
-            # Invert so white text becomes black (Tesseract prefers black text on white)
+            ret, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+            ret2, thresh2 = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            # Invert thresholded image
             inverted = cv2.bitwise_not(thresh)
+            inverted2 = cv2.bitwise_not(gray)
             # Convert to RGB for pytesseract
-            rgb = cv2.cvtColor(inverted, cv2.COLOR_GRAY2RGB)
-            pil_img = Image.fromarray(rgb)
+            rgb_thresh = cv2.cvtColor(thresh, cv2.COLOR_GRAY2RGB)
+            rgb_inverted2 = cv2.cvtColor(inverted2, cv2.COLOR_GRAY2RGB)
+            rgb_gray = cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
+            rgb_inverted = cv2.cvtColor(inverted, cv2.COLOR_GRAY2RGB)
+            rgb_thresh2 = cv2.cvtColor(thresh2, cv2.COLOR_GRAY2RGB)
+            # Create PIL images for pytesseract
+            pil_img1 = Image.fromarray(rgb_inverted)
+            pil_img2 = Image.fromarray(rgb_thresh)
+            pil_img3 = Image.fromarray(rgb_inverted2)
+            pil_img4 = Image.fromarray(rgb_gray)
+            pil_img5 = Image.fromarray(rgb_thresh2)
         except Exception:
             logging.exception("Preprocessing error")
             return 0
 
         # OCR with pytesseract
+        raw_text = ""
+        values = []  # Collect all OCR results for comparison
         try:
-            # Only allow digits and commas, use --psm 7 for single line
-            custom_config = r"--psm 7 -c tessedit_char_whitelist=0123456789,"
-            raw_text = pytesseract.image_to_string(
-                pil_img, config=custom_config
-            )
-            # Remove commas and non-digit characters
-            digits = "".join([c for c in raw_text if c.isdigit()])
-            value = int(digits) if digits else 0
+            # Only allow digits, dollarsign and commas, use --psm 7 for single line
+            custom_config = r"--psm 7 -c tessedit_char_whitelist=0123456789$,"
+            for pil_img in [pil_img1, pil_img2, pil_img3, pil_img4, pil_img5]:
+                raw_text = pytesseract.image_to_string(pil_img, config=custom_config)
+                raw_text = raw_text.strip()
+                digits = "".join(filter(str.isdigit, raw_text))
+                value = int(digits) if digits.isdigit() else 0
+                values.append(value)
+            # Use the minimum value as the final result as we have issues with reading too high (robust to OCR errors)
+            value = min(values) if values else 0
+            if debug:
+                logging.info(f"[OCR] All parsed values: {values}")
+                value_digits = int(math.log10(value)) + 1 if value > 0 else 0
+                # adding some debug code to save images to run external OCR to find best settings
+                if value_digits > 4:
+                    logging.info(f"[OCR] value: {value} (digits: {value_digits})")
+                    cv2.imwrite(make_unique_filename("currency_gray"), gray)
+                    cv2.imwrite(make_unique_filename("currency_thresh"), thresh)
+                    cv2.imwrite(
+                        make_unique_filename("currency_inverted"),
+                        inverted,
+                    )
+                    cv2.imwrite(make_unique_filename("currency_inverted2"), inverted2)
+                    cv2.imwrite(make_unique_filename("currency_rgb_thresh2"), rgb_thresh2)
         except Exception:
             logging.exception("OCR error")
             value = 0
 
         if debug:
-            logging.debug(f"[OCR] Currency: {value}")
+            logging.debug(f"[OCR] raw: {raw_text} | parsed: {value}")
 
     except KeyboardInterrupt:
         logging.info("[OCR] Stopped by user.")
@@ -494,9 +526,7 @@ def read_currency_amount(
     return value
 
 
-def is_mostly_black(
-    image: np.ndarray, threshold: float = 0.9, black_level: int = 30
-) -> bool:
+def is_mostly_black(image: np.ndarray, threshold: float = 0.9, black_level: int = 30) -> bool:
     """
     Determine if the given image is mostly black.
 
@@ -629,14 +659,10 @@ def find_element_on_screen(element_image):
             center_x = max_loc[0] + w // 2
             center_y = max_loc[1] + h // 2
             total_time = time.time() - start_time
-            logging.info(
-                f"find_element_on_screen total time: {total_time:.3f}s"
-            )
+            logging.info(f"find_element_on_screen total time: {total_time:.3f}s")
             return (center_x, center_y)
         else:
-            logging.info(
-                f"No match for {element_image} (max_val={max_val:.2f})"
-            )
+            logging.info(f"No match for {element_image} (max_val={max_val:.2f})")
             return None
     except Exception:
         logging.exception("Error in find_element_on_screen")
