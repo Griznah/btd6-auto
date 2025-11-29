@@ -362,7 +362,6 @@ class ActionManager:
         }
 
         # Only perform a single upgrade per call
-        upgraded = False
         for path_idx in (1, 2, 3):
             path_key = f"path_{path_idx}"
             requested = upgrade_path.get(path_key)
@@ -383,7 +382,6 @@ class ActionManager:
             keyboard.send(hotkey.lower())
             time.sleep(self.timing.get("upgrade_delay", 0.3))
             current_tiers[path_key] = next_tier
-            upgraded = True
             break  # Only one upgrade per call
 
         # Always move cursor away after upgrade attempt
