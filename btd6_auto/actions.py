@@ -335,15 +335,28 @@ class ActionManager:
 
     def run_upgrade_action(self, action: Dict[str, Any]) -> None:
         """
-        Execute a single upgrade for a monkey/tower, only upgrading one tier by one step per call.
+        Execute a single upgrade for a monkey/tower, upgrading only one path per call.
+        The action's 'upgrade_path' dict must contain exactly one path (e.g., {"path_2": 1}).
+
         Args:
-            action (Dict[str, Any]): Action dict with 'target' and 'upgrade_path'.
+            action (Dict[str, Any]): Action dict with 'target' and single-key 'upgrade_path'.
         """
         activate_btd6_window()
         target = action.get("target")
         upgrade_path = action.get("upgrade_path", {})
         if not target or not upgrade_path:
             logging.warning("Upgrade action missing target or upgrade_path.")
+            return
+
+        if len(upgrade_path) != 1:
+            logging.warning(
+                f"Upgrade action for '{target}' must specify exactly one path in upgrade_path, got: {upgrade_path}"
+            )
+            return
+
+        path_key, requested = next(iter(upgrade_path.items()))
+        if path_key not in ("path_1", "path_2", "path_3"):
+            logging.warning(f"Invalid path key '{path_key}' in upgrade_path for '{target}'.")
             return
 
         pos = self.get_monkey_position(target)
@@ -354,35 +367,56 @@ class ActionManager:
         current_tiers = self.monkey_upgrade_state.get(
             target, {"path_1": 0, "path_2": 0, "path_3": 0}
         )
+        current = current_tiers.get(path_key, 0)
+        if requested <= current:
+            logging.info(
+                f"No upgrade needed for {target} {path_key}: current tier {current}, requested {requested}."
+            )
+            return
+
         path_hotkeys = self.global_config.get("hotkey", {})
         path_map = {
             "path_1": "upgrade_path_1",
             "path_2": "upgrade_path_2",
             "path_3": "upgrade_path_3",
         }
+        hotkey_name = path_map[path_key]
+        hotkey = path_hotkeys.get(hotkey_name)
+        if not hotkey:
+            logging.warning(f"No hotkey defined for {hotkey_name} in global config.")
+            return
 
-        # Only perform a single upgrade per call
-        for path_idx in (1, 2, 3):
-            path_key = f"path_{path_idx}"
-            requested = upgrade_path.get(path_key)
-            current = current_tiers.get(path_key, 0)
-            if requested is None or requested <= current:
-                continue
-            hotkey_name = path_map[path_key]
-            hotkey = path_hotkeys.get(hotkey_name)
-            if not hotkey:
-                logging.warning(f"No hotkey defined for {hotkey_name} in global config.")
-                continue
-            # Move and click to select the monkey
-            move_and_click(pos[0], pos[1], delay=0.2)
-            next_tier = current + 1
-            logging.info(
-                f"Upgrading {target} at {pos} via {hotkey_name} ({hotkey}) to tier {next_tier}"
-            )
-            keyboard.send(hotkey.lower())
-            time.sleep(self.timing.get("upgrade_delay", 0.3))
-            current_tiers[path_key] = next_tier
-            break  # Only one upgrade per call
+        # Use vision-based targeting to select the monkey before upgrade
+        from .monkey_manager import try_targeting_success, get_regions_for_monkey
+        from .vision import verify_placement_change, handle_vision_error
+
+        regions = get_regions_for_monkey()
+        max_attempts = regions["max_attempts"]
+        targeting_threshold = regions["place_threshold"]
+        targeting_region_1 = regions["target_region_1"]
+        targeting_region_2 = regions["target_region_2"]
+
+        targeting_success, region_id, targeted_img = try_targeting_success(
+            pos,
+            targeting_region_1,
+            targeting_region_2,
+            targeting_threshold,
+            max_attempts,
+            0.2,
+            verify_placement_change,
+        )
+        if not targeting_success:
+            logging.error(f"Upgrade targeting failed for {target} at {pos}")
+            handle_vision_error()
+            return
+
+        next_tier = current + 1
+        logging.info(
+            f"Upgrading {target} at {pos} via {hotkey_name} ({hotkey}) to tier {next_tier}"
+        )
+        keyboard.send(hotkey.lower())
+        time.sleep(self.timing.get("upgrade_delay", 0.3))
+        current_tiers[path_key] = next_tier
 
         # Always move cursor away after upgrade attempt
         coords = cursor_resting_spot()
@@ -390,12 +424,8 @@ class ActionManager:
         time.sleep(self.timing.get("upgrade_delay", 0.5))
         self.monkey_upgrade_state[target] = current_tiers
 
-        # Mark as completed only if all requested upgrades are done
-        all_upgraded = all(
-            upgrade_path.get(f"path_{i}", 0) <= current_tiers.get(f"path_{i}", 0)
-            for i in (1, 2, 3)
-        )
-        if all_upgraded:
+        # Mark as completed only if the requested upgrade is done
+        if current_tiers[path_key] >= requested:
             self.mark_completed(action.get("step", -1))
 
 

@@ -22,6 +22,7 @@ This project is a Python3 automation bot for Bloons Tower Defense 6 (BTD6), a to
 - Use pytest for unit testing. All new features should include corresponding unit tests.
 - Organize code modularly for easy extension.
 - Use configuration files for user preferences.
+- Keep module imports at the top of each file.
 
 ## Configuration Files and facts
 

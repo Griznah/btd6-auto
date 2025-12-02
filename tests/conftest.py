@@ -21,3 +21,17 @@ def mock_keyboard_and_pyautogui():
         patch("pyautogui.keyUp", create=True),
     ):
         yield
+
+
+# Prevent actual window activation in all tests
+@pytest.fixture(autouse=True)
+def mock_activate_btd6_window():
+    """
+    Automatically mocks activate_btd6_window to prevent real window activation during tests.
+    Patches both where defined and where used (actions).
+    """
+    with (
+        patch("btd6_auto.game_launcher.activate_btd6_window", return_value=True),
+        patch("btd6_auto.actions.activate_btd6_window", return_value=True),
+    ):
+        yield

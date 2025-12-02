@@ -17,7 +17,7 @@
     "logging_level": "INFO",
     "timing": {
       "placement_delay": 0.5,
-      "upgrade_delay": 0.3,
+      "upgrade_delay": 0.5,
       "ability_delay": 0.3
     },
     "retries": {

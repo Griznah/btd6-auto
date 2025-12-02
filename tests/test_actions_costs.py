@@ -14,9 +14,7 @@ from btd6_auto.actions import (
 
 sys.path.insert(
     0,
-    os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "btd6_auto")
-    ),
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "btd6_auto")),
 )
 
 
@@ -79,7 +77,7 @@ def test_can_afford_upgrade_fallback():
     action = {
         "action": "upgrade",
         "target": "Dart Monkey 01",
-        "upgrade_path": {"path_1": 1, "path_2": 0, "path_3": 0},
+        "upgrade_path": {"path_1": 1},
         "at_money": 120,
     }
     assert can_afford(120, action, map_config) is True
@@ -112,13 +110,9 @@ def test_normalize_difficulty_mode_aliases():
 def test_normalize_monkey_name_for_hotkey():
     # Suffix stripping
     assert normalize_monkey_name_for_hotkey("Dart Monkey 01") == "Dart Monkey"
-    assert (
-        normalize_monkey_name_for_hotkey("Super Monkey 99") == "Super Monkey"
-    )
+    assert normalize_monkey_name_for_hotkey("Super Monkey 99") == "Super Monkey"
     assert normalize_monkey_name_for_hotkey("Ninja Monkey") == "Ninja Monkey"
-    assert (
-        normalize_monkey_name_for_hotkey("Ninja Monkey 1") == "Ninja Monkey"
-    )
+    assert normalize_monkey_name_for_hotkey("Ninja Monkey 1") == "Ninja Monkey"
 
 
 def test_cost_regex_parsing():
@@ -139,9 +133,7 @@ def test_monkey_suffix_regex():
 def test_can_afford_unknown_action_type_logs_and_returns_false(caplog):
     action = {"action": "foobar", "target": "Dart Monkey 01"}
     with caplog.at_level("WARNING"):
-        result = can_afford(
-            1000, action, {"difficulty": "Easy", "mode": "Standard"}
-        )
+        result = can_afford(1000, action, {"difficulty": "Easy", "mode": "Standard"})
     assert result is False
     assert any("Unknown action type" in r for r in caplog.text.splitlines())
 
@@ -186,7 +178,7 @@ def test_build_monkey_position_lookup_basic():
 def test_build_monkey_position_lookup_duplicate_targets():
     """
     Verify that when a monkey target appears multiple times, the position from the later occurrence is used in the lookup.
-    
+
     Asserts that ActionManager._build_monkey_position_lookup resolves the final pixel coordinates for a duplicate monkey target according to the later action entry.
     """
     map_config = {
@@ -246,9 +238,7 @@ def test_build_monkey_position_lookup_invalid_positions():
 def test_can_afford_missing_target_logs_and_returns_false(caplog):
     action = {"action": "buy"}  # missing target
     with caplog.at_level("WARNING"):
-        result = can_afford(
-            1000, action, {"difficulty": "Easy", "mode": "Standard"}
-        )
+        result = can_afford(1000, action, {"difficulty": "Easy", "mode": "Standard"})
     assert result is False
     assert any("Tower data not found" in r for r in caplog.text.splitlines())
 
@@ -271,7 +261,4 @@ def test_parse_tower_costs_alternate_block():
 
 def test_can_afford_malformed_action_dict():
     # Missing 'action' key
-    assert (
-        can_afford(100, {}, {"difficulty": "Easy", "mode": "Standard"})
-        is False
-    )
+    assert can_afford(100, {}, {"difficulty": "Easy", "mode": "Standard"}) is False

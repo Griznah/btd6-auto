@@ -61,11 +61,9 @@ def try_targeting_success(
             logging.exception("Error capturing region 1 for targeting.")
         success_1 = False
         if pre_img_1 is not None and post_img_1 is not None:
-            success_1, _ = confirm_fn(
-                pre_img_1, post_img_1, targeting_threshold
-            )
+            success_1, _ = confirm_fn(pre_img_1, post_img_1, targeting_threshold)
         if success_1:
-            return True, "region1", pre_img_1
+            return True, "region1", post_img_1
         # Check region 2
         post_img_2 = None
         try:
@@ -74,11 +72,9 @@ def try_targeting_success(
             logging.exception("Error capturing region 2 for targeting.")
         success_2 = False
         if pre_img_2 is not None and post_img_2 is not None:
-            success_2, _ = confirm_fn(
-                pre_img_2, post_img_2, targeting_threshold
-            )
+            success_2, _ = confirm_fn(pre_img_2, post_img_2, targeting_threshold)
         if success_2:
-            return True, "region2", pre_img_2
+            return True, "region2", post_img_2
         time.sleep(delay)
     return False, None, None
 
@@ -103,12 +99,8 @@ def get_regions_for_monkey():
         "max_attempts": vision.get("max_attempts", 3),
         "select_threshold": vision.get("select_threshold", 40.0),
         "place_threshold": vision.get("place_threshold", 85.0),
-        "select_region": rect_to_region(
-            vision.get("select_region", [925, 800, 1135, 950])
-        ),
-        "target_region_1": rect_to_region(
-            vision.get("target_region_1", [35, 65, 415, 940])
-        ),
+        "select_region": rect_to_region(vision.get("select_region", [925, 800, 1135, 950])),
+        "target_region_1": rect_to_region(vision.get("target_region_1", [35, 65, 415, 940])),
         "target_region_2": rect_to_region(
             vision.get("target_region_2", [1260, 60, 1635, 940])
         ),
@@ -135,21 +127,26 @@ def get_regions_for_hero():
         "max_attempts": vision.get("max_attempts", 3),
         "select_threshold": vision.get("select_threshold", 40.0),
         "place_threshold": vision.get("place_threshold", 85.0),
-        "select_region": rect_to_region(
-            vision.get("select_region", [935, 800, 1135, 950])
-        ),
-        "target_region_1": rect_to_region(
-            vision.get("target_region_1", [35, 65, 415, 940])
-        ),
+        "select_region": rect_to_region(vision.get("select_region", [935, 800, 1135, 950])),
+        "target_region_1": rect_to_region(vision.get("target_region_1", [35, 65, 415, 940])),
         "target_region_2": rect_to_region(
             vision.get("target_region_2", [1260, 60, 1635, 940])
         ),
     }
 
 
-def place_monkey(
-    coords: tuple[int, int], monkey_key: str, delay: float = 0.2
-) -> None:
+def select_monkey(monkey_key: str, delay: float = 0.2) -> None:
+    """
+    Send the configured monkey selection key to the input system and pause for the configured delay.
+    Can be called from other modules.
+    """
+    import keyboard
+
+    keyboard.send(monkey_key)
+    time.sleep(delay)
+
+
+def place_monkey(coords: tuple[int, int], monkey_key: str, delay: float = 0.2) -> None:
     """
     Place a monkey by selecting it with a keyboard key and clicking the specified screen coordinates, verifying placement via vision and retrying as configured.
 
@@ -161,8 +158,6 @@ def place_monkey(
         delay (float): Seconds to wait after sending the selection key and between attempts (default 0.2).
     """
     try:
-        import keyboard
-
         cursor_resting_spot()  # Move cursor to resting spot before action
 
         regions = get_regions_for_monkey()
@@ -173,15 +168,8 @@ def place_monkey(
         targeting_region_1 = regions["target_region_1"]
         targeting_region_2 = regions["target_region_2"]
 
-        def select_monkey():
-            """
-            Send the configured monkey selection key to the input system and pause for the configured delay.
-            """
-            keyboard.send(monkey_key)
-            time.sleep(delay)
-
         selection_success = retry_action(
-            select_monkey,
+            lambda: select_monkey(monkey_key, delay),
             select_region,
             select_threshold,
             max_attempts=max_attempts,
@@ -193,7 +181,7 @@ def place_monkey(
             handle_vision_error()
             return
 
-        targeting_success, region_id, pre_img = try_targeting_success(
+        targeting_success, region_id, targeted_img = try_targeting_success(
             coords,
             targeting_region_1,
             targeting_region_2,
@@ -207,14 +195,22 @@ def place_monkey(
             handle_vision_error()
             return
     except Exception:
-        logging.exception(
-            f"Failed to place monkey at {coords} with key {monkey_key}"
-        )
+        logging.exception(f"Failed to place monkey at {coords} with key {monkey_key}")
 
 
-def place_hero(
-    coords: tuple[int, int], hero_key: str, delay: float = 0.2
-) -> None:
+def select_hero(hero_key: str, delay: float = 0.2) -> None:
+    """
+    Presses and releases the configured hero key to select a hero.
+    Can be called from other modules.
+    """
+    import keyboard
+
+    keyboard.press(hero_key)
+    time.sleep(delay)
+    keyboard.release(hero_key)
+
+
+def place_hero(coords: tuple[int, int], hero_key: str, delay: float = 0.2) -> None:
     """
     Selects a hero by keyboard key and places it at the given screen coordinates while verifying selection and placement with vision checks.
 
@@ -224,8 +220,6 @@ def place_hero(
         delay (float): Seconds to wait after pressing the key and before performing placement actions (default 0.2).
     """
     try:
-        import keyboard
-
         cursor_resting_spot()  # Move cursor to resting spot before action
 
         regions = get_regions_for_hero()
@@ -236,18 +230,8 @@ def place_hero(
         targeting_region_1 = regions["target_region_1"]
         targeting_region_2 = regions["target_region_2"]
 
-        def select_hero():
-            """
-            Presses and releases the configured hero key to select a hero.
-
-            Holds the key down for the configured delay before releasing it; uses `hero_key` and `delay` from the enclosing scope.
-            """
-            keyboard.press(hero_key)
-            time.sleep(delay)
-            keyboard.release(hero_key)
-
         selection_success = retry_action(
-            select_hero,
+            lambda: select_hero(hero_key, delay),
             select_region,
             select_threshold,
             max_attempts=max_attempts,
@@ -259,7 +243,7 @@ def place_hero(
             handle_vision_error()
             return
 
-        targeting_success, region_id, pre_img = try_targeting_success(
+        targeting_success, region_id, targeted_img = try_targeting_success(
             coords,
             targeting_region_1,
             targeting_region_2,
@@ -273,6 +257,4 @@ def place_hero(
             handle_vision_error()
             return
     except Exception:
-        logging.exception(
-            f"Failed to place hero at {coords} with key {hero_key}"
-        )
+        logging.exception(f"Failed to place hero at {coords} with key {hero_key}")

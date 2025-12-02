@@ -31,7 +31,7 @@
       "step": 1,
       "action": "upgrade",
       "target": "Dart Monkey 01",
-      "upgrade_path": { "path_1": 0, "path_2": 0, "path_3": 1 }
+      "upgrade_path": { "path_3": 1 }
     },
     {
       "step": 2,
@@ -43,7 +43,7 @@
       "step": 3,
       "action": "upgrade",
       "target": "Dart Monkey 01",
-      "upgrade_path": { "path_1": 0, "path_2": 0, "path_3": 2 }
+      "upgrade_path": { "path_3": 2 }
     },
     {
       "step": 4,
@@ -55,67 +55,67 @@
       "step": 5,
       "action": "upgrade",
       "target": "Dart Monkey 02",
-      "upgrade_path": { "path_1": 0, "path_2": 1, "path_3": 0 }
+      "upgrade_path": { "path_2": 1 }
     },
     {
       "step": 6,
       "action": "upgrade",
       "target": "Wizard Monkey 01",
-      "upgrade_path": { "path_1": 0, "path_2": 0, "path_3": 1 }
+      "upgrade_path": { "path_3": 1 }
     },
     {
       "step": 7,
       "action": "upgrade",
       "target": "Wizard Monkey 01",
-      "upgrade_path": { "path_1": 0, "path_2": 0, "path_3": 2 }
+      "upgrade_path": { "path_3": 2 }
     },
     {
       "step": 8,
       "action": "upgrade",
       "target": "Wizard Monkey 01",
-      "upgrade_path": { "path_1": 1, "path_2": 0, "path_3": 2 }
+      "upgrade_path": { "path_1": 1 }
     },
     {
       "step": 9,
       "action": "upgrade",
       "target": "Spike Factory 01",
-      "upgrade_path": { "path_1": 0, "path_2": 1, "path_3": 0 }
+      "upgrade_path": { "path_2": 1 }
     },
     {
       "step": 10,
       "action": "upgrade",
       "target": "Spike Factory 01",
-      "upgrade_path": { "path_1": 0, "path_2": 2, "path_3": 0 }
+      "upgrade_path": { "path_2": 2 }
     },
     {
       "step": 11,
       "action": "upgrade",
       "target": "Spike Factory 01",
-      "upgrade_path": { "path_1": 1, "path_2": 2, "path_3": 0 }
+      "upgrade_path": { "path_1": 1 }
     },
     {
       "step": 12,
       "action": "upgrade",
       "target": "Spike Factory 01",
-      "upgrade_path": { "path_1": 2, "path_2": 2, "path_3": 0 }
+      "upgrade_path": { "path_1": 2 }
     },
     {
       "step": 13,
       "action": "upgrade",
       "target": "Wizard Monkey 01",
-      "upgrade_path": { "path_1": 2, "path_2": 0, "path_3": 1 }
+      "upgrade_path": { "path_1": 2 }
     },
     {
       "step": 14,
       "action": "upgrade",
       "target": "Wizard Monkey 01",
-      "upgrade_path": { "path_1": 3, "path_2": 0, "path_3": 2 }
+      "upgrade_path": { "path_1": 3 }
     },
     {
       "step": 15,
       "action": "upgrade",
       "target": "Wizard Monkey 01",
-      "upgrade_path": { "path_1": 4, "path_2": 0, "path_3": 2 }
+      "upgrade_path": { "path_1": 4 }
     }
   ]
 }

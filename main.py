@@ -138,16 +138,17 @@ def main() -> None:
                 break
             # Wait for enough money
             currency = currency_reader.get_currency()
-            # break  # break here for testing/debugging purposes
             if not can_afford(currency, next_action, map_config):
                 time.sleep(0.2)
                 continue
             if next_action["action"] == "buy":
                 logging.info(f"We have ${currency} to buy")
                 action_manager.run_buy_action(next_action)
+                currency = 0
             elif next_action["action"] == "upgrade":
                 logging.info(f"We have ${currency} to upgrade")
                 action_manager.run_upgrade_action(next_action)
+                currency = 0
             else:
                 logging.warning(f"Unknown action type: {next_action['action']}")
             action_manager.mark_completed(next_action["step"])
