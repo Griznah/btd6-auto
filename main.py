@@ -144,11 +144,11 @@ def main() -> None:
             if next_action["action"] == "buy":
                 logging.info(f"We have ${currency} to buy")
                 action_manager.run_buy_action(next_action)
-                currency = 0
+                currency = 0  # need to reset currency after buy to avoid double spending
             elif next_action["action"] == "upgrade":
                 logging.info(f"We have ${currency} to upgrade")
                 action_manager.run_upgrade_action(next_action)
-                currency = 0
+                currency = 0  # need to reset currency after upgrade to avoid double spending
             else:
                 logging.warning(f"Unknown action type: {next_action['action']}")
             action_manager.mark_completed(next_action["step"])

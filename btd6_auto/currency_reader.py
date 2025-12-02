@@ -49,7 +49,7 @@ class CurrencyReader:
     def _run(self) -> None:
         while not self._stop_event.is_set():
             try:
-                value = read_currency_amount(region=self.region, debug=False)
+                value = read_currency_amount(region=self.region, debug=True)
                 logging.debug(f"CurrencyReader OCR value: {value}")
                 with self._lock:
                     self._currency = value

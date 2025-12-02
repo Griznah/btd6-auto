@@ -20,8 +20,9 @@ def ocr_digits_from_image(image_path):
     start_time = time.time()
     try:
         img = Image.open(image_path)
-        custom_config = r"--psm 7 -c tessedit_char_whitelist=0123456789$,"
-        text = pytesseract.image_to_string(img, config=custom_config)
+        # custom_config = r"--oem 1 --psm 7 -c tessedit_char_whitelist=0123456789$,"
+        custom_config = r"--oem 1 --psm 7 -c user_defined_dpi=300"
+        text = pytesseract.image_to_string(img, lang="digits", config=custom_config)
         digits = text.strip().replace(",", "").replace("$", "")
         digits2 = "".join(filter(str.isdigit, text))
         duration = time.time() - start_time
