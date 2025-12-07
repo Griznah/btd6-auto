@@ -36,7 +36,12 @@ def ocr_digits_from_image(image_path):
 def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     screenshots_dir = os.path.join(os.path.dirname(__file__), "screenshots")
-    output_csv = os.path.join(os.path.dirname(__file__), "data", "screenshots_ocr.csv")
+    from datetime import datetime
+
+    date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_csv = os.path.join(
+        os.path.dirname(__file__), "data", f"screenshots_ocr_{date_str}.csv"
+    )
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
     rows = []
     for fname in os.listdir(screenshots_dir):
