@@ -9,7 +9,7 @@ import numpy as np
 from .vision import (
     retry_action,
     confirm_selection,
-    verify_placement_change,
+    verify_image_difference,
     handle_vision_error,
     capture_region,
 )
@@ -188,7 +188,7 @@ def place_monkey(coords: tuple[int, int], monkey_key: str, delay: float = 0.2) -
             targeting_threshold,
             max_attempts,
             delay,
-            verify_placement_change,
+            verify_image_difference,
         )
         if not targeting_success:
             logging.error(f"Monkey targeting failed at {coords}")
@@ -250,7 +250,7 @@ def place_hero(coords: tuple[int, int], hero_key: str, delay: float = 0.2) -> No
             targeting_threshold,
             max_attempts,
             delay,
-            verify_placement_change,
+            verify_image_difference,
         )
         if not targeting_success:
             logging.error(f"Hero targeting failed at {coords}")

@@ -131,7 +131,7 @@ def calculate_image_difference(img1, img2):
     return percent_diff
 
 
-def verify_placement_change(pre_img, post_img, threshold=85.0):
+def verify_image_difference(pre_img, post_img, threshold=85.0):
     """
     Determine whether the visual difference between two images meets a minimum percent threshold.
 

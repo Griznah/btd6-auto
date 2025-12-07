@@ -22,7 +22,13 @@ import logging
 import time
 import keyboard
 
-from .monkey_manager import place_monkey, place_hero
+from .monkey_manager import (
+    place_monkey,
+    place_hero,
+    try_targeting_success,
+    get_regions_for_monkey,
+)
+from .vision import verify_image_difference, handle_vision_error
 from .monkey_hotkey import get_monkey_hotkey
 from .config_loader import get_tower_positions_for_map
 from .input import move_and_click, cursor_resting_spot
@@ -387,9 +393,6 @@ class ActionManager:
             return
 
         # Use vision-based targeting to select the monkey before upgrade
-        from .monkey_manager import try_targeting_success, get_regions_for_monkey
-        from .vision import verify_placement_change, handle_vision_error
-
         regions = get_regions_for_monkey()
         max_attempts = regions["max_attempts"]
         targeting_threshold = regions["place_threshold"]
@@ -403,7 +406,7 @@ class ActionManager:
             targeting_threshold,
             max_attempts,
             0.2,
-            verify_placement_change,
+            verify_image_difference,
         )
         if not targeting_success:
             logging.error(f"Upgrade targeting failed for {target} at {pos}")
@@ -414,8 +417,12 @@ class ActionManager:
         logging.info(
             f"Upgrading {target} at {pos} via {hotkey_name} ({hotkey}) to tier {next_tier}"
         )
+        # Start upgrade sequence with verification
         keyboard.send(hotkey.lower())
         time.sleep(self.timing.get("upgrade_delay", 0.3))
+        # End upgrade sequence with verification
+
+        # Updating game state after successful upgrade
         current_tiers[path_key] = next_tier
 
         # Always move cursor away after upgrade attempt

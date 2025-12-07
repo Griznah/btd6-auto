@@ -154,6 +154,9 @@ def main() -> None:
             action_manager.mark_completed(next_action["step"])
             logging.info(f"Steps remaining: {action_manager.steps_remaining()}")
         currency_reader.stop()
+        logging.info(
+            "Automation completed successfully.\nIn the future we will call End Map-logic here."
+        )
 
     except Exception:
         if "currency_reader" in locals():

@@ -41,18 +41,16 @@ def mock_vision(monkeypatch):
     Replaces:
     - `retry_action` with a callable that always returns `True`.
     - `confirm_selection` with a callable that returns `(True, 50.0)`.
-    - `verify_placement_change` with a callable that returns `(True, 90.0)`.
+    - `verify_image_difference` with a callable that returns `(True, 90.0)`.
     - `handle_vision_error` with a no-op callable.
 
     This fixture does not return a value; it mutates the monkey_manager module via the provided `monkeypatch`.
     """
     monkeypatch.setattr(monkey_manager, "retry_action", lambda *a, **kw: True)
-    monkeypatch.setattr(
-        monkey_manager, "confirm_selection", lambda *a, **kw: (True, 50.0)
-    )
+    monkeypatch.setattr(monkey_manager, "confirm_selection", lambda *a, **kw: (True, 50.0))
     monkeypatch.setattr(
         monkey_manager,
-        "verify_placement_change",
+        "verify_image_difference",
         lambda *a, **kw: (True, 90.0),
     )
     monkeypatch.setattr(monkey_manager, "handle_vision_error", lambda: None)
@@ -66,9 +64,7 @@ def mock_click(monkeypatch):
     Parameters:
         monkeypatch: pytest's monkeypatch fixture used to replace the move_and_click function with a lambda that does nothing.
     """
-    monkeypatch.setattr(
-        monkey_manager, "move_and_click", lambda x, y, delay=0.2: None
-    )
+    monkeypatch.setattr(monkey_manager, "move_and_click", lambda x, y, delay=0.2: None)
 
 
 @pytest.mark.usefixtures("mock_config", "mock_vision", "mock_click")
@@ -98,9 +94,7 @@ def test_place_monkey_failure(monkeypatch):
     Scenario: Vision retry fails, error handler should be called.
     Expected outcome: Error handler is triggered and sets 'error' flag.
     """
-    monkeypatch.setattr(
-        monkey_manager, "retry_action", lambda *a, **kw: False
-    )
+    monkeypatch.setattr(monkey_manager, "retry_action", lambda *a, **kw: False)
     called = {}
     monkeypatch.setattr(
         monkey_manager,
@@ -118,9 +112,7 @@ def test_place_hero_failure(monkeypatch):
     Scenario: Vision retry fails, error handler should be called.
     Expected outcome: Error handler is triggered and sets 'error' flag.
     """
-    monkeypatch.setattr(
-        monkey_manager, "retry_action", lambda *a, **kw: False
-    )
+    monkeypatch.setattr(monkey_manager, "retry_action", lambda *a, **kw: False)
     called = {}
     monkeypatch.setattr(
         monkey_manager,
