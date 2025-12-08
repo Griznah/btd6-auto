@@ -390,10 +390,24 @@ class ActionManager:
             target, {"path_1": 0, "path_2": 0, "path_3": 0}
         )
         current = current_tiers.get(path_key, 0)
-        if requested <= current:
+
+        # Check if already at or beyond requested tier
+        if current >= requested:
             logging.info(
                 f"No upgrade needed for {target} {path_key}: current tier {current}, requested {requested}."
             )
+            self.mark_completed(action.get("step", -1))
+            return
+
+        # Calculate the next tier (always upgrade by exactly 1)
+        next_tier = current + 1
+
+        # Check max tier boundary (BTD6 max is 5)
+        if next_tier > 5:
+            logging.warning(
+                f"Cannot upgrade {target} {path_key} beyond tier 5. Current: {current}, Requested: {requested}"
+            )
+            self.mark_completed(action.get("step", -1))
             return
 
         path_hotkeys = self.global_config.get("hotkey", {})
@@ -439,56 +453,58 @@ class ActionManager:
         max_retries = retries_cfg.get("max_retries", 3)
         retry_delay = retries_cfg.get("retry_delay", 0.5)
 
-        # For each tier between current+1 and requested (inclusive)
-        for next_tier in range(current + 1, requested + 1):
-            verified = False
-            for attempt in range(1, max_retries + 1):
-                # use CurrencyReader to check affordability before each attempt
-                current_money = self.currency_reader.get_currency()
-                if not can_afford(current_money, action, self.map_config):
-                    logging.warning(
-                        f"Not enough money to upgrade {target} {path_key} to tier {next_tier} (have {current_money})."
-                    )
-                    return
-
-                logging.info(
-                    f"[Upgrade] Attempt {attempt}/{max_retries}: {target} {path_key} to tier {next_tier} via {hotkey_name} ({hotkey})"
+        # Perform single upgrade with retries
+        verified = False
+        for attempt in range(1, max_retries + 1):
+            # use CurrencyReader to check affordability before each attempt
+            current_money = self.currency_reader.get_currency()
+            if not can_afford(current_money, action, self.map_config):
+                logging.warning(
+                    f"Not enough money to upgrade {target} {path_key} to tier {next_tier} (have {current_money})."
                 )
-                keyboard.send(hotkey.lower())
-                time.sleep(self.timing.get("upgrade_delay", 0.3))
+                return
 
-                # Vision-based verification
-                post_img = capture_region(verification_region)
-                success, diff = verify_image_difference(targeted_img, post_img, threshold=20.0)
-                logging.info(
-                    f"Upgrade verification for {target} {path_key} tier {next_tier}: success={success}, diff={diff:.2f}"
-                )
-                if success:
-                    # Only update upgrade state after verified success
-                    current_tiers[path_key] = next_tier
-                    verified = True
-                    # Update targeted_img for next tier (if multiple upgrades in one call)
-                    targeted_img = post_img
-                    break
-                else:
-                    time.sleep(retry_delay)
+            logging.info(
+                f"[Upgrade] Attempt {attempt}/{max_retries}: {target} {path_key} to tier {next_tier} via {hotkey_name} ({hotkey})"
+            )
+            keyboard.send(hotkey.lower())
+            time.sleep(self.timing.get("upgrade_delay", 0.3))
 
-            if not verified:
-                logging.exception(
-                    f"Upgrade verification failed for {target} {path_key} to tier {next_tier} after {max_retries} attempts."
-                )
-                # Do not raise, just continue to next action
+            # Vision-based verification
+            post_img = capture_region(verification_region)
+            success, diff = verify_image_difference(targeted_img, post_img, threshold=20.0)
+            logging.info(
+                f"Upgrade verification for {target} {path_key} tier {next_tier}: success={success}, diff={diff:.2f}"
+            )
+            if success:
+                # Update upgrade state after verified success
+                current_tiers[path_key] = next_tier
+                verified = True
+                # Update targeted_img for potential next call
+                targeted_img = post_img
                 break
+            else:
+                time.sleep(retry_delay)
+
+        if not verified:
+            logging.error(
+                f"Upgrade verification failed for {target} {path_key} to tier {next_tier} after {max_retries} attempts."
+            )
+            # Do not raise, just continue to next action
 
         # Always move cursor away after upgrade attempt
         coords = cursor_resting_spot()
         move_and_click(coords[0], coords[1])
         time.sleep(self.timing.get("upgrade_delay", 0.5))
+
+        # Save updated state
         self.monkey_upgrade_state[target] = current_tiers
 
-        # Mark as completed only if the requested upgrade is done
-        if current_tiers[path_key] >= requested:
+        # Only mark as completed if we've reached the requested tier
+        if verified and next_tier >= requested:
             self.mark_completed(action.get("step", -1))
+        elif not verified:
+            logging.error(f"Failed to upgrade {target} {path_key} to tier {next_tier} after {max_retries} attempts")
 
 
 # --- Stateless helpers ---
