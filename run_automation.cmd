@@ -17,4 +17,4 @@ uv sync
 REM Run the BTD6 automation bot
 echo Starting BTD6 Automation Bot...
 echo %time%
-python main.py
+python main.py %*

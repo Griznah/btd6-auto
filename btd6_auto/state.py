@@ -4,3 +4,8 @@
 
 class SharedState:
     KILL_SWITCH = False
+
+
+class DebugState:
+    """Global debug state accessible across all modules"""
+    DEBUG_ENABLED = False

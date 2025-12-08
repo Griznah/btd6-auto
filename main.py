@@ -3,6 +3,7 @@ Main entry point for BTD6 Automation Bot
 Windows-only version
 """
 
+import argparse
 import logging
 import time
 import pyautogui
@@ -35,6 +36,16 @@ def main() -> None:
 
     No value is returned.
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='BTD6 Automation Bot')
+    parser.add_argument('--debug', action='store_true',
+                       help='Enable debug mode (sets logging to DEBUG level)')
+    args = parser.parse_args()
+
+    # Set debug state
+    from btd6_auto.state import DebugState
+    DebugState.DEBUG_ENABLED = args.debug
+
     # Load configs
     global_config = ConfigLoader.load_global_config()
     map_name = global_config.get("default_map", "Monkey Meadow")
@@ -47,10 +58,14 @@ def main() -> None:
         map_config = ConfigLoader.load_map_config("Monkey Meadow")
 
     # Set up logging to both file and STDOUT
-    log_level = getattr(
-        logging,
-        global_config.get("automation", {}).get("logging_level", "INFO"),
-    )
+    # Debug flag overrides config file setting
+    if DebugState.DEBUG_ENABLED:
+        log_level = logging.DEBUG
+    else:
+        log_level = getattr(
+            logging,
+            global_config.get("automation", {}).get("logging_level", "INFO"),
+        )
     log_format = "%(asctime)s %(levelname)s: %(message)s"
     log_file = "btd6_automation.log"
 
@@ -59,6 +74,10 @@ def main() -> None:
         logging.StreamHandler(),
     ]
     logging.basicConfig(level=log_level, format=log_format, handlers=handlers)
+
+    # Log startup messages after logging is configured
+    if DebugState.DEBUG_ENABLED:
+        logging.info("Debug mode enabled via --debug flag")
     logging.info("BTD6 Automation Bot starting, press ESC to exit at any time.")
 
     # Start killswitch listener
