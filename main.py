@@ -94,7 +94,7 @@ def main() -> None:
             time.sleep(0.1)
 
         # Use ActionManager for orchestration
-        action_manager = ActionManager(map_config, global_config)
+        action_manager = ActionManager(map_config, global_config, currency_reader)
 
         # Run pre-play actions (hero and monkeys)
         logging.info("Running pre-play actions (hero and monkeys)")

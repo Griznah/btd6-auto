@@ -28,11 +28,12 @@ from .monkey_manager import (
     try_targeting_success,
     get_regions_for_monkey,
 )
-from .vision import verify_image_difference, handle_vision_error
+from .vision import verify_image_difference, handle_vision_error, capture_region
 from .monkey_hotkey import get_monkey_hotkey
 from .config_loader import get_tower_positions_for_map
 from .input import move_and_click, cursor_resting_spot
 from .game_launcher import activate_btd6_window
+from .currency_reader import CurrencyReader
 
 
 # Compile regexes at module level
@@ -177,13 +178,19 @@ class ActionManager:
                 f"{placement_type} placement returned False for {target} at {pos}."
             )
 
-    def __init__(self, map_config: Dict[str, Any], global_config: Dict[str, Any]) -> None:
+    def __init__(
+        self,
+        map_config: Dict[str, Any],
+        global_config: Dict[str, Any],
+        currency_reader: Optional[CurrencyReader] = None,
+    ) -> None:
         """
         Initialize the ActionManager with map and global configuration.
 
         Args:
             map_config (Dict[str, Any]): Map-specific configuration.
             global_config (Dict[str, Any]): Global configuration.
+            currency_reader (Optional[CurrencyReader]): CurrencyReader instance for reading in-game currency.
         """
         self.map_config = map_config
         self.global_config = global_config
@@ -197,6 +204,7 @@ class ActionManager:
         self.completed_steps = set()
         self.timing = global_config.get("automation", {}).get("timing", {})
         self.monkey_upgrade_state = {}
+        self.currency_reader = currency_reader
 
     def _normalize_position(self, pos: Any) -> Tuple[int, int]:
         """
@@ -341,13 +349,21 @@ class ActionManager:
 
     def run_upgrade_action(self, action: Dict[str, Any]) -> None:
         """
-        Execute a single upgrade for a monkey/tower, upgrading only one path per call.
+        Execute a single upgrade for a monkey/tower, upgrading only one path per call, with vision-based verification and retry logic.
         The action's 'upgrade_path' dict must contain exactly one path (e.g., {"path_2": 1}).
 
         Args:
             action (Dict[str, Any]): Action dict with 'target' and single-key 'upgrade_path'.
         """
         activate_btd6_window()
+
+        # Check if CurrencyReader is available
+        if not self.currency_reader:
+            logging.warning(
+                "No CurrencyReader provided to ActionManager. Skipping upgrade action."
+            )
+            return
+
         target = action.get("target")
         upgrade_path = action.get("upgrade_path", {})
         if not target or not upgrade_path:
@@ -408,22 +424,61 @@ class ActionManager:
             0.2,
             verify_image_difference,
         )
-        if not targeting_success:
+        if not targeting_success or targeted_img is None:
             logging.error(f"Upgrade targeting failed for {target} at {pos}")
             handle_vision_error()
             return
 
-        next_tier = current + 1
-        logging.info(
-            f"Upgrading {target} at {pos} via {hotkey_name} ({hotkey}) to tier {next_tier}"
+        # Determine which region to use for verification
+        verification_region = (
+            targeting_region_1 if region_id == "region1" else targeting_region_2
         )
-        # Start upgrade sequence with verification
-        keyboard.send(hotkey.lower())
-        time.sleep(self.timing.get("upgrade_delay", 0.3))
-        # End upgrade sequence with verification
 
-        # Updating game state after successful upgrade
-        current_tiers[path_key] = next_tier
+        # Read retry config from global config
+        retries_cfg = self.global_config.get("automation", {}).get("retries", {})
+        max_retries = retries_cfg.get("max_retries", 3)
+        retry_delay = retries_cfg.get("retry_delay", 0.5)
+
+        # For each tier between current+1 and requested (inclusive)
+        for next_tier in range(current + 1, requested + 1):
+            verified = False
+            for attempt in range(1, max_retries + 1):
+                # use CurrencyReader to check affordability before each attempt
+                current_money = self.currency_reader.get_currency()
+                if not can_afford(current_money, action, self.map_config):
+                    logging.warning(
+                        f"Not enough money to upgrade {target} {path_key} to tier {next_tier} (have {current_money})."
+                    )
+                    return
+
+                logging.info(
+                    f"[Upgrade] Attempt {attempt}/{max_retries}: {target} {path_key} to tier {next_tier} via {hotkey_name} ({hotkey})"
+                )
+                keyboard.send(hotkey.lower())
+                time.sleep(self.timing.get("upgrade_delay", 0.3))
+
+                # Vision-based verification
+                post_img = capture_region(verification_region)
+                success, diff = verify_image_difference(targeted_img, post_img, threshold=20.0)
+                logging.info(
+                    f"Upgrade verification for {target} {path_key} tier {next_tier}: success={success}, diff={diff:.2f}"
+                )
+                if success:
+                    # Only update upgrade state after verified success
+                    current_tiers[path_key] = next_tier
+                    verified = True
+                    # Update targeted_img for next tier (if multiple upgrades in one call)
+                    targeted_img = post_img
+                    break
+                else:
+                    time.sleep(retry_delay)
+
+            if not verified:
+                logging.exception(
+                    f"Upgrade verification failed for {target} {path_key} to tier {next_tier} after {max_retries} attempts."
+                )
+                # Do not raise, just continue to next action
+                break
 
         # Always move cursor away after upgrade attempt
         coords = cursor_resting_spot()
