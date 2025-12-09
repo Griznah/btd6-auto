@@ -480,8 +480,6 @@ class ActionManager:
                 # Update upgrade state after verified success
                 current_tiers[path_key] = next_tier
                 verified = True
-                # Update targeted_img for potential next call
-                targeted_img = post_img
                 break
             else:
                 time.sleep(retry_delay)
