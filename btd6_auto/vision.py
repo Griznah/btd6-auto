@@ -19,6 +19,7 @@ import bettercam
 
 # Use ConfigLoader for config loading
 from .config_loader import ConfigLoader
+from .debug_manager import DebugManager
 
 
 def make_unique_filename(prefix: str, folder: str = "screenshots") -> str:
@@ -71,42 +72,107 @@ def capture_region(region):
     Returns:
         numpy.ndarray or None: BGR image array for the captured region, or `None` if the region is invalid or no frame could be captured.
     """
+    # Only start performance tracking if debug manager is enabled
+    # and not in verbose mode (to avoid interfering with timing-sensitive operations)
+    if _DEBUG_MANAGER.enabled and _DEBUG_MANAGER.level.value < 3:
+        operation_id = _DEBUG_MANAGER.start_performance_tracking("capture_region")
+        _DEBUG_MANAGER.log_verbose(
+            "Vision",
+            "Starting region capture",
+            data={"region": region, "max_retries": _CAPTURE_RETRIES},
+        )
+    else:
+        operation_id = None
+
     left, top, width, height = region
     right = left + width
     bottom = top + height
     bettercam_region = (left, top, right, bottom)
+
     # Validate region bounds for 1920x1080 screen
     if not (0 <= left < right <= 1920 and 0 <= top < bottom <= 1080):
-        logging.error(
+        error_msg = (
             f"capture_region: Invalid region {bettercam_region} (must be within 1920x1080)"
         )
+        _DEBUG_MANAGER.log_error(
+            "Vision",
+            Exception(error_msg),
+            context={"region": region, "bettercam_region": bettercam_region},
+        )
+        logging.error(error_msg)
         return None
+
     cam = _CAMERA
     img = None
+
     for attempt in range(_CAPTURE_RETRIES):
+        # Skip debug checkpoints in verbose mode to reduce overhead
+        if operation_id is not None:
+            _DEBUG_MANAGER.add_checkpoint(operation_id, f"capture_attempt_{attempt + 1}")
+
         try:
             img = cam.grab(region=bettercam_region)
-        except Exception:
+            # Only log verbose success messages if not in verbose mode
+            if img is not None and operation_id is not None:
+                _DEBUG_MANAGER.log_verbose(
+                    "Vision",
+                    f"Frame captured on attempt {attempt + 1}",
+                    data={
+                        "attempt": attempt + 1,
+                        "shape": img.shape if img is not None else None,
+                    },
+                )
+        except Exception as e:
+            # Always log errors, but reduce context in verbose mode
+            if _DEBUG_MANAGER.enabled and _DEBUG_MANAGER.level.value < 3:
+                _DEBUG_MANAGER.log_error(
+                    "Vision", e, context={"region": bettercam_region, "attempt": attempt + 1}
+                )
             logging.exception("BetterCam grab error in capture_region")
             img = None
+
         if img is not None:
             break
+
         logging.info(
             f"capture_region: No new frame, retrying ({attempt + 1}/{_CAPTURE_RETRIES}) after {_CAPTURE_DELAY}s..."
         )
         time.sleep(_CAPTURE_DELAY)
+
     if img is None:
-        logging.warning(
-            f"capture_region: No frame captured after {_CAPTURE_RETRIES} attempts."
-        )
+        error_msg = f"capture_region: No frame captured after {_CAPTURE_RETRIES} attempts."
+        if operation_id is not None:
+            _DEBUG_MANAGER.log_basic("Vision", error_msg, "warning")
+        logging.warning(error_msg)
         return None
+
     # Handle BGRA/RGBA images and convert to BGR
+    original_shape = img.shape
     if img.ndim == 3 and img.shape[2] == 4:
         img_bgr = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+        conversion = "BGRA->BGR"
     elif img.ndim == 3 and img.shape[2] == 3:
         img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        conversion = "RGB->BGR"
     else:
         img_bgr = img
+        conversion = "none"
+
+    # Only finish performance tracking if it was started
+    if operation_id is not None:
+        processing_time = _DEBUG_MANAGER.finish_performance_tracking(operation_id)
+        _DEBUG_MANAGER.log_vision_result(
+            "capture_region",
+            True,
+            processing_time=processing_time,
+            match_info={
+                "region": region,
+                "original_shape": original_shape,
+                "final_shape": img_bgr.shape,
+                "conversion": conversion,
+            },
+        )
+
     return img_bgr
 
 
@@ -121,13 +187,41 @@ def calculate_image_difference(img1, img2):
     Returns:
         float: Percentage of pixels that differ between the images, in the range 0.0 to 100.0. Returns 100.0 if the images have different shapes.
     """
+    operation_id = _DEBUG_MANAGER.start_performance_tracking("calculate_image_difference")
+
+    shape1 = img1.shape if img1 is not None else None
+    shape2 = img2.shape if img2 is not None else None
+
+    _DEBUG_MANAGER.log_verbose(
+        "Vision", "Calculating image difference", data={"shape1": shape1, "shape2": shape2}
+    )
+
     if img1.shape != img2.shape:
-        logging.error("Image shapes do not match for comparison.")
+        error_msg = "Image shapes do not match for comparison."
+        _DEBUG_MANAGER.log_error(
+            "Vision", Exception(error_msg), context={"shape1": shape1, "shape2": shape2}
+        )
+        logging.error(error_msg)
         return 100.0
+
     diff = cv2.absdiff(img1, img2)
     nonzero = np.count_nonzero(diff)
     total = diff.size
     percent_diff = (nonzero / total) * 100
+
+    processing_time = _DEBUG_MANAGER.finish_performance_tracking(operation_id)
+    _DEBUG_MANAGER.log_vision_result(
+        "calculate_image_difference",
+        True,
+        confidence=percent_diff,
+        processing_time=processing_time,
+        match_info={
+            "nonzero_pixels": int(nonzero),
+            "total_pixels": int(total),
+            "percent_diff": percent_diff,
+        },
+    )
+
     return percent_diff
 
 
@@ -144,9 +238,27 @@ def verify_image_difference(pre_img, post_img, threshold=85.0):
         success (bool): `true` if the percent difference is greater than or equal to `threshold`, `false` otherwise.
         percent_diff (float): Percentage of pixels that differ between `pre_img` and `post_img`.
     """
+    operation_id = _DEBUG_MANAGER.start_performance_tracking("verify_image_difference")
+    _DEBUG_MANAGER.log_detailed("Vision", "Verifying image difference", threshold=threshold)
+
     percent_diff = calculate_image_difference(pre_img, post_img)
+    success = percent_diff >= threshold
+
+    processing_time = _DEBUG_MANAGER.finish_performance_tracking(operation_id)
+    _DEBUG_MANAGER.log_vision_result(
+        "verify_image_difference",
+        success,
+        confidence=percent_diff,
+        processing_time=processing_time,
+        match_info={
+            "threshold": threshold,
+            "percent_diff": percent_diff,
+            "verification_type": "placement",
+        },
+    )
+
     logging.debug(f"Placement diff: {percent_diff:.2f}% (threshold: {threshold})")
-    return percent_diff >= threshold, percent_diff
+    return success, percent_diff
 
 
 def confirm_selection(pre_img, post_img, threshold=40.0):
@@ -161,9 +273,27 @@ def confirm_selection(pre_img, post_img, threshold=40.0):
     Returns:
         (bool, float): First element is `true` if the percent difference is greater than or equal to `threshold`, `false` otherwise; second element is the percent difference between the images.
     """
+    operation_id = _DEBUG_MANAGER.start_performance_tracking("confirm_selection")
+    _DEBUG_MANAGER.log_detailed("Vision", "Confirming selection change", threshold=threshold)
+
     percent_diff = calculate_image_difference(pre_img, post_img)
+    success = percent_diff >= threshold
+
+    processing_time = _DEBUG_MANAGER.finish_performance_tracking(operation_id)
+    _DEBUG_MANAGER.log_vision_result(
+        "confirm_selection",
+        success,
+        confidence=percent_diff,
+        processing_time=processing_time,
+        match_info={
+            "threshold": threshold,
+            "percent_diff": percent_diff,
+            "verification_type": "selection",
+        },
+    )
+
     logging.info(f"Selection diff: {percent_diff:.2f}% (threshold: {threshold})")
-    return percent_diff >= threshold, percent_diff
+    return success, percent_diff
 
 
 def retry_action(
@@ -192,21 +322,104 @@ def retry_action(
     Returns:
         bool: `True` if the action was confirmed successful within the allotted attempts, `False` otherwise.
     """
+    operation_id = _DEBUG_MANAGER.start_performance_tracking("retry_action")
+    _DEBUG_MANAGER.log_detailed(
+        "Vision",
+        "Starting retry action sequence",
+        max_attempts=max_attempts,
+        threshold=threshold,
+        region=region,
+        delay=delay,
+        action_fn=action_fn.__name__ if hasattr(action_fn, "__name__") else str(action_fn),
+    )
+
     for attempt in range(1, max_attempts + 1):
+        _DEBUG_MANAGER.add_checkpoint(operation_id, f"attempt_{attempt}")
+        _DEBUG_MANAGER.log_detailed(
+            "Vision",
+            f"Retry action attempt {attempt}/{max_attempts}",
+            attempt=attempt,
+            max_attempts=max_attempts,
+        )
+
+        pre_capture_id = _DEBUG_MANAGER.start_performance_tracking("pre_capture")
         pre_img = capture_region(region)
-        action_fn(*args, **kwargs)
-        time.sleep(delay)
-        post_img = capture_region(region)
-        if pre_img is None or post_img is None:
-            logging.warning(
-                f"Attempt {attempt}: capture_region returned None for pre_img or post_img in region {region}. Skipping confirm_fn and retrying."
+        _DEBUG_MANAGER.finish_performance_tracking(pre_capture_id)
+
+        if pre_img is None:
+            _DEBUG_MANAGER.log_basic(
+                "Vision", f"Attempt {attempt}: pre_img capture failed", "warning"
             )
+            logging.warning(f"Attempt {attempt}: pre_img capture failed")
             continue
+
+        action_start = time.time()
+        action_fn(*args, **kwargs)
+        action_time = time.time() - action_start
+        _DEBUG_MANAGER.log_verbose(
+            "Vision", "Action executed", data={"attempt": attempt, "action_time": action_time}
+        )
+
+        time.sleep(delay)
+
+        post_capture_id = _DEBUG_MANAGER.start_performance_tracking("post_capture")
+        post_img = capture_region(region)
+        _DEBUG_MANAGER.finish_performance_tracking(post_capture_id)
+
+        if post_img is None:
+            _DEBUG_MANAGER.log_basic(
+                "Vision", f"Attempt {attempt}: post_img capture failed", "warning"
+            )
+            logging.warning(f"Attempt {attempt}: post_img capture failed")
+            continue
+
+        verification_id = _DEBUG_MANAGER.start_performance_tracking("action_verification")
         success, percent_diff = confirm_fn(pre_img, post_img, threshold)
+        verification_time = _DEBUG_MANAGER.finish_performance_tracking(verification_id)
+
+        _DEBUG_MANAGER.log_vision_result(
+            f"retry_action_attempt_{attempt}",
+            success,
+            confidence=percent_diff,
+            processing_time=verification_time,
+            match_info={
+                "attempt": attempt,
+                "threshold": threshold,
+                "percent_diff": percent_diff,
+                "action_fn": action_fn.__name__
+                if hasattr(action_fn, "__name__")
+                else str(action_fn),
+            },
+        )
+
         logging.info(f"Attempt {attempt}: diff={percent_diff:.2f}% success={success}")
+
         if success:
+            _DEBUG_MANAGER.finish_performance_tracking(operation_id)
+            _DEBUG_MANAGER.log_action(
+                "retry_action",
+                f"{action_fn.__name__ if hasattr(action_fn, '__name__') else 'unknown'}",
+                True,
+                details={"attempts": attempt, "percent_diff": percent_diff},
+            )
             return True
-    logging.error(f"Action failed after {max_attempts} attempts.")
+
+    total_time = _DEBUG_MANAGER.finish_performance_tracking(operation_id)
+    error_msg = f"Action failed after {max_attempts} attempts."
+    _DEBUG_MANAGER.log_error(
+        "Vision",
+        Exception(error_msg),
+        context={
+            "max_attempts": max_attempts,
+            "threshold": threshold,
+            "region": region,
+            "total_time": total_time,
+            "action_fn": action_fn.__name__
+            if hasattr(action_fn, "__name__")
+            else str(action_fn),
+        },
+    )
+    logging.error(error_msg)
     return False
 
 
@@ -237,6 +450,9 @@ except Exception as e:
 # Module-level BetterCam instance
 # This is a hard requirement for baseline functionality, we cannot function without it
 _CAMERA = bettercam.create()
+
+# Module-level debug manager for vision operations
+_DEBUG_MANAGER = DebugManager(_GLOBAL_CONFIG.get("debug", {}))
 
 
 def _find_in_region(template_path: str, region: tuple) -> bool:
@@ -427,22 +643,24 @@ def read_currency_amount(region: tuple, debug: bool = False) -> int:
         - If OCR result is malformed, returns 0 and logs a warning.
     """
 
-    camera = _CAMERA
-
     try:
+        # Convert region to capture_region format (left, top, width, height)
+        left, top, right, bottom = region
+        width = right - left
+        height = bottom - top
+        capture_region_coords = (left, top, width, height)
+
+        # Use capture_region to get the frame (this applies debug mode optimizations)
         frame = None
         for attempt in range(3):
-            try:
-                left, top, right, bottom = region
-                frame = camera.grab(region=(left, top, right, bottom))
-            except Exception:
-                logging.exception("Camera grab error")
+            frame = capture_region(capture_region_coords)
             if frame is not None:
                 break
             logging.info(
                 f"No frame captured for currency region (attempt {attempt + 1}/3). Retrying..."
             )
             time.sleep(0.2)
+
         if frame is None:
             logging.warning("No frame captured for currency region after 3 attempts.")
             return 0
@@ -567,44 +785,49 @@ def capture_screen(region=None) -> np.ndarray:
     Returns:
         tuple: (img_bgr, img_gray) OpenCV images (numpy arrays)
     """
-    cam = _CAMERA
     try:
+        # Use capture_region to benefit from debug mode optimizations
         if region is not None:
-            left, top, width, height = region
-            right = left + width
-            bottom = top + height
-            bettercam_region = (left, top, right, bottom)
+            img_bgr = capture_region(region)
+            if img_bgr is None:
+                logging.warning(
+                    f"capture_screen: No frame captured after {_CAPTURE_RETRIES} attempts."
+                )
+                return None, None
+            img_gray = _to_grayscale(img_bgr)
+            return img_bgr, img_gray
         else:
-            bettercam_region = None
-        img = None
-        for attempt in range(_CAPTURE_RETRIES):
-            try:
-                img = cam.grab(region=bettercam_region)
-            except Exception:
-                logging.exception("BetterCam grab error")
-                img = None
-            if img is not None:
-                break
-            logging.info(
-                f"capture_screen: No new frame, retrying ({attempt + 1}/{_CAPTURE_RETRIES}) after {_CAPTURE_DELAY}s..."
-            )
-            time.sleep(_CAPTURE_DELAY)
-        if img is None:
-            logging.warning(
-                f"capture_screen: No frame captured after {_CAPTURE_RETRIES} attempts."
-            )
-            return None, None
-        # Handle BGRA/RGBA images and convert to BGR
-        if img.ndim == 3 and img.shape[2] == 4:
-            # BGRA or RGBA to BGR
-            img_bgr = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
-        elif img.ndim == 3 and img.shape[2] == 3:
-            # Already BGR or RGB, assume RGB from BetterCam
-            img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        else:
-            img_bgr = img
-        img_gray = _to_grayscale(img_bgr)
-        return img_bgr, img_gray
+            # For full screen capture, use the original logic
+            cam = _CAMERA
+            img = None
+            for attempt in range(_CAPTURE_RETRIES):
+                try:
+                    img = cam.grab(region=None)
+                except Exception:
+                    logging.exception("BetterCam grab error")
+                    img = None
+                if img is not None:
+                    break
+                logging.info(
+                    f"capture_screen: No new frame, retrying ({attempt + 1}/{_CAPTURE_RETRIES}) after {_CAPTURE_DELAY}s..."
+                )
+                time.sleep(_CAPTURE_DELAY)
+            if img is None:
+                logging.warning(
+                    f"capture_screen: No frame captured after {_CAPTURE_RETRIES} attempts."
+                )
+                return None, None
+
+            # Convert to BGR if needed
+            if img.ndim == 3 and img.shape[2] == 4:
+                img_bgr = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+            elif img.ndim == 3 and img.shape[2] == 3:
+                img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            else:
+                img_bgr = img
+
+            img_gray = _to_grayscale(img_bgr)
+            return img_bgr, img_gray
     except Exception:
         logging.exception(f"Failed to capture screen region {region}")
         return None, None
