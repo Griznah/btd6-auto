@@ -8,6 +8,7 @@ and error tracking throughout the application.
 import logging
 import time
 import json
+import collections
 from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional, Any
@@ -71,18 +72,40 @@ class DebugManager:
         self.screenshot_on_error = config.get('screenshot_on_error', True)
         self.performance_tracking = config.get('performance_tracking', True)
 
+        # Memory leak prevention settings
+        self.max_performance_entries = config.get('max_performance_entries', 1000)
+        self.cleanup_interval = config.get('cleanup_interval', 300)  # 5 minutes
+        self.last_cleanup_time = time.time()
+
         # Setup logging
         self._setup_logging()
 
-        # Performance tracking
-        self.performance_data: Dict[str, List[float]] = {}
+        # Performance tracking with bounded storage
+        self.performance_data: Dict[str, collections.deque] = {}
         self.active_operations: Dict[str, PerformanceTracker] = {}
 
-        # Error tracking
+        # Error tracking with bounded storage (existing implementation is good)
         self.error_history: List[Dict[str, Any]] = []
 
         # Component-specific loggers
         self.loggers = {}
+
+    def _cleanup_performance_data(self) -> None:
+        """Ensure performance data doesn't exceed memory bounds."""
+        current_time = time.time()
+
+        # Periodic cleanup check
+        if current_time - self.last_cleanup_time < self.cleanup_interval:
+            return
+
+        self.last_cleanup_time = current_time
+
+        # The deque with maxlen handles automatic cleanup, but we'll log cleanup events
+        total_entries = sum(len(deque_data) for deque_data in self.performance_data.values())
+        if total_entries > self.max_performance_entries:
+            self.log_basic('Performance',
+                         f'Performance data cleanup: {total_entries} entries tracked, '
+                         f'each operation limited to {self.max_performance_entries} recent entries')
 
     def _setup_logging(self) -> None:
         """Setup logging configuration."""
@@ -264,11 +287,15 @@ class DebugManager:
         tracker = self.active_operations[operation_id]
         duration = tracker.finish()
 
-        # Store performance data
+        # Store performance data with bounded storage
         operation_name = tracker.operation_name
         if operation_name not in self.performance_data:
-            self.performance_data[operation_name] = []
+            # Use deque with maxlen to prevent unbounded growth
+            self.performance_data[operation_name] = collections.deque(maxlen=self.max_performance_entries)
         self.performance_data[operation_name].append(duration)
+
+        # Periodic cleanup check
+        self._cleanup_performance_data()
 
         # Log performance
         self.log_detailed('Performance',
@@ -395,14 +422,15 @@ class DebugManager:
         """
         stats = {}
 
-        for operation, times in self.performance_data.items():
-            if times:
+        for operation, times_deque in self.performance_data.items():
+            if times_deque:
+                times_list = list(times_deque)  # Convert deque to list for calculations
                 stats[operation] = {
-                    'count': len(times),
-                    'total_time': sum(times),
-                    'average_time': sum(times) / len(times),
-                    'min_time': min(times),
-                    'max_time': max(times)
+                    'count': len(times_list),
+                    'total_time': sum(times_list),
+                    'average_time': sum(times_list) / len(times_list),
+                    'min_time': min(times_list),
+                    'max_time': max(times_list)
                 }
 
         return stats
@@ -429,4 +457,5 @@ class DebugManager:
     def clear_performance_data(self) -> None:
         """Clear all performance tracking data."""
         self.performance_data.clear()
+        self.last_cleanup_time = time.time()  # Reset cleanup timer
         self.log_basic('Performance', 'Performance data cleared')
