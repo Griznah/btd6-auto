@@ -121,6 +121,15 @@
     "recovery_delay": 1.0,
     "screenshot_on_error": true
   },
+  "debug": {
+    "enabled": false,
+    "level": 1,
+    "log_to_file": true,
+    "log_to_console": true,
+    "performance_tracking": true,
+    "screenshot_on_error": true,
+    "log_directory": "logs"
+  },
   "hotkey": {
     "upgrade_path_1": "Comma",
     "upgrade_path_2": "Period",

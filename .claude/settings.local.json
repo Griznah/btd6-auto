@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pytest:*)"
+      "Bash(pytest:*)",
+      "Bash(ruff check:*)",
+      "Bash(python -m ruff check:*)",
+      "Bash(git log:*)",
+      "Bash(gh pr list:*)"
     ],
     "deny": [],
     "ask": []
