@@ -10,11 +10,9 @@ import time
 import json
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 from pathlib import Path
 import traceback
-import threading
-
 
 class DebugLevel(Enum):
     """Debug logging levels."""
