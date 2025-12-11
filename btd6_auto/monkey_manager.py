@@ -270,6 +270,8 @@ def place_monkey(coords: tuple[int, int], monkey_key: str, delay: float = 0.2) -
             max_attempts=max_attempts,
             delay=delay,
             confirm_fn=confirm_selection,
+            debug_manager=_DEBUG_MANAGER,
+            operation_name="monkey_selection",
         )
 
         selection_time = _DEBUG_MANAGER.finish_performance_tracking(selection_id)
@@ -396,6 +398,8 @@ def place_hero(coords: tuple[int, int], hero_key: str, delay: float = 0.2) -> No
             max_attempts=max_attempts,
             delay=delay,
             confirm_fn=confirm_selection,
+            debug_manager=_DEBUG_MANAGER,
+            operation_name="hero_selection",
         )
 
         selection_time = _DEBUG_MANAGER.finish_performance_tracking(selection_id)

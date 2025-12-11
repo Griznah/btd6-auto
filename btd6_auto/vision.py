@@ -173,6 +173,8 @@ def retry_action(
     max_attempts=3,
     delay=0.3,
     confirm_fn=None,
+    debug_manager=None,
+    operation_name="retry_action",
     *args,
     **kwargs,
 ):
@@ -186,26 +188,63 @@ def retry_action(
         max_attempts (int): Maximum number of attempts to perform the action and confirm it.
         delay (float): Seconds to wait after performing the action before taking the post-action capture.
         confirm_fn (callable): Function that compares pre- and post-action images and returns a tuple `(success: bool, percent_diff: float)`.
+        debug_manager (Optional[DebugManager]): DebugManager instance for performance tracking. If None, no debug overhead is incurred.
+        operation_name (str): Name for the operation when debug tracking is enabled. Default: "retry_action".
         *args: Positional arguments forwarded to `action_fn`.
         **kwargs: Keyword arguments forwarded to `action_fn`.
 
     Returns:
         bool: `True` if the action was confirmed successful within the allotted attempts, `False` otherwise.
     """
+    # Lazy debug tracking - only create operation_id if debug_manager is provided and enabled
+    operation_id = None
+    if debug_manager is not None:
+        operation_id = debug_manager.start_performance_tracking(operation_name)
+        debug_manager.log_detailed("retry_action", "Starting retry action",
+                                  operation_name=operation_name, max_attempts=max_attempts,
+                                  region=region, threshold=threshold)
+
     for attempt in range(1, max_attempts + 1):
+        # Only track checkpoints if debug is enabled
+        if debug_manager is not None:
+            debug_manager.add_checkpoint(operation_id, f"attempt_{attempt}")
+
         pre_img = capture_region(region)
         action_fn(*args, **kwargs)
         time.sleep(delay)
         post_img = capture_region(region)
+
         if pre_img is None or post_img is None:
             logging.warning(
                 f"Attempt {attempt}: capture_region returned None for pre_img or post_img in region {region}. Skipping confirm_fn and retrying."
             )
+            # Only log warning if debug is enabled
+            if debug_manager is not None:
+                debug_manager.log_basic("retry_action", f"Attempt {attempt}: Failed to capture images",
+                                       attempt=attempt, region=region)
             continue
+
         success, percent_diff = confirm_fn(pre_img, post_img, threshold)
         logging.info(f"Attempt {attempt}: diff={percent_diff:.2f}% success={success}")
+
+        # Only log detailed info if debug is enabled
+        if debug_manager is not None:
+            debug_manager.log_detailed("retry_action", f"Attempt {attempt} completed",
+                                      attempt=attempt, percent_diff=percent_diff, success=success)
+
         if success:
+            if debug_manager is not None:
+                debug_manager.log_action(operation_name, "succeeded", True,
+                                       details={"attempt": attempt, "percent_diff": percent_diff})
+                debug_manager.finish_performance_tracking(operation_id)
             return True
+
+    # Only log error summary if debug is enabled
+    if debug_manager is not None:
+        debug_manager.log_action(operation_name, "failed", False,
+                               details={"max_attempts": max_attempts})
+        debug_manager.finish_performance_tracking(operation_id)
+
     logging.error(f"Action failed after {max_attempts} attempts.")
     return False
 

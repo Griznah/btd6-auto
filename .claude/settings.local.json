@@ -6,7 +6,9 @@
       "Bash(python -m ruff check:*)",
       "Bash(git log:*)",
       "Bash(gh pr list:*)",
-      "Skill(prompt-engineer)"
+      "Skill(prompt-engineer)",
+      "Bash(python -m pytest:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []
