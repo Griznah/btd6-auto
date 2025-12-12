@@ -13,9 +13,10 @@ import logging
 import os
 import time
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 import keyboard
 import bettercam
+import shutil
 
 # Use ConfigLoader for config loading
 from .config_loader import ConfigLoader
@@ -35,6 +36,44 @@ def make_unique_filename(prefix: str, folder: str = "screenshots") -> str:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     filename = f"{prefix}_{timestamp}.png"
     return os.path.join(folder, filename)
+
+
+def save_debug_image(image: np.ndarray, prefix: str, subfolder: str = None,
+                    base_folder: str = "debug/upgrades") -> str:
+    """
+    Save a debug image with organized folder structure.
+
+    Parameters:
+    image (np.ndarray): BGR image array to save.
+    prefix (str): Prefix for the filename.
+    subfolder (str, optional): Subfolder within the date folder.
+    base_folder (str): Base folder for debug images.
+
+    Returns:
+    str: The filepath if saved successfully, None otherwise.
+    """
+    if image is None:
+        return None
+
+    # Create organized directory structure
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    if subfolder:
+        folder = os.path.join(base_folder, date_str, subfolder)
+    else:
+        folder = os.path.join(base_folder, date_str)
+
+    os.makedirs(folder, exist_ok=True)
+
+    # Generate unique filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filename = f"{prefix}_{timestamp}.png"
+    filepath = os.path.join(folder, filename)
+
+    # Save with compression
+    compression = [cv2.IMWRITE_PNG_COMPRESSION, 9]  # Max compression
+    cv2.imwrite(filepath, image, compression)
+
+    return filepath
 
 
 def rect_to_region(rect):
@@ -709,3 +748,28 @@ def find_element_on_screen(element_image):
     except Exception:
         logging.exception("Error in find_element_on_screen")
         return None
+
+
+def cleanup_debug_images(base_folder: str = "debug/upgrades", retention_days: int = 7) -> None:
+    """
+    Remove debug images older than retention_days.
+
+    Parameters:
+    base_folder (str): Base folder containing debug images.
+    retention_days (int): Number of days to retain images.
+    """
+    cutoff_date = datetime.now() - timedelta(days=retention_days)
+
+    for root, dirs, files in os.walk(base_folder):
+        # Parse date from folder structure
+        try:
+            folder_date_str = os.path.basename(root)
+            if folder_date_str and folder_date_str != os.path.basename(base_folder):
+                folder_date = datetime.strptime(folder_date_str, "%Y-%m-%d")
+
+                if folder_date < cutoff_date:
+                    shutil.rmtree(root)
+                    logging.info(f"Cleaned up old debug folder: {root}")
+        except (ValueError, OSError):
+            # Skip invalid folders or errors
+            continue

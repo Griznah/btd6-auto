@@ -31,10 +31,16 @@ from .monkey_manager import (
     get_regions_for_monkey,
 )
 from .exceptions import UpgradeVerificationError, UpgradeStateError
-from .vision import verify_image_difference, handle_vision_error, capture_region
+from .vision import (
+    verify_image_difference,
+    handle_vision_error,
+    capture_region,
+    save_debug_image,
+)
 from .monkey_hotkey import get_monkey_hotkey
 from .config_loader import get_tower_positions_for_map
-from .input import move_and_click, cursor_resting_spot
+
+# from .input import move_and_click, cursor_resting_spot
 from .game_launcher import activate_btd6_window
 from .currency_reader import CurrencyReader
 from .debug_manager import DebugManager
@@ -295,25 +301,35 @@ class ActionManager:
         Raises exceptions for invalid positions or placement errors.
         """
         operation_id = self.debug_manager.start_performance_tracking("pre_play")
-        self.debug_manager.log_detailed("ActionManager", "Starting pre-play routine",
-                                      hero_count=1 if self.hero else 0,
-                                      pre_play_actions=len(self.pre_play_actions))
+        self.debug_manager.log_detailed(
+            "ActionManager",
+            "Starting pre-play routine",
+            hero_count=1 if self.hero else 0,
+            pre_play_actions=len(self.pre_play_actions),
+        )
 
         # Place hero
         hero = self.hero
         if hero and "position" in hero:
             hero_op_id = self.debug_manager.start_performance_tracking("place_hero")
-            self.debug_manager.log_detailed("ActionManager", "Placing hero",
-                                          hero_name=hero.get('name', ''),
-                                          position=hero.get("position"))
+            self.debug_manager.log_detailed(
+                "ActionManager",
+                "Placing hero",
+                hero_name=hero.get("name", ""),
+                position=hero.get("position"),
+            )
 
             try:
                 pos = self._normalize_position(hero["position"])
-                self.debug_manager.log_verbose("ActionManager", "Normalized hero position",
-                                             data={"normalized_pos": pos})
+                self.debug_manager.log_verbose(
+                    "ActionManager", "Normalized hero position", data={"normalized_pos": pos}
+                )
             except ValueError as e:
-                self.debug_manager.log_error("ActionManager", e,
-                                           context={"hero": hero, "position": hero.get("position")})
+                self.debug_manager.log_error(
+                    "ActionManager",
+                    e,
+                    context={"hero": hero, "position": hero.get("position")},
+                )
                 logging.exception("Invalid hero position")
                 raise
             hotkey = hero.get("hotkey")
@@ -321,7 +337,9 @@ class ActionManager:
                 # Defensive: require explicit hotkey or use dedicated hero_key from global config
                 hero_key = self.global_config.get("hero_key", "u")
                 if not hero_key:
-                    error_msg = "No hero hotkey defined in config and none provided in hero config."
+                    error_msg = (
+                        "No hero hotkey defined in config and none provided in hero config."
+                    )
                     self.debug_manager.log_basic("ActionManager", error_msg, "error")
                     logging.error(error_msg)
                     raise ValueError(
@@ -335,8 +353,11 @@ class ActionManager:
                 self._check_placement_result(result, hero.get("name", ""), pos, "hero")
                 self.debug_manager.log_action("place_hero", hero.get("name", ""), result)
             except Exception as e:
-                self.debug_manager.log_error("ActionManager", e,
-                                           context={"hero": hero, "position": pos, "hotkey": hotkey})
+                self.debug_manager.log_error(
+                    "ActionManager",
+                    e,
+                    context={"hero": hero, "position": pos, "hotkey": hotkey},
+                )
                 logging.exception("Exception during hero placement")
                 raise
 
@@ -347,17 +368,26 @@ class ActionManager:
         for idx, action in enumerate(self.pre_play_actions):
             if action.get("action") == "buy":
                 monkey_op_id = self.debug_manager.start_performance_tracking("place_monkey")
-                self.debug_manager.log_detailed("ActionManager", f"Placing pre-play monkey {idx+1}",
-                                              target=action.get('target'),
-                                              step=action.get('step'))
+                self.debug_manager.log_detailed(
+                    "ActionManager",
+                    f"Placing pre-play monkey {idx + 1}",
+                    target=action.get("target"),
+                    step=action.get("step"),
+                )
 
                 try:
                     pos = self._normalize_position(action["position"])
-                    self.debug_manager.log_verbose("ActionManager", "Normalized monkey position",
-                                                 data={"action": action, "normalized_pos": pos})
+                    self.debug_manager.log_verbose(
+                        "ActionManager",
+                        "Normalized monkey position",
+                        data={"action": action, "normalized_pos": pos},
+                    )
                 except ValueError as e:
-                    self.debug_manager.log_error("ActionManager", e,
-                                               context={"action": action, "position": action.get("position")})
+                    self.debug_manager.log_error(
+                        "ActionManager",
+                        e,
+                        context={"action": action, "position": action.get("position")},
+                    )
                     logging.exception(f"Invalid position for monkey '{action['target']}'")
                     raise
                 hotkey = action.get("hotkey")
@@ -371,11 +401,18 @@ class ActionManager:
                 try:
                     result = place_monkey(pos, hotkey)
                     self._check_placement_result(result, action["target"], pos, "monkey")
-                    self.debug_manager.log_action("place_monkey", action["target"], result,
-                                                details={"hotkey": hotkey, "position": pos})
+                    self.debug_manager.log_action(
+                        "place_monkey",
+                        action["target"],
+                        result,
+                        details={"hotkey": hotkey, "position": pos},
+                    )
                 except Exception as e:
-                    self.debug_manager.log_error("ActionManager", e,
-                                               context={"action": action, "position": pos, "hotkey": hotkey})
+                    self.debug_manager.log_error(
+                        "ActionManager",
+                        e,
+                        context={"action": action, "position": pos, "hotkey": hotkey},
+                    )
                     logging.exception("Exception during monkey placement")
                     raise
 
@@ -394,18 +431,27 @@ class ActionManager:
             action (Dict[str, Any]): Action dictionary containing target and position.
         """
         operation_id = self.debug_manager.start_performance_tracking("buy_action")
-        self.debug_manager.log_detailed("ActionManager", "Starting buy action",
-                                      target=action.get('target'),
-                                      step=action.get('step'))
+        self.debug_manager.log_detailed(
+            "ActionManager",
+            "Starting buy action",
+            target=action.get("target"),
+            step=action.get("step"),
+        )
 
         activate_btd6_window()
         try:
             pos = self._normalize_position(action["position"])
-            self.debug_manager.log_verbose("ActionManager", "Normalized position",
-                                         data={"action": action, "normalized_pos": pos})
+            self.debug_manager.log_verbose(
+                "ActionManager",
+                "Normalized position",
+                data={"action": action, "normalized_pos": pos},
+            )
         except ValueError as e:
-            self.debug_manager.log_error("ActionManager", e,
-                                       context={"action": action, "position": action.get("position")})
+            self.debug_manager.log_error(
+                "ActionManager",
+                e,
+                context={"action": action, "position": action.get("position")},
+            )
             logging.exception(f"Invalid position for monkey '{action['target']}'")
             raise
         hotkey = action.get("hotkey")
@@ -415,20 +461,30 @@ class ActionManager:
                 normalized_name,
                 self.global_config.get("default_monkey_key", "q"),
             )
-            self.debug_manager.log_detailed("ActionManager", "Resolved hotkey from target name",
-                                          target=action["target"],
-                                          normalized_name=normalized_name,
-                                          hotkey=hotkey)
+            self.debug_manager.log_detailed(
+                "ActionManager",
+                "Resolved hotkey from target name",
+                target=action["target"],
+                normalized_name=normalized_name,
+                hotkey=hotkey,
+            )
 
         logging.info(f"Placing {action['target']} at {pos}")
         try:
             result = place_monkey(pos, hotkey)
             self._check_placement_result(result, action["target"], pos, "monkey")
-            self.debug_manager.log_action("place_monkey", action["target"], result,
-                                        details={"hotkey": hotkey, "position": pos, "step": action.get("step")})
+            self.debug_manager.log_action(
+                "place_monkey",
+                action["target"],
+                result,
+                details={"hotkey": hotkey, "position": pos, "step": action.get("step")},
+            )
         except Exception as e:
-            self.debug_manager.log_error("ActionManager", e,
-                                       context={"action": action, "position": pos, "hotkey": hotkey})
+            self.debug_manager.log_error(
+                "ActionManager",
+                e,
+                context={"action": action, "position": pos, "hotkey": hotkey},
+            )
             logging.exception("Exception during monkey placement")
             raise
 
@@ -452,9 +508,7 @@ class ActionManager:
         upgrade_path = action.get("upgrade_path", {})
 
         if not target or not upgrade_path:
-            raise UpgradeStateError(
-                f"Upgrade action missing target or upgrade_path: {action}"
-            )
+            raise UpgradeStateError(f"Upgrade action missing target or upgrade_path: {action}")
 
         if len(upgrade_path) != 1:
             raise UpgradeStateError(
@@ -470,15 +524,22 @@ class ActionManager:
 
         pos = self.get_monkey_position(target)
         if not pos:
-            raise UpgradeStateError(
-                f"No position found for tower '{target}' during upgrade."
-            )
+            raise UpgradeStateError(f"No position found for tower '{target}' during upgrade.")
 
         return target, path_key, requested
 
-    def _attempt_upgrade_verification(self, target: str, path_key: str, next_tier: int,
-                                    hotkey: str, verification_region, targeted_img,
-                                    max_retries: int, retry_delay: float) -> Tuple[bool, float]:
+    def _attempt_upgrade_verification(
+        self,
+        target: str,
+        path_key: str,
+        next_tier: int,
+        hotkey: str,
+        verification_region,
+        targeted_img,
+        max_retries: int,
+        retry_delay: float,
+        debug_config: Dict = None,
+    ) -> Tuple[bool, float]:
         """
         Attempt upgrade verification with vision and retry logic.
 
@@ -491,6 +552,7 @@ class ActionManager:
             targeted_img: Pre-upgrade image for comparison
             max_retries (int): Maximum number of retry attempts
             retry_delay (float): Delay between retries
+            debug_config (Dict, optional): Debug configuration for image saving
 
         Returns:
             Tuple[bool, float]: (verification_success, final_diff)
@@ -502,51 +564,109 @@ class ActionManager:
         final_diff = 0.0
         operation_id = self.debug_manager.start_performance_tracking("upgrade_action")
 
+        # Initialize debug_config if not provided
+        if debug_config is None:
+            debug_config = {}
+
         for attempt in range(1, max_retries + 1):
             self.debug_manager.add_checkpoint(operation_id, f"upgrade_attempt_{attempt}")
 
             info_msg = f"[Upgrade] Attempt {attempt}/{max_retries}: {target} {path_key} to tier {next_tier} via {hotkey}"
-            self.debug_manager.log_detailed("ActionManager", info_msg,
-                                          attempt=attempt, target=target, path_key=path_key,
-                                          next_tier=next_tier, hotkey=hotkey)
+            self.debug_manager.log_detailed(
+                "ActionManager",
+                info_msg,
+                attempt=attempt,
+                target=target,
+                path_key=path_key,
+                next_tier=next_tier,
+                hotkey=hotkey,
+            )
             logging.info(info_msg)
+
+            # Save pre-upgrade image if debug enabled
+            if debug_config.get("save_images") and (
+                attempt == 1 or debug_config.get("save_on_retry")
+            ):
+                pre_img = capture_region(verification_region)
+                if pre_img is not None:
+                    filepath = save_debug_image(
+                        pre_img,
+                        f"pre_upgrade_attempt_{attempt - 1}_{target}_{path_key}",
+                        "verification",
+                    )
+                    self.debug_manager.log_detailed(
+                        "ActionManager",
+                        f"Saved pre-upgrade image for attempt {attempt - 1}",
+                        filepath=filepath,
+                    )
 
             keyboard.send(hotkey.lower())
             time.sleep(self.timing.get("upgrade_delay", 0.3))
 
             # Vision-based verification
-            verification_op_id = self.debug_manager.start_performance_tracking("upgrade_verification")
+            verification_op_id = self.debug_manager.start_performance_tracking(
+                "upgrade_verification"
+            )
             with self._capture_and_manage_images(verification_region, targeted_img) as images:
                 post_img = capture_region(verification_region)
                 if post_img is not None:
                     images.append(post_img)
 
+                    # Save post-upgrade image if debug enabled
+                    if debug_config.get("save_images") and (
+                        attempt == 1 or debug_config.get("save_on_retry")
+                    ):
+                        filepath = save_debug_image(
+                            post_img,
+                            f"post_upgrade_attempt_{attempt - 1}_{target}_{path_key}",
+                            "verification",
+                        )
+                        self.debug_manager.log_detailed(
+                            "ActionManager",
+                            f"Saved post-upgrade image for attempt {attempt - 1}",
+                            filepath=filepath,
+                        )
+
                 success, diff = verify_image_difference(targeted_img, post_img, threshold=15.0)
                 final_diff = diff
 
-            verification_time = self.debug_manager.finish_performance_tracking(verification_op_id)
+            verification_time = self.debug_manager.finish_performance_tracking(
+                verification_op_id
+            )
 
-            self.debug_manager.log_vision_result("upgrade_verification", success,
-                                                confidence=diff,
-                                                match_info={
-                                                    "target": target,
-                                                    "path_key": path_key,
-                                                    "next_tier": next_tier,
-                                                    "attempt": attempt,
-                                                    "threshold": 15.0
-                                                },
-                                                processing_time=verification_time)
+            self.debug_manager.log_vision_result(
+                "upgrade_verification",
+                success,
+                confidence=diff,
+                match_info={
+                    "target": target,
+                    "path_key": path_key,
+                    "next_tier": next_tier,
+                    "attempt": attempt,
+                    "threshold": 15.0,
+                },
+                processing_time=verification_time,
+            )
 
             info_msg = f"Upgrade verification for {target} {path_key} tier {next_tier}: success={success}, diff={diff:.2f}"
-            self.debug_manager.log_detailed("ActionManager", info_msg,
-                                          success=success, diff=diff, attempt=attempt)
+            self.debug_manager.log_detailed(
+                "ActionManager", info_msg, success=success, diff=diff, attempt=attempt
+            )
             logging.info(info_msg)
 
             if success:
                 verified = True
-                self.debug_manager.log_action("upgrade", target, True,
-                                            details={"path_key": path_key, "tier": next_tier,
-                                                   "attempts": attempt, "diff": diff})
+                self.debug_manager.log_action(
+                    "upgrade",
+                    target,
+                    True,
+                    details={
+                        "path_key": path_key,
+                        "tier": next_tier,
+                        "attempts": attempt,
+                        "diff": diff,
+                    },
+                )
                 break
             else:
                 time.sleep(retry_delay)
@@ -554,6 +674,21 @@ class ActionManager:
         self.debug_manager.finish_performance_tracking(operation_id)
 
         if not verified:
+            # Save final failure image if debug enabled
+            if debug_config.get("save_images") and debug_config.get("save_on_failure"):
+                final_error_img = capture_region(verification_region)
+                if final_error_img is not None:
+                    filepath = save_debug_image(
+                        final_error_img,
+                        f"verification_final_error_{target}_{path_key}",
+                        "errors",
+                    )
+                    self.debug_manager.log_detailed(
+                        "ActionManager",
+                        "Saved final verification error image",
+                        filepath=filepath,
+                    )
+
             raise UpgradeVerificationError(
                 f"Upgrade verification failed for {target} {path_key} to tier {next_tier} "
                 f"after {max_retries} attempts. Final diff: {final_diff:.2f}"
@@ -574,17 +709,27 @@ class ActionManager:
             UpgradeVerificationError: If upgrade verification fails after all retries
         """
         operation_id = self.debug_manager.start_performance_tracking("upgrade_action")
-        self.debug_manager.log_detailed("ActionManager", "Starting upgrade action",
-                                      target=action.get('target'),
-                                      upgrade_path=action.get('upgrade_path'),
-                                      step=action.get('step'))
+        self.debug_manager.log_detailed(
+            "ActionManager",
+            "Starting upgrade action",
+            target=action.get("target"),
+            upgrade_path=action.get("upgrade_path"),
+            step=action.get("step"),
+        )
+
+        # Get debug configuration early so it's available in exception handlers
+        debug_config = (
+            self.global_config.get("automation", {}).get("debug", {}).get("upgrades", {})
+        )
 
         try:
             activate_btd6_window()
 
             # Check if CurrencyReader is available
             if not self.currency_reader:
-                error_msg = "No CurrencyReader provided to ActionManager. Skipping upgrade action."
+                error_msg = (
+                    "No CurrencyReader provided to ActionManager. Skipping upgrade action."
+                )
                 self.debug_manager.log_basic("ActionManager", error_msg, "warning")
                 logging.warning(error_msg)
                 return
@@ -599,14 +744,17 @@ class ActionManager:
 
             current = current_tiers.get(path_key, 0)
 
-            self.debug_manager.log_verbose("ActionManager", "Current upgrade state",
-                                         data={
-                                             "target": target,
-                                             "current_tiers": current_tiers,
-                                             "path_key": path_key,
-                                             "current_tier": current,
-                                             "requested_tier": requested
-                                         })
+            self.debug_manager.log_verbose(
+                "ActionManager",
+                "Current upgrade state",
+                data={
+                    "target": target,
+                    "current_tiers": current_tiers,
+                    "path_key": path_key,
+                    "current_tier": current,
+                    "requested_tier": requested,
+                },
+            )
 
             # Check if already at or beyond requested tier
             if current >= requested:
@@ -643,15 +791,29 @@ class ActionManager:
                 return
 
             # Use vision-based targeting to select the monkey before upgrade
-            targeting_op_id = self.debug_manager.start_performance_tracking("upgrade_targeting")
-            self.debug_manager.log_detailed("ActionManager", "Starting targeting for upgrade",
-                                          target=target, position=pos)
+            targeting_op_id = self.debug_manager.start_performance_tracking(
+                "upgrade_targeting"
+            )
+            self.debug_manager.log_detailed(
+                "ActionManager", "Starting targeting for upgrade", target=target, position=pos
+            )
 
             regions = get_regions_for_monkey()
             max_attempts = regions["max_attempts"]
             targeting_threshold = regions["place_threshold"]
             targeting_region_1 = regions["target_region_1"]
             targeting_region_2 = regions["target_region_2"]
+
+            # Save pre-targeting image if debug enabled
+            if debug_config.get("save_images"):
+                pre_targeting_img = capture_region(targeting_region_1)
+                if pre_targeting_img is not None:
+                    filepath = save_debug_image(
+                        pre_targeting_img, f"pre_targeting_{target}_{path_key}", "targeting"
+                    )
+                    self.debug_manager.log_detailed(
+                        "ActionManager", "Saved pre-targeting image", filepath=filepath
+                    )
 
             with self._capture_and_manage_images(None) as images:
                 targeting_success, region_id, targeted_img = try_targeting_success(
@@ -667,14 +829,69 @@ class ActionManager:
                 if targeted_img is not None:
                     images.append(targeted_img)
 
-            self.debug_manager.log_vision_result("targeting_for_upgrade", targeting_success,
-                                                confidence=targeting_threshold,
-                                                match_info={"region_id": region_id, "target": target})
+            self.debug_manager.log_vision_result(
+                "targeting_for_upgrade",
+                targeting_success,
+                confidence=targeting_threshold,
+                match_info={"region_id": region_id, "target": target},
+            )
+
+            # Save targeting result image if debug enabled
+            if debug_config.get("save_images") and targeted_img is not None:
+                status = "success" if targeting_success else "failure"
+                if (status == "success" and debug_config.get("save_on_success")) or (
+                    status == "failure" and debug_config.get("save_on_failure")
+                ):
+                    filepath = save_debug_image(
+                        targeted_img, f"targeting_{status}_{target}_{path_key}", "targeting"
+                    )
+                    self.debug_manager.log_detailed(
+                        "ActionManager",
+                        f"Saved targeting {status} image",
+                        filepath=filepath,
+                        region_id=region_id,
+                    )
 
             if not targeting_success or targeted_img is None:
                 error_msg = f"Upgrade targeting failed for {target} at {pos}"
-                self.debug_manager.log_error("ActionManager", Exception(error_msg),
-                                           context={"target": target, "position": pos, "region_id": region_id})
+
+                # Save error state image if debug enabled
+                if debug_config.get("save_images") and debug_config.get("save_on_failure"):
+                    error_region = (
+                        targeting_region_1 if region_id == "region1" else targeting_region_2
+                    )
+                    error_img = capture_region(error_region)
+                    if error_img is not None:
+                        filepath = save_debug_image(
+                            error_img, f"targeting_error_{target}_{path_key}", "errors"
+                        )
+                        self.debug_manager.log_error(
+                            "ActionManager",
+                            Exception(error_msg),
+                            context={
+                                "target": target,
+                                "position": pos,
+                                "region_id": region_id,
+                                "error_image": filepath,
+                            },
+                        )
+                    else:
+                        self.debug_manager.log_error(
+                            "ActionManager",
+                            Exception(error_msg),
+                            context={
+                                "target": target,
+                                "position": pos,
+                                "region_id": region_id,
+                            },
+                        )
+                else:
+                    self.debug_manager.log_error(
+                        "ActionManager",
+                        Exception(error_msg),
+                        context={"target": target, "position": pos, "region_id": region_id},
+                    )
+
                 logging.error(error_msg)
                 handle_vision_error()
                 return
@@ -691,14 +908,26 @@ class ActionManager:
             max_retries = retries_cfg.get("max_retries", 3)
             retry_delay = retries_cfg.get("retry_delay", 0.5)
 
-            self.debug_manager.log_detailed("ActionManager", "Starting upgrade attempts",
-                                          target=target, path_key=path_key, next_tier=next_tier,
-                                          max_retries=max_retries)
+            self.debug_manager.log_detailed(
+                "ActionManager",
+                "Starting upgrade attempts",
+                target=target,
+                path_key=path_key,
+                next_tier=next_tier,
+                max_retries=max_retries,
+            )
 
             # Perform upgrade verification with retry logic
             verified, final_diff = self._attempt_upgrade_verification(
-                target, path_key, next_tier, hotkey, verification_region,
-                targeted_img, max_retries, retry_delay
+                target,
+                path_key,
+                next_tier,
+                hotkey,
+                verification_region,
+                targeted_img,
+                max_retries,
+                retry_delay,
+                debug_config,
             )
 
             # CRITICAL FIX: Only update state after successful verification and tier check
@@ -711,12 +940,18 @@ class ActionManager:
                 with self._access_upgrade_state() as state:
                     state[target] = updated_tiers
 
-                self.debug_manager.log_verbose("ActionManager", "Updated upgrade state",
-                                             data={"target": target, "new_tiers": updated_tiers})
+                self.debug_manager.log_verbose(
+                    "ActionManager",
+                    "Updated upgrade state",
+                    data={"target": target, "new_tiers": updated_tiers},
+                )
 
                 # Only mark as completed if we've reached the requested tier
                 if next_tier >= requested:
-                    self.debug_manager.log_basic("ActionManager", f"Upgrade completed: {target} {path_key} tier {next_tier}")
+                    self.debug_manager.log_basic(
+                        "ActionManager",
+                        f"Upgrade completed: {target} {path_key} tier {next_tier}",
+                    )
                     self.mark_completed(action.get("step", -1))
                 else:
                     # Partial upgrade success - continue with remaining upgrades
@@ -726,27 +961,53 @@ class ActionManager:
 
         except (UpgradeStateError, UpgradeVerificationError) as e:
             # Log the structured exception and re-raise for caller to handle
-            self.debug_manager.log_error("ActionManager", e,
-                                       context={"action": action, "step": action.get("step")})
+            error_context = {"action": action, "step": action.get("step")}
+
+            # Save exception error image if debug enabled
+            if debug_config.get("save_images") and debug_config.get("save_on_failure"):
+                exception_img = capture_region((0, 0, 1920, 1080))  # Full screen
+                if exception_img is not None:
+                    filepath = save_debug_image(
+                        exception_img,
+                        f"exception_{type(e).__name__}_{action.get('target', 'unknown')}",
+                        "errors",
+                    )
+                    error_context["exception_image"] = filepath
+                    self.debug_manager.log_detailed(
+                        "ActionManager",
+                        f"Saved exception error image for {type(e).__name__}",
+                        filepath=filepath,
+                    )
+
+            self.debug_manager.log_error("ActionManager", e, context=error_context)
             logging.error(f"Upgrade action failed: {e}")
             # Re-raise to allow calling code to handle the failure appropriately
             raise
         except Exception as e:
             # Handle unexpected exceptions
-            self.debug_manager.log_error("ActionManager", e,
-                                       context={"action": action, "step": action.get("step")})
+            error_context = {"action": action, "step": action.get("step")}
+
+            # Save exception error image if debug enabled
+            if debug_config.get("save_images") and debug_config.get("save_on_failure"):
+                exception_img = capture_region((0, 0, 1920, 1080))  # Full screen
+                if exception_img is not None:
+                    filepath = save_debug_image(
+                        exception_img,
+                        f"exception_{type(e).__name__}_{action.get('target', 'unknown')}",
+                        "errors",
+                    )
+                    error_context["exception_image"] = filepath
+                    self.debug_manager.log_detailed(
+                        "ActionManager",
+                        f"Saved exception error image for {type(e).__name__}",
+                        filepath=filepath,
+                    )
+
+            self.debug_manager.log_error("ActionManager", e, context=error_context)
             logging.exception(f"Unexpected error during upgrade action: {e}")
             raise
         finally:
-            # Always ensure cursor is moved away and debug tracking is completed
-            try:
-                coords = cursor_resting_spot()
-                move_and_click(coords[0], coords[1])
-                time.sleep(self.timing.get("upgrade_delay", 0.5))
-            except Exception as e:
-                # Log cursor cleanup error but don't raise it
-                self.debug_manager.log_basic("ActionManager", f"Failed to move cursor to resting spot: {e}", "warning")
-
+            # Always ensure debug tracking is completed
             self.debug_manager.finish_performance_tracking(operation_id)
 
 

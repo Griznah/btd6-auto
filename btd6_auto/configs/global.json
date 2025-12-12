@@ -24,6 +24,18 @@
       "max_retries": 3,
       "retry_delay": 0.5,
       "image_recognition_timeout": 5.0
+    },
+    "debug": {
+      "upgrades": {
+        "save_images": true,
+        "save_on_success": false,
+        "save_on_failure": true,
+        "save_on_retry": true,
+        "compression_quality": 95,
+        "async_saving": false,
+        "retention_days": 7,
+        "base_folder": "debug/upgrades"
+      }
     }
   },
   "map_filenames": {
