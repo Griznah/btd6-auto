@@ -12,7 +12,7 @@
   "automation": {
     "pause_between_actions": 0.1,
     "failsafe_enabled": true,
-    "killswitch_key": "esc",
+    "killswitch_key": "end",
     "monitor_duration": 1,
     "logging_level": "INFO",
     "timing": {

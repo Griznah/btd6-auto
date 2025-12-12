@@ -14,11 +14,11 @@ from .state import SharedState
 from .config_utils import get_vision_config
 
 
-def esc_listener():
+def killswitch():
     """
-    Start a keyboard listener that activates a hard kill switch when the Escape key is pressed.
+    Start a keyboard listener that activates a hard kill switch when the specified key is pressed.
 
-    When Escape is pressed, sets SharedState.KILL_SWITCH to True and terminates the process immediately using os._exit(0).
+    When the key is pressed, sets SharedState.KILL_SWITCH to True and terminates the process immediately using os._exit(0).
 
     Returns:
         pynput.keyboard.Listener: The started listener instance.
@@ -26,15 +26,15 @@ def esc_listener():
 
     def on_press(key):
         """
-        Handle a keyboard key press and trigger an immediate hard shutdown when ESC is pressed.
+        Handle a keyboard key press and trigger an immediate hard shutdown when the specified key is pressed.
 
-        If the pressed key is the ESC key, logs an informational message, sets KILL_SWITCH to True (using SharedState), and immediately terminates the process using os._exit(0).
+        If the pressed key is the specified key, logs an informational message, sets KILL_SWITCH to True (using SharedState), and immediately terminates the process using os._exit(0).
 
         Parameters:
             key: The key event object received from the keyboard listener.
         """
-        if key == pynput_keyboard.Key.esc:
-            logging.info("ESC pressed! Exiting...")
+        if key == pynput_keyboard.Key.end:
+            logging.info("KILLSWITCH pressed! Exiting...")
             # Set the shared KILL_SWITCH variable
             SharedState.KILL_SWITCH = True
             # Hard terminate the process immediately
@@ -96,9 +96,7 @@ def cursor_resting_spot() -> tuple[int, int]:
         if isinstance(resting_spot, list) and len(resting_spot) == 2:
             resting_spot = (resting_spot[0], resting_spot[1])
         elif not (isinstance(resting_spot, tuple) and len(resting_spot) == 2):
-            logging.warning(
-                "Invalid resting_spot format, using default (1035, 900)."
-            )
+            logging.warning("Invalid resting_spot format, using default (1035, 900).")
             resting_spot = (1035, 900)
         logging.debug(f"Moving cursor to resting spot at {resting_spot}")
         pyautogui.moveTo(resting_spot[0], resting_spot[1], duration=0.1)

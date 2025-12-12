@@ -9,7 +9,7 @@ import time
 import pyautogui
 from btd6_auto.config_loader import ConfigLoader
 from btd6_auto.game_launcher import load_map
-from btd6_auto.input import esc_listener
+from btd6_auto.input import killswitch
 from btd6_auto.state import SharedState
 from btd6_auto.vision import set_round_state
 from btd6_auto.currency_reader import CurrencyReader
@@ -29,7 +29,7 @@ def main() -> None:
 
     This function:
     - Loads global and map configurations (falls back to "Monkey Meadow" on map-load failure) and initializes logging.
-    - Starts an ESC listener that toggles a global killswitch to stop automation.
+    - Starts a KILLSWITCH listener that toggles a global killswitch to stop automation.
     - Repeatedly attempts to load the map; if loading fails the function exits.
     - Places the configured hero, executes any pre-play "buy" actions (monkey placements), and then enters a runtime loop that monitors currency and pauses between action cycles.
     - After runtime monitoring, processes the map's ordered actions (e.g., "buy" for monkey placement and placeholder handling for "upgrade") using configured timing and key bindings.
@@ -95,7 +95,9 @@ def main() -> None:
     # Log startup messages after logging is configured
     if DebugState.DEBUG_ENABLED:
         logging.info("Debug mode enabled via --debug flag")
-    logging.info("BTD6 Automation Bot starting, press ESC to exit at any time.")
+    logging.info(
+        "BTD6 Automation Bot starting, press the killswitch (end) to exit at any time."
+    )
 
     # Log debug manager initialization
     debug_manager.log_basic(
@@ -110,7 +112,7 @@ def main() -> None:
     )
 
     # Start killswitch listener
-    esc_listener()
+    killswitch()
 
     try:
         # Load map once
@@ -159,7 +161,7 @@ def main() -> None:
         )
 
         logging.info(
-            "Opening hero and monkey sequence complete. Press ESC to exit at any time."
+            "Opening hero and monkey sequence complete. Press the killswitch to exit at any time."
         )
 
         currency = currency_reader.get_currency()
