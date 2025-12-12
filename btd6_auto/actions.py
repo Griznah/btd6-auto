@@ -21,6 +21,8 @@ from pathlib import Path
 import logging
 import time
 import keyboard
+import threading
+from contextlib import contextmanager
 
 from .monkey_manager import (
     place_monkey,
@@ -28,6 +30,7 @@ from .monkey_manager import (
     try_targeting_success,
     get_regions_for_monkey,
 )
+from .exceptions import UpgradeVerificationError, UpgradeStateError
 from .vision import verify_image_difference, handle_vision_error, capture_region
 from .monkey_hotkey import get_monkey_hotkey
 from .config_loader import get_tower_positions_for_map
@@ -207,8 +210,30 @@ class ActionManager:
         self.completed_steps = set()
         self.timing = global_config.get("automation", {}).get("timing", {})
         self.monkey_upgrade_state = {}
+        self._state_lock = threading.Lock()  # Thread safety for upgrade state
         self.currency_reader = currency_reader
         self.debug_manager = debug_manager or DebugManager(global_config.get("debug", {}))
+
+    @contextmanager
+    def _access_upgrade_state(self):
+        """Context manager for thread-safe upgrade state access."""
+        self._state_lock.acquire()
+        try:
+            yield self.monkey_upgrade_state
+        finally:
+            self._state_lock.release()
+
+    @contextmanager
+    def _capture_and_manage_images(self, verification_region, initial_img=None):
+        """Context manager for image capture and cleanup."""
+        images = []
+        try:
+            if initial_img is not None:
+                images.append(initial_img)
+            yield images
+        finally:
+            # Ensure images are cleaned up (numpy arrays are self-managing, but we clear references)
+            images.clear()
 
     def _normalize_position(self, pos: Any) -> Tuple[int, int]:
         """
@@ -410,159 +435,77 @@ class ActionManager:
         self.debug_manager.finish_performance_tracking(operation_id)
         time.sleep(self.timing.get("placement_delay", 0.5))
 
-    def run_upgrade_action(self, action: Dict[str, Any]) -> None:
+    def _validate_upgrade_action(self, action: Dict[str, Any]) -> Tuple[str, str, int]:
         """
-        Execute a single upgrade for a monkey/tower, upgrading only one path per call, with vision-based verification and retry logic.
-        The action's 'upgrade_path' dict must contain exactly one path (e.g., {"path_2": 1}).
+        Validate upgrade action parameters and return validated values.
 
         Args:
-            action (Dict[str, Any]): Action dict with 'target' and single-key 'upgrade_path'.
+            action (Dict[str, Any]): Action dict with 'target' and 'upgrade_path'
+
+        Returns:
+            Tuple[str, str, int]: (target, path_key, requested_tier)
+
+        Raises:
+            UpgradeStateError: If validation fails
         """
-        operation_id = self.debug_manager.start_performance_tracking("upgrade_action")
-        self.debug_manager.log_detailed("ActionManager", "Starting upgrade action",
-                                      target=action.get('target'),
-                                      upgrade_path=action.get('upgrade_path'),
-                                      step=action.get('step'))
-
-        activate_btd6_window()
-
-        # Check if CurrencyReader is available
-        if not self.currency_reader:
-            error_msg = "No CurrencyReader provided to ActionManager. Skipping upgrade action."
-            self.debug_manager.log_basic("ActionManager", error_msg, "warning")
-            logging.warning(error_msg)
-            return
-
         target = action.get("target")
         upgrade_path = action.get("upgrade_path", {})
+
         if not target or not upgrade_path:
-            error_msg = "Upgrade action missing target or upgrade_path."
-            self.debug_manager.log_basic("ActionManager", error_msg, "warning")
-            logging.warning(error_msg)
-            return
+            raise UpgradeStateError(
+                f"Upgrade action missing target or upgrade_path: {action}"
+            )
 
         if len(upgrade_path) != 1:
-            error_msg = f"Upgrade action for '{target}' must specify exactly one path in upgrade_path, got: {upgrade_path}"
-            self.debug_manager.log_basic("ActionManager", error_msg, "warning")
-            logging.warning(error_msg)
-            return
+            raise UpgradeStateError(
+                f"Upgrade action for '{target}' must specify exactly one path in upgrade_path, got: {upgrade_path}"
+            )
 
         path_key, requested = next(iter(upgrade_path.items()))
+
         if path_key not in ("path_1", "path_2", "path_3"):
-            error_msg = f"Invalid path key '{path_key}' in upgrade_path for '{target}'."
-            self.debug_manager.log_basic("ActionManager", error_msg, "warning")
-            logging.warning(error_msg)
-            return
+            raise UpgradeStateError(
+                f"Invalid path key '{path_key}' in upgrade_path for '{target}'."
+            )
 
         pos = self.get_monkey_position(target)
         if not pos:
-            error_msg = f"No position found for tower '{target}' during upgrade."
-            self.debug_manager.log_basic("ActionManager", error_msg, "warning")
-            logging.warning(error_msg)
-            return
+            raise UpgradeStateError(
+                f"No position found for tower '{target}' during upgrade."
+            )
 
-        current_tiers = self.monkey_upgrade_state.get(
-            target, {"path_1": 0, "path_2": 0, "path_3": 0}
-        )
-        current = current_tiers.get(path_key, 0)
+        return target, path_key, requested
 
-        self.debug_manager.log_verbose("ActionManager", "Current upgrade state",
-                                     data={
-                                         "target": target,
-                                         "current_tiers": current_tiers,
-                                         "path_key": path_key,
-                                         "current_tier": current,
-                                         "requested_tier": requested
-                                     })
+    def _attempt_upgrade_verification(self, target: str, path_key: str, next_tier: int,
+                                    hotkey: str, verification_region, targeted_img,
+                                    max_retries: int, retry_delay: float) -> Tuple[bool, float]:
+        """
+        Attempt upgrade verification with vision and retry logic.
 
-        # Check if already at or beyond requested tier
-        if current >= requested:
-            info_msg = f"No upgrade needed for {target} {path_key}: current tier {current}, requested {requested}."
-            self.debug_manager.log_basic("ActionManager", info_msg, "info")
-            logging.info(info_msg)
-            self.mark_completed(action.get("step", -1))
-            return
+        Args:
+            target (str): Tower name
+            path_key (str): Upgrade path (path_1, path_2, path_3)
+            next_tier (int): Target tier
+            hotkey (str): Keyboard hotkey for upgrade
+            verification_region: Region to capture for verification
+            targeted_img: Pre-upgrade image for comparison
+            max_retries (int): Maximum number of retry attempts
+            retry_delay (float): Delay between retries
 
-        # Calculate the next tier (always upgrade by exactly 1)
-        next_tier = current + 1
+        Returns:
+            Tuple[bool, float]: (verification_success, final_diff)
 
-        # Check max tier boundary (BTD6 max is 5)
-        if next_tier > 5:
-            warning_msg = f"Cannot upgrade {target} {path_key} beyond tier 5. Current: {current}, Requested: {requested}"
-            self.debug_manager.log_basic("ActionManager", warning_msg, "warning")
-            logging.warning(warning_msg)
-            self.mark_completed(action.get("step", -1))
-            return
-
-        path_hotkeys = self.global_config.get("hotkey", {})
-        path_map = {
-            "path_1": "upgrade_path_1",
-            "path_2": "upgrade_path_2",
-            "path_3": "upgrade_path_3",
-        }
-        hotkey_name = path_map[path_key]
-        hotkey = path_hotkeys.get(hotkey_name)
-        if not hotkey:
-            error_msg = f"No hotkey defined for {hotkey_name} in global config."
-            self.debug_manager.log_basic("ActionManager", error_msg, "warning")
-            logging.warning(error_msg)
-            return
-
-        # Use vision-based targeting to select the monkey before upgrade
-        targeting_op_id = self.debug_manager.start_performance_tracking("upgrade_targeting")
-        self.debug_manager.log_detailed("ActionManager", "Starting targeting for upgrade",
-                                      target=target, position=pos)
-
-        regions = get_regions_for_monkey()
-        max_attempts = regions["max_attempts"]
-        targeting_threshold = regions["place_threshold"]
-        targeting_region_1 = regions["target_region_1"]
-        targeting_region_2 = regions["target_region_2"]
-
-        targeting_success, region_id, targeted_img = try_targeting_success(
-            pos,
-            targeting_region_1,
-            targeting_region_2,
-            targeting_threshold,
-            max_attempts,
-            0.2,
-            verify_image_difference,
-        )
-
-        self.debug_manager.log_vision_result("targeting_for_upgrade", targeting_success,
-                                            confidence=targeting_threshold,
-                                            match_info={"region_id": region_id, "target": target})
-
-        if not targeting_success or targeted_img is None:
-            error_msg = f"Upgrade targeting failed for {target} at {pos}"
-            self.debug_manager.log_error("ActionManager", Exception(error_msg),
-                                       context={"target": target, "position": pos, "region_id": region_id})
-            logging.error(error_msg)
-            handle_vision_error()
-            return
-
-        # Determine which region to use for verification
-        verification_region = (
-            targeting_region_1 if region_id == "region1" else targeting_region_2
-        )
-
-        self.debug_manager.finish_performance_tracking(targeting_op_id)
-
-        # Read retry config from global config
-        retries_cfg = self.global_config.get("automation", {}).get("retries", {})
-        max_retries = retries_cfg.get("max_retries", 3)
-        retry_delay = retries_cfg.get("retry_delay", 0.5)
-
-        self.debug_manager.log_detailed("ActionManager", "Starting upgrade attempts",
-                                      target=target, path_key=path_key, next_tier=next_tier,
-                                      max_retries=max_retries)
-
-        # Perform single upgrade with retries
+        Raises:
+            UpgradeVerificationError: If verification fails after all retries
+        """
         verified = False
+        final_diff = 0.0
+        operation_id = self.debug_manager.start_performance_tracking("upgrade_action")
+
         for attempt in range(1, max_retries + 1):
             self.debug_manager.add_checkpoint(operation_id, f"upgrade_attempt_{attempt}")
 
-            info_msg = f"[Upgrade] Attempt {attempt}/{max_retries}: {target} {path_key} to tier {next_tier} via {hotkey_name} ({hotkey})"
+            info_msg = f"[Upgrade] Attempt {attempt}/{max_retries}: {target} {path_key} to tier {next_tier} via {hotkey}"
             self.debug_manager.log_detailed("ActionManager", info_msg,
                                           attempt=attempt, target=target, path_key=path_key,
                                           next_tier=next_tier, hotkey=hotkey)
@@ -573,8 +516,13 @@ class ActionManager:
 
             # Vision-based verification
             verification_op_id = self.debug_manager.start_performance_tracking("upgrade_verification")
-            post_img = capture_region(verification_region)
-            success, diff = verify_image_difference(targeted_img, post_img, threshold=15.0)
+            with self._capture_and_manage_images(verification_region, targeted_img) as images:
+                post_img = capture_region(verification_region)
+                if post_img is not None:
+                    images.append(post_img)
+
+                success, diff = verify_image_difference(targeted_img, post_img, threshold=15.0)
+                final_diff = diff
 
             verification_time = self.debug_manager.finish_performance_tracking(verification_op_id)
 
@@ -595,8 +543,6 @@ class ActionManager:
             logging.info(info_msg)
 
             if success:
-                # Update upgrade state after verified success
-                current_tiers[path_key] = next_tier
                 verified = True
                 self.debug_manager.log_action("upgrade", target, True,
                                             details={"path_key": path_key, "tier": next_tier,
@@ -605,37 +551,203 @@ class ActionManager:
             else:
                 time.sleep(retry_delay)
 
-        if not verified:
-            error_msg = f"Upgrade verification failed for {target} {path_key} to tier {next_tier} after {max_retries} attempts."
-            self.debug_manager.log_error("ActionManager", Exception(error_msg),
-                                       context={"target": target, "path_key": path_key,
-                                              "next_tier": next_tier, "max_retries": max_retries})
-            logging.error(error_msg)
-            # Do not raise, just continue to next action
-
-        # Always move cursor away after upgrade attempt
-        coords = cursor_resting_spot()
-        move_and_click(coords[0], coords[1])
-        time.sleep(self.timing.get("upgrade_delay", 0.5))
-
-        # Save updated state
-        self.monkey_upgrade_state[target] = current_tiers
-
-        self.debug_manager.log_verbose("ActionManager", "Updated upgrade state",
-                                     data={"target": target, "new_tiers": current_tiers})
-
-        # Only mark as completed if we've reached the requested tier
-        if verified and next_tier >= requested:
-            self.debug_manager.log_basic("ActionManager", f"Upgrade completed: {target} {path_key} tier {next_tier}")
-            self.mark_completed(action.get("step", -1))
-        elif not verified:
-            error_msg = f"Failed to upgrade {target} {path_key} to tier {next_tier} after {max_retries} attempts"
-            self.debug_manager.log_error("ActionManager", Exception(error_msg),
-                                       context={"target": target, "path_key": path_key,
-                                              "next_tier": next_tier, "max_retries": max_retries})
-            logging.error(error_msg)
-
         self.debug_manager.finish_performance_tracking(operation_id)
+
+        if not verified:
+            raise UpgradeVerificationError(
+                f"Upgrade verification failed for {target} {path_key} to tier {next_tier} "
+                f"after {max_retries} attempts. Final diff: {final_diff:.2f}"
+            )
+
+        return verified, final_diff
+
+    def run_upgrade_action(self, action: Dict[str, Any]) -> None:
+        """
+        Execute a single upgrade for a monkey/tower, upgrading only one path per call, with vision-based verification and retry logic.
+        The action's 'upgrade_path' dict must contain exactly one path (e.g., {"path_2": 1}).
+
+        Args:
+            action (Dict[str, Any]): Action dict with 'target' and single-key 'upgrade_path'.
+
+        Raises:
+            UpgradeStateError: If validation fails
+            UpgradeVerificationError: If upgrade verification fails after all retries
+        """
+        operation_id = self.debug_manager.start_performance_tracking("upgrade_action")
+        self.debug_manager.log_detailed("ActionManager", "Starting upgrade action",
+                                      target=action.get('target'),
+                                      upgrade_path=action.get('upgrade_path'),
+                                      step=action.get('step'))
+
+        try:
+            activate_btd6_window()
+
+            # Check if CurrencyReader is available
+            if not self.currency_reader:
+                error_msg = "No CurrencyReader provided to ActionManager. Skipping upgrade action."
+                self.debug_manager.log_basic("ActionManager", error_msg, "warning")
+                logging.warning(error_msg)
+                return
+
+            # Validate action parameters
+            target, path_key, requested = self._validate_upgrade_action(action)
+            pos = self.get_monkey_position(target)
+
+            # Get current upgrade state with thread safety
+            with self._access_upgrade_state() as state:
+                current_tiers = state.get(target, {"path_1": 0, "path_2": 0, "path_3": 0})
+
+            current = current_tiers.get(path_key, 0)
+
+            self.debug_manager.log_verbose("ActionManager", "Current upgrade state",
+                                         data={
+                                             "target": target,
+                                             "current_tiers": current_tiers,
+                                             "path_key": path_key,
+                                             "current_tier": current,
+                                             "requested_tier": requested
+                                         })
+
+            # Check if already at or beyond requested tier
+            if current >= requested:
+                info_msg = f"No upgrade needed for {target} {path_key}: current tier {current}, requested {requested}."
+                self.debug_manager.log_basic("ActionManager", info_msg, "info")
+                logging.info(info_msg)
+                self.mark_completed(action.get("step", -1))
+                return
+
+            # Calculate the next tier (always upgrade by exactly 1)
+            next_tier = current + 1
+
+            # Check max tier boundary (BTD6 max is 5)
+            if next_tier > 5:
+                warning_msg = f"Cannot upgrade {target} {path_key} beyond tier 5. Current: {current}, Requested: {requested}"
+                self.debug_manager.log_basic("ActionManager", warning_msg, "warning")
+                logging.warning(warning_msg)
+                self.mark_completed(action.get("step", -1))
+                return
+
+            # Get hotkey configuration
+            path_hotkeys = self.global_config.get("hotkey", {})
+            path_map = {
+                "path_1": "upgrade_path_1",
+                "path_2": "upgrade_path_2",
+                "path_3": "upgrade_path_3",
+            }
+            hotkey_name = path_map[path_key]
+            hotkey = path_hotkeys.get(hotkey_name)
+            if not hotkey:
+                error_msg = f"No hotkey defined for {hotkey_name} in global config."
+                self.debug_manager.log_basic("ActionManager", error_msg, "warning")
+                logging.warning(error_msg)
+                return
+
+            # Use vision-based targeting to select the monkey before upgrade
+            targeting_op_id = self.debug_manager.start_performance_tracking("upgrade_targeting")
+            self.debug_manager.log_detailed("ActionManager", "Starting targeting for upgrade",
+                                          target=target, position=pos)
+
+            regions = get_regions_for_monkey()
+            max_attempts = regions["max_attempts"]
+            targeting_threshold = regions["place_threshold"]
+            targeting_region_1 = regions["target_region_1"]
+            targeting_region_2 = regions["target_region_2"]
+
+            with self._capture_and_manage_images(None) as images:
+                targeting_success, region_id, targeted_img = try_targeting_success(
+                    pos,
+                    targeting_region_1,
+                    targeting_region_2,
+                    targeting_threshold,
+                    max_attempts,
+                    0.2,
+                    verify_image_difference,
+                )
+
+                if targeted_img is not None:
+                    images.append(targeted_img)
+
+            self.debug_manager.log_vision_result("targeting_for_upgrade", targeting_success,
+                                                confidence=targeting_threshold,
+                                                match_info={"region_id": region_id, "target": target})
+
+            if not targeting_success or targeted_img is None:
+                error_msg = f"Upgrade targeting failed for {target} at {pos}"
+                self.debug_manager.log_error("ActionManager", Exception(error_msg),
+                                           context={"target": target, "position": pos, "region_id": region_id})
+                logging.error(error_msg)
+                handle_vision_error()
+                return
+
+            # Determine which region to use for verification
+            verification_region = (
+                targeting_region_1 if region_id == "region1" else targeting_region_2
+            )
+
+            self.debug_manager.finish_performance_tracking(targeting_op_id)
+
+            # Read retry config from global config
+            retries_cfg = self.global_config.get("automation", {}).get("retries", {})
+            max_retries = retries_cfg.get("max_retries", 3)
+            retry_delay = retries_cfg.get("retry_delay", 0.5)
+
+            self.debug_manager.log_detailed("ActionManager", "Starting upgrade attempts",
+                                          target=target, path_key=path_key, next_tier=next_tier,
+                                          max_retries=max_retries)
+
+            # Perform upgrade verification with retry logic
+            verified, final_diff = self._attempt_upgrade_verification(
+                target, path_key, next_tier, hotkey, verification_region,
+                targeted_img, max_retries, retry_delay
+            )
+
+            # CRITICAL FIX: Only update state after successful verification and tier check
+            if verified:
+                # Create a copy of current tiers to modify
+                updated_tiers = current_tiers.copy()
+                updated_tiers[path_key] = next_tier
+
+                # Only save state if we verified the upgrade
+                with self._access_upgrade_state() as state:
+                    state[target] = updated_tiers
+
+                self.debug_manager.log_verbose("ActionManager", "Updated upgrade state",
+                                             data={"target": target, "new_tiers": updated_tiers})
+
+                # Only mark as completed if we've reached the requested tier
+                if next_tier >= requested:
+                    self.debug_manager.log_basic("ActionManager", f"Upgrade completed: {target} {path_key} tier {next_tier}")
+                    self.mark_completed(action.get("step", -1))
+                else:
+                    # Partial upgrade success - continue with remaining upgrades
+                    info_msg = f"Partial upgrade: {target} {path_key} now at tier {next_tier}, still need tier {requested}"
+                    self.debug_manager.log_basic("ActionManager", info_msg, "info")
+                    logging.info(info_msg)
+
+        except (UpgradeStateError, UpgradeVerificationError) as e:
+            # Log the structured exception and re-raise for caller to handle
+            self.debug_manager.log_error("ActionManager", e,
+                                       context={"action": action, "step": action.get("step")})
+            logging.error(f"Upgrade action failed: {e}")
+            # Re-raise to allow calling code to handle the failure appropriately
+            raise
+        except Exception as e:
+            # Handle unexpected exceptions
+            self.debug_manager.log_error("ActionManager", e,
+                                       context={"action": action, "step": action.get("step")})
+            logging.exception(f"Unexpected error during upgrade action: {e}")
+            raise
+        finally:
+            # Always ensure cursor is moved away and debug tracking is completed
+            try:
+                coords = cursor_resting_spot()
+                move_and_click(coords[0], coords[1])
+                time.sleep(self.timing.get("upgrade_delay", 0.5))
+            except Exception as e:
+                # Log cursor cleanup error but don't raise it
+                self.debug_manager.log_basic("ActionManager", f"Failed to move cursor to resting spot: {e}", "warning")
+
+            self.debug_manager.finish_performance_tracking(operation_id)
 
 
 # --- Stateless helpers ---
