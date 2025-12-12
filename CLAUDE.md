@@ -9,6 +9,7 @@ BTD6 Auto is a Python automation bot for Bloons Tower Defense 6 (BTD6) on Window
 ## Development Commands
 
 ### Environment Setup
+
 ```bash
 # Install dependencies using uv
 uv sync
@@ -18,6 +19,7 @@ uv pip install <package>
 ```
 
 ### Testing
+
 ```bash
 # Run all tests
 pytest tests/
@@ -30,6 +32,7 @@ pytest -v tests/
 ```
 
 ### Running the Application
+
 ```bash
 # Main entry point (Windows batch file handles Python installation)
 run_automation.cmd
@@ -68,30 +71,36 @@ run_automation.cmd
 ## Development Guidelines
 
 ### Code Style
+
 - Follow PEP8 Python style guide
 - Use markdownlint for markdown files
 - Keep imports at the top of each file
 - Use type hints where appropriate
 
 ### Platform Considerations
+
 - Windows-only application
 - Use backslashes for paths or `os.path.join()` for compatibility
 - Game must run in 1920x1080 fullscreen mode
 - Requires Tesseract OCR 5.5.0+ in PATH
 
 ### Testing and Quality
+
 - All new features should include unit tests
 - Use pytest for testing framework
 - Test files should be named `test_*.py` and placed in `tests/` directory
 - Maintain test coverage for critical functionality
 
 ### Vision and Input Patterns
+
 - Use OpenCV over Pillow for advanced vision tasks
 - Use keyboard package for hero/monkey selection to avoid focus issues
 - Implement retry logic with proper error handling for vision-based operations
 - Use verify_image_difference() for confirming UI changes after actions
+- Use input.unselect() to deselect towers/heroes before new selections to avoid UI conflicts
 
 ### Configuration Management
+
 - Use ConfigLoader for accessing configuration values
 - Map configurations should contain tower positions and strategies
 - Global config contains cross-map settings and preferences

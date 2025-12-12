@@ -1,6 +1,9 @@
 """
 Input automation utilities for BTD6 automation bot.
 Centralizes mouse/keyboard actions and error handling.
+
+Provides core input functions including mouse movement/clicking, text typing,
+ESC key unselection for towers/heroes, and keyboard monitoring for kill switches.
 """
 
 import pyautogui
@@ -77,6 +80,34 @@ def type_text(text: str, interval: float = 0.05) -> None:
         pyautogui.write(text, interval=interval)
     except Exception:
         logging.exception(f"Failed to type text '{text}'.")
+
+
+def unselect(delay: float = 0.2) -> None:
+    """
+    Press the ESC key to unselect any currently selected tower or UI element.
+
+    Uses the keyboard module to send an ESC key press, which deselects
+    any selected tower, hero, or UI element in BTD6. Includes a configurable
+    delay after the key press to ensure the game processes the input.
+
+    Parameters:
+        delay (float): Seconds to wait after the ESC key press (default 0.2).
+    """
+    try:
+        # Import inside function to avoid dependency if function unused
+        import keyboard
+        logging.debug("Pressing ESC key to unselect")
+
+        # Use keyboard.send() instead of press/release for simplicity and reliability
+        # ESC is the standard BTD6 control for deselecting towers/heroes/UI elements
+        keyboard.send('esc')
+
+        # Allow game time to process the deselect action before next operation
+        logging.debug(f"Sleeping for {delay} seconds after ESC key press")
+        time.sleep(delay)
+    except Exception:
+        # Log error but don't raise - failure to unselect is non-critical
+        logging.exception("Failed to press ESC key for unselect")
 
 
 def cursor_resting_spot() -> tuple[int, int]:
