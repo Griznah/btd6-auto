@@ -8,7 +8,9 @@
       "Bash(gh pr list:*)",
       "Skill(prompt-engineer)",
       "Bash(python -m pytest:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(ls:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
