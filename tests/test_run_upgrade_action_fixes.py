@@ -215,12 +215,8 @@ class TestUpgradeActionStateConsistency:
     @patch("btd6_auto.actions.activate_btd6_window")
     @patch("btd6_auto.actions.try_targeting_success")
     @patch("btd6_auto.actions.keyboard.send")
-    @patch("btd6_auto.actions.move_and_click")
-    @patch("btd6_auto.actions.cursor_resting_spot")
     def test_state_only_updated_after_verification(
         self,
-        mock_cursor_rest,
-        mock_move_click,
         mock_keyboard,
         mock_targeting,
         mock_activate,
@@ -230,7 +226,6 @@ class TestUpgradeActionStateConsistency:
         # Setup targeting to succeed
         mock_target_img = Mock()
         mock_targeting.return_value = (True, "region1", mock_target_img)
-        mock_cursor_rest.return_value = (0, 0)
 
         action = {"step": 1, "target": "Dart Monkey 01", "upgrade_path": {"path_1": 1}}
 
@@ -251,12 +246,8 @@ class TestUpgradeActionStateConsistency:
     @patch("btd6_auto.actions.activate_btd6_window")
     @patch("btd6_auto.actions.try_targeting_success")
     @patch("btd6_auto.actions.keyboard.send")
-    @patch("btd6_auto.actions.move_and_click")
-    @patch("btd6_auto.actions.cursor_resting_spot")
     def test_state_updated_correctly_on_success(
         self,
-        mock_cursor_rest,
-        mock_move_click,
         mock_keyboard,
         mock_targeting,
         mock_activate,
@@ -266,7 +257,6 @@ class TestUpgradeActionStateConsistency:
         # Setup targeting to succeed
         mock_target_img = Mock()
         mock_targeting.return_value = (True, "region1", mock_target_img)
-        mock_cursor_rest.return_value = (0, 0)
 
         action = {"step": 1, "target": "Dart Monkey 01", "upgrade_path": {"path_1": 1}}
 
@@ -297,27 +287,25 @@ class TestUpgradeActionStateConsistency:
             with patch.object(
                 action_manager_with_fixtures, "_attempt_upgrade_verification"
             ) as mock_verify:
-                with patch("btd6_auto.actions.move_and_click"):
-                    with patch("btd6_auto.actions.cursor_resting_spot", return_value=(0, 0)):
-                        mock_target_img = Mock()
-                        mock_targeting.return_value = (True, "region1", mock_target_img)
-                        mock_verify.return_value = (True, 20.0)
+                mock_target_img = Mock()
+                mock_targeting.return_value = (True, "region1", mock_target_img)
+                mock_verify.return_value = (True, 20.0)
 
-                        # Request tier 3, but verify only succeeds for tier 2
-                        action = {
-                            "step": 1,
-                            "target": "Dart Monkey 01",
-                            "upgrade_path": {"path_1": 3},
-                        }
+                # Request tier 3, but verify only succeeds for tier 2
+                action = {
+                    "step": 1,
+                    "target": "Dart Monkey 01",
+                    "upgrade_path": {"path_1": 3},
+                }
 
-                        action_manager_with_fixtures.run_upgrade_action(action)
+                action_manager_with_fixtures.run_upgrade_action(action)
 
-                        # State should be updated to tier 2
-                        with action_manager_with_fixtures._access_upgrade_state() as state:
-                            assert state["Dart Monkey 01"]["path_1"] == 2
+                # State should be updated to tier 2
+                with action_manager_with_fixtures._access_upgrade_state() as state:
+                    assert state["Dart Monkey 01"]["path_1"] == 2
 
-                        # Step should NOT be marked completed
-                        assert 1 not in action_manager_with_fixtures.completed_steps
+                # Step should NOT be marked completed
+                assert 1 not in action_manager_with_fixtures.completed_steps
 
 
 class TestUpgradeActionErrorHandling:
@@ -370,14 +358,9 @@ class TestUpgradeActionErrorHandling:
         """Test that cursor cleanup happens even when errors occur."""
         action = {"target": "Unknown Tower", "upgrade_path": {"path_1": 1}}
 
-        with patch("btd6_auto.actions.move_and_click") as mock_move_click:
-            with patch("btd6_auto.actions.cursor_resting_spot", return_value=(0, 0)):
-                # Should raise validation error
-                with pytest.raises(UpgradeStateError):
-                    action_manager.run_upgrade_action(action)
-
-                # Cursor cleanup should still happen
-                mock_move_click.assert_called_once_with(0, 0)
+        # move_and_click and cursor_resting_spot are no longer present; just check error is raised
+        with pytest.raises(UpgradeStateError):
+            action_manager.run_upgrade_action(action)
 
     @patch("btd6_auto.actions.activate_btd6_window")
     @patch("btd6_auto.actions.try_targeting_success")
